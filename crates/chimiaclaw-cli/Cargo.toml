@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
 chimiaclaw-governance = { path = "../chimiaclaw-governance" }
+chimiaclaw-node = { path = "../chimiaclaw-node" }
 chimiaclaw-ord-adt = { path = "../chimiaclaw-ord-adt" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
 retroquoter = { path = "../../apps/retroquoter" }

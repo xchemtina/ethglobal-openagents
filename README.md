@@ -6,9 +6,9 @@ Rust-native scaffold for autonomous scientific agents, signed payload-bound arti
 
 ## Maturity at a glance
 
-- **Implemented and tested:** `chimiaclaw-artifact` (signed artifacts with `PayloadRef` binding), `chimiaclaw-ord-adt` (ORD/ORD-like to ADT translator), `apps/retroquoter` (route → quote → procured receipt), CLI `demo-dag` and `demo-ord-adt` flows, Foundry scaffold tests.
-- **Scaffolded (intentional placeholders, no autonomous behavior):** `chimiaclaw-skill`, `chimiaclaw-reactor`, `chimiaclaw-optimization`, `chimiaclaw-governance`, `chimiaclaw-mutator`, `chimiaclaw-node`, all `chimiaclaw-storage-0g` / `transport-axl` / `identity-ens` / `inft` / `onchain-pox` / `settle-uniswap` / `exec-keeperhub` / `semantic-rdf` adapters, `apps/dft-daemon`, `apps/marchev-mssp`.
-- **Design-only (described, not built):** cross-machine consensus, governance execution, on-chain anchoring, MSSP/cybernetic Marchev stack, World Avatar RDF projection, real procurement APIs.
+- **Implemented and tested:** `chimiaclaw-artifact` (signed artifacts with `PayloadRef` binding, file-backed store), `chimiaclaw-ord-adt` (ORD/ORD-like to ADT translator + `OrdToAdtSkill`), `apps/retroquoter` (route → quote → procured receipt), `chimiaclaw-node` minimal one-shot runtime loop, CLI `demo-dag`, `demo-ord-adt`, `node seed-ord`, `node run-once`, and `artifact inspect` flows, Foundry scaffold tests.
+- **Scaffolded (intentional placeholders, no autonomous behavior):** `chimiaclaw-skill` registry only, `chimiaclaw-reactor`, `chimiaclaw-optimization`, `chimiaclaw-governance`, `chimiaclaw-mutator`, all `chimiaclaw-storage-0g` / `transport-axl` / `identity-ens` / `inft` / `onchain-pox` / `settle-uniswap` / `exec-keeperhub` / `semantic-rdf` adapters, `apps/dft-daemon`, `apps/marchev-mssp`.
+- **Design-only (described, not built):** long-running daemon, cross-machine consensus, governance execution, on-chain anchoring, MSSP/cybernetic Marchev stack, World Avatar RDF projection, real procurement APIs.
 
 When this README says "DAO substrate" or "reference swarm", read it as direction, not present capability.
 
@@ -70,6 +70,19 @@ Run the ORD→ADT signed translation demo:
 ```sh
 cargo run -p chimiaclaw-cli -- demo-ord-adt
 ```
+
+Run the file-backed node runtime end-to-end:
+
+```sh
+STORE=$(mktemp -d /tmp/chimiaclaw-store-XXXXXX)
+cargo run -p chimiaclaw-cli -- node seed-ord --store-dir "$STORE"
+cargo run -p chimiaclaw-cli -- node run-once --store-dir "$STORE"
+cargo run -p chimiaclaw-cli -- artifact inspect --store-dir "$STORE"
+```
+
+This seeds a payload-bound `chem.ord.reaction` artifact, runs one synchronous
+loop that invokes the registered `OrdToAdtSkill`, persists the verified
+`chem.adt.reaction` child, and prints the resulting lineage.
 
 ## Validate
 

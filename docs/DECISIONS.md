@@ -42,6 +42,9 @@ Current example: `chimiaclaw-ord-adt` parses ORD-style JSON directly with serde 
 ## D3a. Bind artifacts to canonical payload digests
 
 Artifacts now carry an optional `PayloadRef` whose Blake3 digest is signed alongside the artifact metadata. Inline payloads embed canonical bytes; external payloads carry a CID plus the digest. This means tampering with the scientific or procurement payload invalidates the artifact's `content_hash`. The system signs the payload binding even though the bytes can live off-chain or in decentralized storage.
+## D3b. Minimal node runtime is one-shot, not daemonized
+
+`chimiaclaw-node` is a library plus a thin binary. The library exposes `NodeProfile` and `NodeRuntime::run_once`. The runtime opens a file-backed `FileArtifactStore`, scans for parent artifacts whose schema tags match a registered skill's `consumes_tags`, invokes the skill, seals the resulting `ArtifactDraft` with the runtime signer, and persists the child. There is **no** poll loop, no transport, and no capability enforcement yet. A reliable one-shot loop is a more honest foundation than a fake daemon, and the CLI exposes it as `chimiaclaw-cli node run-once --store-dir <path>`.
 
 ## D4. Treat ScienceClaw as skill inspiration, not dependency policy
 

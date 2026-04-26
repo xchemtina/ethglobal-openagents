@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
+chimiaclaw-skill = { path = "../chimiaclaw-skill" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

@@ -9,11 +9,14 @@ This is the near-term build order after the current scaffold.
 - Add a compact graph printer for artifact parent/child lineage.
 - Add fixture snapshots for demo JSON output once schemas settle.
 
-## 1a. Make the runtime real
+## 1a. Make the runtime real (in progress)
 
-- Wire `chimiaclaw-node` to a file-backed artifact store.
-- Run a one-shot loop that consumes a parent artifact and produces a payload-bound child via a registered skill.
-- Wrap ORD→ADT as the first real `Skill` implementation behind `chimiaclaw-skill`.
+- ✅ `chimiaclaw-node` now exposes a `NodeProfile` + `NodeRuntime` lib, wired to `FileArtifactStore`.
+- ✅ `NodeRuntime::run_once` consumes parent artifacts whose tags match a registered skill's `consumes_tags`, invokes the skill, seals with the runtime signer, and persists payload-bound children.
+- ✅ `OrdToAdtSkill` wraps ORD→ADT as the first real `chimiaclaw-skill` implementation.
+- 🟡 Add a long-running `chimiaclaw-node` daemon mode with a poll interval.
+- 🟡 Add capability checks before skill execution.
+- 🟡 Add structured logs and basic metrics for artifact creation/verification.
 
 ## 2. Add a chemical safety gate
 

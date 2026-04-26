@@ -1,9 +1,10 @@
 use chimiaclaw_artifact::{
-    ArtifactDraft, ArtifactSigner, ArtifactStore, InMemoryArtifactStore, PayloadRef,
+    ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore, PayloadRef,
 };
+use chimiaclaw_node::{NodeProfile, NodeRuntime};
 use chimiaclaw_ord_adt::{
-    adt_experiment_hash, demo_suzuki_ord_like, OrdToAdtTranslator, ADT_REACTION_TAG, ORD_ADT_AGENT,
-    ORD_REACTION_TAG,
+    adt_experiment_hash, demo_suzuki_ord_like, OrdToAdtSkill, OrdToAdtTranslator, ADT_REACTION_TAG,
+    ORD_ADT_AGENT, ORD_REACTION_TAG,
 };
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use retroquoter::{
@@ -12,13 +13,46 @@ use retroquoter::{
     PROCUREMENT_AGENT, ROUTE_PROPOSAL_TAG,
 };
 use std::collections::BTreeSet;
+use std::path::PathBuf;
+use std::process::ExitCode;
 
-fn main() {
+fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
-    match args.get(1).map(String::as_str) {
-        Some("demo-dag") => run_demo_dag(),
-        Some("demo-ord-adt") => run_demo_ord_adt(),
-        _ => print_help(),
+    let argv: Vec<&str> = args.iter().map(String::as_str).collect();
+    match argv.as_slice() {
+        [_, "demo-dag", ..] => {
+            run_demo_dag();
+            ExitCode::SUCCESS
+        }
+        [_, "demo-ord-adt", ..] => {
+            run_demo_ord_adt();
+            ExitCode::SUCCESS
+        }
+        [_, "node", "seed-ord", rest @ ..] => match run_node_seed_ord(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("node seed-ord failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "node", "run-once", rest @ ..] => match run_node_run_once(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("node run-once failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "artifact", "inspect", rest @ ..] => match run_artifact_inspect(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("artifact inspect failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        _ => {
+            print_help();
+            ExitCode::SUCCESS
+        }
     }
 }
 
@@ -68,8 +102,152 @@ fn run_demo_ord_adt() {
 fn print_help() {
     println!("chimiaclaw-cli");
     println!("usage:");
-    println!("  chimiaclaw-cli demo-dag    create and verify a deterministic local artifact DAG");
-    println!("  chimiaclaw-cli demo-ord-adt    translate demo ORD-like reaction into signed ADT artifact");
+    println!("  chimiaclaw-cli demo-dag");
+    println!("      Build a deterministic in-memory route -> quote -> procured DAG.");
+    println!("  chimiaclaw-cli demo-ord-adt");
+    println!("      Translate the demo ORD-like reaction into a signed ADT artifact.");
+    println!("  chimiaclaw-cli node seed-ord --store-dir <path>");
+    println!("      Seed a file-backed store with a signed demo ORD reaction artifact.");
+    println!("  chimiaclaw-cli node run-once --store-dir <path> [--agent <id>] [--profile-label <label>]");
+    println!(
+        "      Run one synchronous loop: scan store, invoke ORD->ADT skill, persist children."
+    );
+    println!("  chimiaclaw-cli artifact inspect --store-dir <path> [--id <artifact-id>]");
+    println!("      List all stored artifacts (and lineage) or inspect one by id.");
+}
+
+fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == key && i + 1 < args.len() {
+            return Some(args[i + 1]);
+        }
+        i += 1;
+    }
+    None
+}
+
+fn require_kv<'a>(args: &'a [&'a str], key: &str) -> Result<&'a str, String> {
+    parse_kv(args, key).ok_or_else(|| format!("missing required argument: {key}"))
+}
+
+fn run_node_seed_ord(args: &[&str]) -> Result<(), String> {
+    let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
+    let agent_id = parse_kv(args, "--agent").unwrap_or("ord.importer.eth");
+    let label = parse_kv(args, "--profile-label").unwrap_or("chimiaclaw-dev");
+
+    let signer = NodeProfile::dev_signer_from_seed_label(&format!("importer:{label}"));
+    let ord = demo_suzuki_ord_like();
+    let payload = PayloadRef::inline_json(&ord).map_err(|error| format!("{error:?}"))?;
+    let ord_artifact = ArtifactDraft {
+        skill: SkillId("chem.ord.import.v1".to_string()),
+        agent: AgentId(agent_id.to_string()),
+        topic: "demo ORD-like Suzuki reaction".to_string(),
+        input_fingerprint: "ord-like:suzuki".to_string(),
+        output_cid: Some("inline://ord-like/suzuki".to_string()),
+        parent_artifact_ids: Vec::new(),
+        schema_tags: BTreeSet::from([SchemaTag(ORD_REACTION_TAG.to_string())]),
+        payload: Some(payload),
+    }
+    .seal(&signer, 1)
+    .map_err(|error| format!("seal: {error:?}"))?;
+
+    let profile = NodeProfile {
+        agent: AgentId(agent_id.to_string()),
+        signer,
+        store_dir,
+    };
+    let mut runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
+    let id = ord_artifact.id.clone();
+    match runtime.put_artifact(ord_artifact) {
+        Ok(())
+        | Err(chimiaclaw_node::NodeError::Store(
+            chimiaclaw_artifact::ArtifactStoreError::Conflict(_),
+        )) => {}
+        Err(other) => return Err(format!("put: {other:?}")),
+    }
+    println!(
+        "{}",
+        serde_json::json!({
+            "seeded_artifact_id": id.0,
+            "schema_tag": ORD_REACTION_TAG,
+        })
+    );
+    Ok(())
+}
+
+fn run_node_run_once(args: &[&str]) -> Result<(), String> {
+    let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
+    let agent_id = parse_kv(args, "--agent").unwrap_or(ORD_ADT_AGENT);
+    let label = parse_kv(args, "--profile-label").unwrap_or("chimiaclaw-dev");
+
+    let signer = NodeProfile::dev_signer_from_seed_label(&format!("node:{label}"));
+    let profile = NodeProfile {
+        agent: AgentId(agent_id.to_string()),
+        signer,
+        store_dir,
+    };
+    let mut runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
+    runtime.register_skill(Box::new(OrdToAdtSkill::new()));
+    let report = runtime.run_once(2).map_err(|error| format!("{error:?}"))?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .unwrap_or_else(|error| format!("<failed to serialize report: {error}>"))
+    );
+    Ok(())
+}
+
+fn run_artifact_inspect(args: &[&str]) -> Result<(), String> {
+    let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
+    let id = parse_kv(args, "--id");
+    let signer = NodeProfile::dev_signer_from_seed_label("inspect");
+    let profile = NodeProfile {
+        agent: AgentId("inspector.local.eth".to_string()),
+        signer,
+        store_dir,
+    };
+    let runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
+    if let Some(id) = id {
+        let artifact = runtime
+            .get_artifact(&ArtifactId(id.to_string()))
+            .map_err(|error| format!("{error:?}"))?;
+        match artifact {
+            Some(artifact) => {
+                let value = serde_json::to_value(&artifact)
+                    .map_err(|error| format!("serialize: {error}"))?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&value)
+                        .unwrap_or_else(|error| format!("<failed to serialize: {error}>"))
+                );
+            }
+            None => return Err(format!("no artifact with id {id} in store")),
+        }
+    } else {
+        let all = runtime
+            .all_artifacts()
+            .map_err(|error| format!("{error:?}"))?;
+        let summary: Vec<_> = all
+            .iter()
+            .map(|artifact| {
+                serde_json::json!({
+                    "id": artifact.id.0,
+                    "skill": artifact.skill.0,
+                    "agent": artifact.agent.0,
+                    "schema_tags": artifact.schema_tags.iter().map(|tag| tag.0.clone()).collect::<Vec<_>>(),
+                    "parents": artifact.parent_artifact_ids.iter().map(|id| id.0.clone()).collect::<Vec<_>>(),
+                    "payload_hash": artifact.payload.as_ref().map(|p| p.hash.clone()),
+                })
+            })
+            .collect();
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&summary)
+                .unwrap_or_else(|error| format!("<failed to serialize summary: {error}>"))
+        );
+    }
+    Ok(())
 }
 
 fn run_demo_dag() {

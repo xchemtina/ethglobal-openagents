@@ -191,6 +191,7 @@ pub enum OrdAdtError {
     InvalidOfficialOrdJson { reason: String },
     MissingOrdReactionTag { artifact_id: String },
     MissingReferencedReagent { reagent: String },
+    PayloadUnavailable,
 }
 
 pub struct OrdToAdtTranslator {
@@ -259,6 +260,124 @@ impl OrdToAdtTranslator {
             experiment,
             artifact,
         })
+    }
+}
+
+/// Build a payload-bound `ArtifactDraft` from an ORD parent without sealing it.
+///
+/// The runtime that owns the signer is responsible for sealing the draft.
+pub fn build_adt_draft(
+    agent: &AgentId,
+    ord_artifact: &Artifact,
+    ord: &OrdLikeReaction,
+    options: &OrdToAdtOptions,
+) -> Result<(AdtExperiment, ArtifactDraft), OrdAdtError> {
+    validate_ord_artifact(ord_artifact)?;
+    let experiment = translate_ord_like(ord, options)?;
+    let adt_hash = adt_experiment_hash(&experiment)?;
+    let payload = PayloadRef::inline_json(&experiment).map_err(OrdAdtError::Artifact)?;
+    let draft = ArtifactDraft {
+        skill: SkillId(ORD_TO_ADT_SKILL.to_string()),
+        agent: agent.clone(),
+        topic: format!("ADT reaction translated from {}", ord.name),
+        input_fingerprint: blake3_hex(
+            format!("{}:{adt_hash}", ord_artifact.content_hash).as_bytes(),
+        ),
+        output_cid: Some(format!("inline://chimiaclaw/adt/{adt_hash}")),
+        parent_artifact_ids: vec![ord_artifact.id.clone()],
+        schema_tags: BTreeSet::from([SchemaTag(ADT_REACTION_TAG.to_string())]),
+        payload: Some(payload),
+    };
+    Ok((experiment, draft))
+}
+
+/// Decode the ORD payload that an ORD reaction artifact commits to.
+///
+/// Currently only inline payloads are supported -- external CIDs would require
+/// a fetcher adapter.
+pub fn decode_ord_payload(artifact: &Artifact) -> Result<OrdLikeReaction, OrdAdtError> {
+    let bytes = artifact
+        .inline_payload_bytes()
+        .map_err(OrdAdtError::Artifact)?
+        .ok_or(OrdAdtError::PayloadUnavailable)?;
+    artifact
+        .verify_payload_bytes(&bytes)
+        .map_err(OrdAdtError::Artifact)?;
+    serde_json::from_slice(&bytes).map_err(|error| OrdAdtError::Json(error.to_string()))
+}
+
+/// Skill wrapper that turns the ORD→ADT translator into a `chimiaclaw-skill`
+/// implementation, suitable for execution by `chimiaclaw-node`.
+pub struct OrdToAdtSkill {
+    options: OrdToAdtOptions,
+}
+
+impl OrdToAdtSkill {
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            options: OrdToAdtOptions::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_options(options: OrdToAdtOptions) -> Self {
+        Self { options }
+    }
+}
+
+impl Default for OrdToAdtSkill {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl chimiaclaw_skill::Skill for OrdToAdtSkill {
+    fn id(&self) -> SkillId {
+        SkillId(ORD_TO_ADT_SKILL.to_string())
+    }
+
+    fn capabilities(&self) -> Vec<chimiaclaw_schema::Capability> {
+        Vec::new()
+    }
+
+    fn consumes_tags(&self) -> Vec<SchemaTag> {
+        vec![SchemaTag(ORD_REACTION_TAG.to_string())]
+    }
+
+    fn produces_tags(&self) -> Vec<SchemaTag> {
+        vec![SchemaTag(ADT_REACTION_TAG.to_string())]
+    }
+
+    fn invoke(
+        &self,
+        ctx: &chimiaclaw_skill::SkillCtx,
+        parents: &[Artifact],
+    ) -> Result<ArtifactDraft, chimiaclaw_skill::SkillError> {
+        let parent = parents.first().ok_or_else(|| {
+            chimiaclaw_skill::SkillError::InvalidInput(
+                "ord-adt skill requires exactly one parent ORD artifact".to_string(),
+            )
+        })?;
+        let ord = decode_ord_payload(parent).map_err(|error| match error {
+            OrdAdtError::Artifact(inner) => chimiaclaw_skill::SkillError::InvalidInput(format!(
+                "failed to decode ORD payload: {inner:?}"
+            )),
+            OrdAdtError::Json(message) => chimiaclaw_skill::SkillError::InvalidInput(format!(
+                "ORD payload was not valid JSON: {message}"
+            )),
+            OrdAdtError::PayloadUnavailable => chimiaclaw_skill::SkillError::InvalidInput(
+                "ORD parent artifact did not carry an inline payload".to_string(),
+            ),
+            other => chimiaclaw_skill::SkillError::InvalidInput(format!(
+                "unexpected ord-adt error: {other:?}"
+            )),
+        })?;
+        let (_experiment, draft) = build_adt_draft(&ctx.agent, parent, &ord, &self.options)
+            .map_err(|error| {
+                chimiaclaw_skill::SkillError::Execution(format!("ord-adt translation: {error:?}"))
+            })?;
+        Ok(draft)
     }
 }
 

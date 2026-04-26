@@ -87,6 +87,7 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-governance",
+ "chimiaclaw-node",
  "chimiaclaw-ord-adt",
  "chimiaclaw-schema",
  "retroquoter",
@@ -138,6 +139,11 @@ name = "chimiaclaw-node"
 version = "0.1.0"
 dependencies = [
  "chimiaclaw-agent",
+ "chimiaclaw-artifact",
+ "chimiaclaw-schema",
+ "chimiaclaw-skill",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -163,6 +169,7 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-schema",
+ "chimiaclaw-skill",
  "hex",
  "serde",
  "serde_json",
