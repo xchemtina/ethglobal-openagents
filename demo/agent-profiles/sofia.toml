@@ -1,0 +1,4 @@
+agent_id = "sofia.chimiaclaw.eth"
+transport = "mock-axl"
+storage = "local"
+strategy_sets = ["sofia.cost_optimized", "sofia.quality_optimized"]

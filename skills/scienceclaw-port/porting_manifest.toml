@@ -1,0 +1,485 @@
+manifest_version = 1
+name = "scienceclaw-port"
+purpose = "Port the chemistry, deep-learning, and data-science substrate from ScienceClaw into ChimiaClaw without installing dependencies yet."
+
+[source]
+repository = "https://github.com/lamm-mit/scienceclaw"
+revision = "20ac3565abde79b306d952c114ffe97d1126c388"
+local_research_checkout = "/tmp/scienceclaw-port"
+snapshot_requirement_files = [
+  "requirements/chemistry.txt",
+  "requirements/deep-learning.txt",
+  "requirements/data-science.txt",
+]
+
+[policy]
+install_dependencies_now = false
+package_manager = "uv"
+docker_allowed = false
+homebrew_allowed = false
+artifact_model = "Every ported worker consumes a signed input artifact and emits a signed child artifact; stdout JSON is only a transport envelope."
+first_runtime_target = "chimiaclaw-skill-subprocess"
+later_runtime_targets = [
+  "native Rust API clients for simple REST lookups",
+  "job-artifact executors for long-running DFT and docking",
+  "0G-backed payload storage for large structures, trajectories, and model outputs",
+]
+
+[dependency_groups.chemistry]
+source_file = "requirements/chemistry.txt"
+packages = [
+  "rdkit>=2025.0.0",
+  "pubchempy>=1.0.4",
+  "chembl-webresource-client>=0.10.0",
+  "url-normalize>=2.0.0",
+  "datamol>=0.12.0",
+  "medchem>=2.0.0",
+  "py3Dmol>=2.0.3",
+]
+notes = [
+  "RDKit is the core parsing, descriptor, fingerprint, substructure, and reaction primitive.",
+  "datamol is a higher-level RDKit wrapper for standardization, descriptors, fingerprints, conformers, clustering, scaffolds, and fragments.",
+  "pubchempy and chembl-webresource-client support open compound identity and bioactivity lookups.",
+  "medchem supplies medicinal chemistry filters including Lipinski, Veber, PAINS, NIBR, Lilly demerits, reactive groups, and complexity metrics.",
+  "py3Dmol is visualization-only and should not be on the Phase 0 critical path.",
+]
+
+[dependency_groups.deep_learning]
+source_file = "requirements/deep-learning.txt"
+packages = [
+  "torch>=2.0.0",
+  "lightning>=2.0.0",
+  "lightning-utilities>=0.15.0",
+  "pytorch-lightning>=2.6.0",
+  "torchmetrics>=1.8.0",
+  "stable-baselines3>=2.0.0",
+  "gymnasium>=1.0.0",
+]
+notes = [
+  "This group supports DeepChem, DiffDock-like docking, graph models, transfer learning, and reinforcement learning.",
+  "GPU acceleration is useful but not required for the initial manifest and lightweight CLI wrappers.",
+]
+
+[dependency_groups.data_science]
+source_file = "requirements/data-science.txt"
+packages = [
+  "numpy>=1.24.0",
+  "pandas>=2.0.0",
+  "matplotlib>=3.7.0",
+  "seaborn>=0.12.0",
+  "scipy>=1.7.0",
+  "scikit-learn>=1.0.0",
+  "statsmodels>=0.14.0",
+  "polars>=1.0.0",
+  "plotly>=5.0.0",
+]
+notes = [
+  "These are shared tabular, numerical, statistical, and plotting dependencies for skill workers.",
+  "Prefer structured JSON/CSV artifacts over direct plot files in Phase 0; plots can become derived child artifacts later.",
+]
+
+[[skills]]
+name = "rdkit"
+source_paths = [
+  "skills/rdkit/SKILL.md",
+  "skills/rdkit/scripts/molecular_properties.py",
+]
+tier = "0-core-chemistry"
+upstream_kind = "python-library-wrapper"
+chimiaclaw_skill_id = "chem.cheminformatics.rdkit.properties.v1"
+input_schema_tags = [
+  "chem.compound.smiles",
+  "chem.compound.structure_file",
+]
+output_schema_tags = [
+  "chem.compound.descriptor_profile",
+  "chem.compound.standardized_structure",
+]
+port_status = "direct-subprocess-first"
+notes = [
+  "Use for fine-grained molecular control: SMILES/SDF parsing, descriptors, fingerprints, substructure search, 2D/3D generation, similarity, and reactions.",
+  "Normalize all parse failures into signed error artifacts rather than stderr-only failures.",
+]
+
+[[skills]]
+name = "datamol"
+source_paths = [
+  "skills/datamol/SKILL.md",
+  "skills/datamol/scripts/datamol_process.py",
+]
+tier = "0-core-chemistry"
+upstream_kind = "python-library-wrapper"
+chimiaclaw_skill_id = "chem.cheminformatics.datamol.process.v1"
+input_schema_tags = [
+  "chem.compound.smiles",
+]
+output_schema_tags = [
+  "chem.compound.standardized_structure",
+  "chem.compound.descriptor_profile",
+]
+port_status = "direct-subprocess-first"
+notes = [
+  "ScienceClaw correctly treats datamol as computation-only: it requires SMILES already obtained from PubChem, ChEMBL, CAS, or another resolver.",
+  "Good first worker because the upstream script already returns compact JSON with canonical SMILES, descriptors, InChI, InChIKey, and optional SELFIES.",
+]
+
+[[skills]]
+name = "medchem"
+source_paths = [
+  "skills/medchem/SKILL.md",
+]
+tier = "0-core-chemistry"
+upstream_kind = "python-library-guidance"
+chimiaclaw_skill_id = "chem.medchem.filter.v1"
+input_schema_tags = [
+  "chem.compound.smiles_batch",
+  "chem.compound.descriptor_profile",
+]
+output_schema_tags = [
+  "chem.medchem.filter_report",
+  "chem.safety.structural_alerts",
+]
+port_status = "needs-worker-script"
+notes = [
+  "Core capabilities to expose are drug-likeness rules, PAINS, NIBR filters, Lilly demerits, reactive groups, named catalogs, and molecular complexity.",
+  "This enhances RetroQuoter by adding a medicinal chemistry gate before procurement is allowed to proceed.",
+]
+
+[[skills]]
+name = "pubchem"
+source_paths = [
+  "skills/pubchem/SKILL.md",
+  "skills/pubchem/scripts/pubchem_search.py",
+]
+tier = "0-core-identity"
+upstream_kind = "rest-cli-wrapper"
+chimiaclaw_skill_id = "chem.identity.pubchem.lookup.v1"
+input_schema_tags = [
+  "chem.compound.query",
+  "chem.compound.pubchem_cid",
+]
+output_schema_tags = [
+  "chem.compound.profile",
+  "chem.compound.identifier_crosswalk",
+]
+port_status = "direct-subprocess-or-native-rest"
+notes = [
+  "No API key is required; upstream notes a 5 requests per second rate limit.",
+  "A native Rust REST client is plausible after the subprocess proof, because the protocol is simple PUG-REST JSON.",
+]
+
+[[skills]]
+name = "pubchem-database"
+source_paths = [
+  "skills/pubchem-database/SKILL.md",
+]
+tier = "1-expanded-identity"
+upstream_kind = "python-client-guidance"
+chimiaclaw_skill_id = "chem.identity.pubchem.advanced_search.v1"
+input_schema_tags = [
+  "chem.compound.smiles",
+  "chem.compound.substructure_query",
+  "chem.compound.similarity_query",
+]
+output_schema_tags = [
+  "chem.compound.search_results",
+  "chem.bioactivity.pubchem_summary",
+]
+port_status = "needs-worker-script"
+notes = [
+  "Adds similarity, substructure, batch property retrieval, image export, and bioactivity access beyond the simple pubchem lookup.",
+  "Similarity and substructure searches can be slow or asynchronous, so the ChimiaClaw port should emit job/request artifacts for long calls.",
+]
+
+[[skills]]
+name = "chembl"
+source_paths = [
+  "skills/chembl/SKILL.md",
+  "skills/chembl/scripts/chembl_search.py",
+]
+tier = "0-core-bioactivity"
+upstream_kind = "rest-cli-wrapper"
+chimiaclaw_skill_id = "chem.bioactivity.chembl.lookup.v1"
+input_schema_tags = [
+  "chem.compound.query",
+  "chem.compound.chembl_id",
+]
+output_schema_tags = [
+  "chem.compound.profile",
+  "chem.bioactivity.chembl_summary",
+]
+port_status = "direct-subprocess-or-native-rest"
+notes = [
+  "Upstream explicitly warns that queries must be exact compound names or ChEMBL IDs, not mechanism or disease phrases.",
+  "Use PubMed or literature extraction before ChEMBL when the user provides a mechanism topic rather than a compound.",
+]
+
+[[skills]]
+name = "chembl-database"
+source_paths = [
+  "skills/chembl-database/SKILL.md",
+  "skills/chembl-database/scripts/search.py",
+  "skills/chembl-database/scripts/example_queries.py",
+]
+tier = "1-expanded-bioactivity"
+upstream_kind = "python-client-guidance"
+chimiaclaw_skill_id = "chem.bioactivity.chembl.query.v1"
+input_schema_tags = [
+  "chem.target.query",
+  "chem.compound.chembl_id",
+  "chem.compound.smiles",
+]
+output_schema_tags = [
+  "chem.bioactivity.activity_table",
+  "chem.target.profile",
+  "chem.sar.compound_series",
+]
+port_status = "needs-worker-script"
+notes = [
+  "Expose target, activity, molecule, drug, mechanism, indication, similarity, and substructure endpoints.",
+  "Use explicit provenance fields for standard_type, units, assay, target ChEMBL ID, and source version.",
+]
+
+[[skills]]
+name = "cas"
+source_paths = [
+  "skills/cas/SKILL.md",
+  "skills/cas/scripts/cas_search.py",
+]
+tier = "0-core-identity"
+upstream_kind = "rest-cli-wrapper"
+chimiaclaw_skill_id = "chem.identity.cas.lookup.v1"
+input_schema_tags = [
+  "chem.compound.query",
+  "chem.compound.cas_rn",
+]
+output_schema_tags = [
+  "chem.compound.profile",
+  "chem.compound.identifier_crosswalk",
+]
+port_status = "direct-subprocess-first"
+notes = [
+  "CAS Common Chemistry covers roughly 500,000 compounds and may require CAS_API_KEY.",
+  "Never store secrets in artifacts; only store a redacted credential source label and response provenance.",
+]
+
+[[skills]]
+name = "chemical-compound-retrieval"
+source_paths = [
+  "skills/chemical-compound-retrieval/SKILL.md",
+  "skills/chemical-compound-retrieval/scripts/run.py",
+]
+tier = "1-agentic-workflow"
+upstream_kind = "tooluniverse-workflow"
+chimiaclaw_skill_id = "chem.identity.compound_retrieval.workflow.v1"
+input_schema_tags = [
+  "chem.compound.query",
+]
+output_schema_tags = [
+  "chem.compound.profile_report",
+  "chem.compound.identifier_crosswalk",
+]
+port_status = "redesign-before-critical-use"
+notes = [
+  "Useful as a high-level orchestration recipe, but the direct ToolUniverse workflow dependency is opaque compared with signed ChimiaClaw sub-artifacts.",
+  "Port by decomposing the workflow into PubChem, ChEMBL, identity resolution, cross-reference, and report synthesis child artifacts.",
+]
+
+[[skills]]
+name = "chemical-safety"
+source_paths = [
+  "skills/chemical-safety/SKILL.md",
+  "skills/chemical-safety/scripts/run.py",
+]
+tier = "1-safety-gate"
+upstream_kind = "tooluniverse-workflow"
+chimiaclaw_skill_id = "chem.safety.integrated_assessment.v1"
+input_schema_tags = [
+  "chem.compound.profile",
+  "chem.compound.smiles",
+]
+output_schema_tags = [
+  "chem.safety.toxicology_report",
+  "chem.safety.procurement_gate",
+]
+port_status = "redesign-before-critical-use"
+notes = [
+  "The upstream chemistry detail is strongest here: it requires identity resolution first, then ADMET-AI, CTD, FDA labels, DrugBank, STITCH, structural alerts, evidence grading, and conservative risk classification.",
+  "This should become a signed safety gate between route quote and procurement execution for real-world wet-lab use.",
+]
+
+[[skills]]
+name = "askcos"
+source_paths = [
+  "skills/askcos/SKILL.md",
+  "skills/askcos/scripts/askcos_retro.py",
+  "skills/askcos/scripts/askcos_scraper.py",
+]
+tier = "1-retrosynthesis"
+upstream_kind = "local-service-wrapper"
+chimiaclaw_skill_id = "chem.retrosynth.askcos.template_relevance.v1"
+input_schema_tags = [
+  "chem.compound.smiles",
+]
+output_schema_tags = [
+  "chem.retrosynth.template_suggestions",
+  "chem.retrosynth.route_proposal",
+]
+port_status = "needs-non-docker-service-alternative"
+notes = [
+  "ScienceClaw assumes a local ASKCOS TorchServe container at http://localhost:9410 with template sets reaxys, pistachio, pistachio_ringbreaker, bkms_metabolic, and reaxys_biocatalysis.",
+  "The ChimiaClaw port must not depend on Docker. Accept a user-managed HTTP endpoint, a non-Docker TorchServe process, or an external API fallback.",
+  "The scraper fallback fabricates demo-like routes and should not be used as a scientific source of truth.",
+]
+
+[[skills]]
+name = "ase"
+source_paths = [
+  "skills/ase/SKILL.md",
+  "skills/ase/scripts/ase_optimize.py",
+  "skills/ase/scripts/ase_properties.py",
+]
+tier = "1-computational-chemistry"
+upstream_kind = "python-library-wrapper"
+chimiaclaw_skill_id = "chem.compute.ase.optimize.v1"
+input_schema_tags = [
+  "chem.compound.smiles",
+  "chem.structure.xyz",
+  "chem.structure.cif",
+]
+output_schema_tags = [
+  "chem.compute.optimized_structure",
+  "chem.compute.property_report",
+]
+port_status = "direct-subprocess-with-sandboxing"
+notes = [
+  "ASE supports structure optimization, molecular/material properties, phonons, molecular dynamics, and calculators such as MOPAC, Quantum ESPRESSO, and VASP.",
+  "ChimiaClaw should treat output files such as optimized XYZ and trajectories as payload artifacts with content hashes.",
+]
+
+[[skills]]
+name = "dft"
+source_paths = [
+  "skills/dft/SKILL.md",
+  "skills/dft/scripts/dft_submit.py",
+  "skills/dft/scripts/dft_status.py",
+  "skills/dft/scripts/dft_retrieve.py",
+  "skills/dft/references/dreams_integration.md",
+]
+tier = "2-hpc-computational-chemistry"
+upstream_kind = "slurm-job-wrapper"
+chimiaclaw_skill_id = "chem.compute.dft.slurm.v1"
+input_schema_tags = [
+  "chem.structure.cif",
+  "chem.structure.poscar",
+  "chem.materials_project_id",
+]
+output_schema_tags = [
+  "chem.compute.dft_job",
+  "chem.compute.dft_result",
+  "chem.compute.relaxed_structure",
+]
+port_status = "redesign-as-job-artifact-state-machine"
+notes = [
+  "The upstream scripts target Artemis SLURM, Quantum Espresso, DREAMS, and optional Materials Project fetching.",
+  "Submit, status, and retrieve should be separate signed artifacts so queued, running, completed, failed, and retrieved states are auditable.",
+  "Do not auto-generate or submit expensive DFT jobs without an explicit signed request artifact.",
+]
+
+[[skills]]
+name = "deepchem"
+source_paths = [
+  "skills/deepchem/SKILL.md",
+  "skills/deepchem/scripts/predict_solubility.py",
+  "skills/deepchem/scripts/graph_neural_network.py",
+  "skills/deepchem/scripts/transfer_learning.py",
+]
+tier = "2-ml-chemistry"
+upstream_kind = "python-ml-workflows"
+chimiaclaw_skill_id = "chem.ml.deepchem.train_or_predict.v1"
+input_schema_tags = [
+  "chem.dataset.molecule_table",
+  "chem.compound.smiles_batch",
+]
+output_schema_tags = [
+  "chem.ml.model_artifact",
+  "chem.ml.evaluation_report",
+  "chem.property.prediction_batch",
+]
+port_status = "defer-until-artifact-dataset-schema"
+notes = [
+  "DeepChem gives MoleculeNet loaders, scaffold splits, fingerprints, graph featurizers, GCN/GAT/MPNN/AttentiveFP, ChemBERTa/GROVER/MolFormer transfer learning, and property prediction examples.",
+  "Require dataset hash, split strategy, metrics, seed, model config, and dependency lock in the output artifact.",
+]
+
+[[skills]]
+name = "diffdock"
+source_paths = [
+  "skills/diffdock/SKILL.md",
+]
+tier = "2-docking"
+upstream_kind = "external-model-workflow"
+chimiaclaw_skill_id = "chem.docking.diffdock.pose_prediction.v1"
+input_schema_tags = [
+  "chem.protein.pdb",
+  "chem.protein.sequence",
+  "chem.compound.smiles",
+  "chem.compound.sdf",
+]
+output_schema_tags = [
+  "chem.docking.pose_set",
+  "chem.docking.confidence_report",
+]
+port_status = "defer-heavy-runtime"
+notes = [
+  "DiffDock predicts binding poses and confidence, not binding affinity.",
+  "The upstream doc recommends conda or Docker; ChimiaClaw should prefer a user-managed uv-compatible environment or remote executor and keep model checkpoints outside git.",
+]
+
+[[skills]]
+name = "drugbank-database"
+source_paths = [
+  "skills/drugbank-database/SKILL.md",
+]
+tier = "2-licensed-database"
+upstream_kind = "credentialed-database-workflow"
+chimiaclaw_skill_id = "chem.drugbank.query.v1"
+input_schema_tags = [
+  "chem.drugbank_id",
+  "chem.compound.query",
+]
+output_schema_tags = [
+  "chem.drug.profile",
+  "chem.drug.interaction_network",
+  "chem.drug.target_profile",
+]
+port_status = "defer-until-credential-policy"
+notes = [
+  "DrugBank requires account credentials and license awareness.",
+  "Use exact database versioning, cached parsed data, and redacted credential provenance.",
+]
+
+[chemistry_enhancement_path]
+phase_0 = [
+  "Port rdkit, datamol, pubchem, chembl, cas as deterministic JSON subprocess workers.",
+  "Add medchem worker script for rule filters and structural alerts.",
+  "Define schema tags for compound query, compound profile, standardized structure, descriptor profile, and identifier crosswalk.",
+]
+phase_1 = [
+  "Insert chemical-safety as a signed procurement gate after RetroQuoter route_quote and before procurement procured artifacts.",
+  "Replace opaque ToolUniverse workflows with decomposed child artifacts that cite PubChem, ChEMBL, DrugBank, FDA, CTD, STITCH, and ADMET model outputs separately.",
+  "Add ASKCOS via a non-Docker local service endpoint or external API fallback.",
+]
+phase_2 = [
+  "Represent DFT and DiffDock as long-running job state machines with submit, status, retrieve, and result artifacts.",
+  "Add DeepChem dataset, split, model, metric, and prediction schemas before training any nontrivial models.",
+  "Project mature chemistry artifacts into RDF through chimiaclaw-semantic-rdf for World Avatar compatibility.",
+]
+
+[open_design_questions]
+items = [
+  "Whether chemistry workers should live as separate uv projects under skills/scienceclaw-port/workers or reuse one shared uv environment.",
+  "Which exact JSON canonicalization format should subprocess workers use before the Rust skill layer seals artifacts.",
+  "Whether PubChem and ChEMBL should remain subprocess workers or become native Rust REST clients before the hackathon demo.",
+  "What non-Docker ASKCOS deployment path is realistic on the available machines.",
+]

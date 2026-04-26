@@ -1,0 +1,8 @@
+# Snapshot from lamm-mit/scienceclaw requirements/deep-learning.txt at 20ac3565abde79b306d952c114ffe97d1126c388.
+torch>=2.0.0
+lightning>=2.0.0
+lightning-utilities>=0.15.0
+pytorch-lightning>=2.6.0
+torchmetrics>=1.8.0
+stable-baselines3>=2.0.0
+gymnasium>=1.0.0

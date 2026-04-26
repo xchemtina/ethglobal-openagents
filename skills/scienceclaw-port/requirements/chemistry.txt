@@ -1,0 +1,8 @@
+# Snapshot from lamm-mit/scienceclaw requirements/chemistry.txt at 20ac3565abde79b306d952c114ffe97d1126c388.
+rdkit>=2025.0.0
+pubchempy>=1.0.4
+chembl-webresource-client>=0.10.0
+url-normalize>=2.0.0
+datamol>=0.12.0
+medchem>=2.0.0
+py3Dmol>=2.0.3

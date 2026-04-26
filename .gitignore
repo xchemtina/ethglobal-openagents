@@ -1,0 +1,11 @@
+/target/
+/.chimiaclaw/
+/.env
+.env.*
+!.env.example
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+__pycache__/
+.venv/
+.pytest_cache/
