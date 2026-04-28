@@ -87,6 +87,7 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-governance",
+ "chimiaclaw-market",
  "chimiaclaw-node",
  "chimiaclaw-ord-adt",
  "chimiaclaw-schema",
@@ -125,6 +126,16 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-schema",
+]
+
+[[package]]
+name = "chimiaclaw-market"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-schema",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -13,12 +13,54 @@ Phase 0 planned scripts:
 ```sh
 cargo run -p chimiaclaw-cli -- demo-dag
 cargo run -p chimiaclaw-cli -- demo-ord-adt
+cargo run -p chimiaclaw-cli -- world-model
+cargo run -p chimiaclaw-cli -- science-market-demo
+python3 -m http.server 8787 --directory demo
+STORE=$(mktemp -d /tmp/chimiaclaw-store-XXXXXX)
+cargo run -p chimiaclaw-cli -- node seed-ord --store-dir "$STORE"
+cargo run -p chimiaclaw-cli -- node seed-route --store-dir "$STORE"
+cargo run -p chimiaclaw-cli -- node run --store-dir "$STORE" --max-cycles 3 --interval-ms 0
+cargo run -p chimiaclaw-cli -- artifact inspect --store-dir "$STORE"
 ```
+`world-model` prints `demo/world-model.json`, a deterministic frontend fixture
+for the abstract lab-swarm map: three ChimiaDAO physical labs, allied labs,
+virtual agent labs, unknown/quarantined labs, trust edges, quests, artifact
+cards, and backend command bindings. It is a UI projection over the artifact DAG,
+not a live backend server.
+
+`world-map.html` is the first dependency-free visual demo of that abstraction.
+Serve this directory and open `http://localhost:8787/world-map.html`. The page
+fetches `world-model.json` and renders the lab map, trust edges, quests,
+artifact cards, science service transactions, implemented/planned agents, MSSP
+genealogy projection, and World Avatar RDF projection. It does not contact a
+live backend.
+
+`science-market-demo` prints the current hackathon transaction spine:
+ENS-shaped provider profile → service offer → request → quote → quote
+acceptance → simulated escrow authorization → operator-confirmation-required
+settlement intent → result → result acknowledgement → simulated release. It
+includes one flow each for retrosynthesis, DFT, and literature. The payer is
+`operator.chimiaclaw.eth`; the payees are the ENS-shaped service agents. The
+amounts are deterministic USDC-micro fixtures, and the refund policy returns the
+full simulated escrow to the payer for quote expiry, rejected result, provider
+failure, or operator cancellation before execution. The sponsor fields are
+explicit attachment points only: no live ENS resolution, AXL traffic, 0G write,
+live Uniswap quote, KeeperHub schedule, or fund movement occurs in fixture mode.
+
+`node run` is the current overnight-safe local loop. It polls the file-backed
+artifact store, invokes registered deterministic demo skills, emits JSONL
+cycle reports, and skips parents that already have a child from the same skill.
+Without `--max-cycles`, stop it with Ctrl+C.
 
 ## Recording outline
 
 1. Run validation quickly.
 2. Run `demo-dag` and point out parent IDs.
 3. Run `demo-ord-adt` and point out the `chem.ord.reaction` → `chem.adt.reaction` lineage.
-4. Show the contract tests passing.
-5. Explain the next safety gate and governance anchor.
+4. Run `science-market-demo` and point out the three signed service transaction chains, including acceptance, simulated escrow, acknowledgement, release, and refund-policy artifacts.
+5. Open `world-map.html` and show how quests/artifact cards/science transactions map to the CLI flows.
+6. Point out the MSSP panel as an artifact genealogy projection, not a live optimizer.
+7. Point out the World Avatar panel as an RDF projection, not the canonical store.
+8. Run `node seed-ord`, `node seed-route`, and `node run --max-cycles 3`; point out that cycle 1 creates children and later cycles skip existing children.
+9. Show the contract tests passing.
+10. Explain the next safety gate and live sponsor integrations.

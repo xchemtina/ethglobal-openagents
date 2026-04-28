@@ -4,6 +4,7 @@ use chimiaclaw_artifact::{
     ArtifactSigner, ArtifactStore, ArtifactStoreError, PayloadRef,
 };
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
+use chimiaclaw_skill::{Skill, SkillCtx, SkillError};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -83,6 +84,281 @@ impl ReagentCatalog {
     #[must_use]
     pub fn offer(&self, reagent_id: &str) -> Option<&SupplierOffer> {
         self.offers.get(reagent_id)
+    }
+}
+
+/// Deterministic aspirin route fixture used by CLI and runtime demos.
+#[must_use]
+pub fn demo_route_proposal() -> RouteProposal {
+    RouteProposal {
+        route_id: "route-aspirin-demo".to_string(),
+        target_smiles: "CC(=O)Oc1ccccc1C(=O)O".to_string(),
+        target_scale_milligrams: 5_000,
+        steps: vec![RouteStep {
+            step_id: "step-1".to_string(),
+            description: "Acetylate salicylic acid with acetic anhydride".to_string(),
+            requirements: vec![
+                ReagentRequirement {
+                    reagent_id: "salicylic-acid".to_string(),
+                    display_name: "Salicylic acid".to_string(),
+                    quantity_milligrams: 4_000,
+                    role: ReagentRole::StartingMaterial,
+                },
+                ReagentRequirement {
+                    reagent_id: "acetic-anhydride".to_string(),
+                    display_name: "Acetic anhydride".to_string(),
+                    quantity_milligrams: 6_000,
+                    role: ReagentRole::Reagent,
+                },
+            ],
+        }],
+    }
+}
+
+/// Deterministic supplier catalog fixture used by CLI and runtime demos.
+#[must_use]
+pub fn demo_reagent_catalog() -> ReagentCatalog {
+    ReagentCatalog::new()
+        .with_offer(
+            "salicylic-acid",
+            SupplierOffer {
+                supplier: "DemoChem".to_string(),
+                sku: "SAL-001".to_string(),
+                unit_price_cents_per_gram: 120,
+                available_grams: 100,
+            },
+        )
+        .with_offer(
+            "acetic-anhydride",
+            SupplierOffer {
+                supplier: "DemoChem".to_string(),
+                sku: "ACE-002".to_string(),
+                unit_price_cents_per_gram: 80,
+                available_grams: 250,
+            },
+        )
+}
+
+/// Deterministic execution request fixture used by the in-memory demo.
+#[must_use]
+pub fn demo_execution_request() -> ProcurementExecutionRequest {
+    ProcurementExecutionRequest {
+        buyer_agent: AgentId("buyer.chimiaclaw.eth".to_string()),
+        payment_reference: "uniswap-swap-demo-001".to_string(),
+        destination_profile_id: "sofia-lab-default".to_string(),
+    }
+}
+
+/// Build an unsigned route quote draft for sealing by a runtime-owned signer.
+pub fn build_route_quote_draft(
+    agent: &AgentId,
+    route_artifact: &Artifact,
+    route: &RouteProposal,
+    catalog: &ReagentCatalog,
+    contingency_basis_points: u64,
+) -> Result<(RouteQuote, ArtifactDraft), RetroQuoteError> {
+    validate_route_artifact(route_artifact)?;
+    route_artifact
+        .verify_payload_value(route)
+        .map_err(|error| match error {
+            ArtifactError::PayloadHashMismatch { expected, actual } => {
+                RetroQuoteError::RoutePayloadMismatch { expected, actual }
+            }
+            other => RetroQuoteError::Artifact(other),
+        })?;
+    let quote = price_route(route_artifact, route, catalog, contingency_basis_points)?;
+    let quote_hash = quote_hash(&quote)?;
+    let quote_payload = PayloadRef::inline_json(&quote).map_err(RetroQuoteError::Artifact)?;
+    let draft = ArtifactDraft {
+        skill: SkillId(ROUTE_QUOTE_SKILL.to_string()),
+        agent: agent.clone(),
+        topic: format!("supplier quote for route {}", route.route_id),
+        input_fingerprint: blake3_hex(
+            format!(
+                "{}:{}",
+                route_artifact.content_hash, quote.route_payload_hash
+            )
+            .as_bytes(),
+        ),
+        output_cid: Some(format!("inline://retroquoter/quote/{quote_hash}")),
+        parent_artifact_ids: vec![route_artifact.id.clone()],
+        schema_tags: BTreeSet::from([SchemaTag(ROUTE_QUOTE_TAG.to_string())]),
+        payload: Some(quote_payload),
+    };
+    Ok((quote, draft))
+}
+
+/// Decode and verify the inline `RouteProposal` payload from a route artifact.
+pub fn decode_route_payload(artifact: &Artifact) -> Result<RouteProposal, RetroQuoteError> {
+    validate_route_artifact(artifact)?;
+    let bytes = artifact
+        .inline_payload_bytes()
+        .map_err(RetroQuoteError::Artifact)?
+        .ok_or_else(|| RetroQuoteError::PayloadUnavailable {
+            artifact_id: artifact.id.clone(),
+        })?;
+    artifact
+        .verify_payload_bytes(&bytes)
+        .map_err(RetroQuoteError::Artifact)?;
+    serde_json::from_slice(&bytes).map_err(|error| RetroQuoteError::Json(error.to_string()))
+}
+
+fn price_route(
+    route_artifact: &Artifact,
+    route: &RouteProposal,
+    catalog: &ReagentCatalog,
+    contingency_basis_points: u64,
+) -> Result<RouteQuote, RetroQuoteError> {
+    if route.steps.is_empty() {
+        return Err(RetroQuoteError::EmptyRoute(route.route_id.clone()));
+    }
+
+    let route_payload_hash = route_payload_hash(route)?;
+    let mut line_items = Vec::new();
+    for step in &route.steps {
+        for requirement in &step.requirements {
+            let offer = catalog.offer(&requirement.reagent_id).ok_or_else(|| {
+                RetroQuoteError::UnknownReagent {
+                    reagent_id: requirement.reagent_id.clone(),
+                }
+            })?;
+            let requested_grams = ceil_div(requirement.quantity_milligrams, 1_000);
+            if requested_grams > offer.available_grams {
+                return Err(RetroQuoteError::InsufficientAvailability {
+                    reagent_id: requirement.reagent_id.clone(),
+                    requested_grams,
+                    available_grams: offer.available_grams,
+                });
+            }
+            let line_total_cents = ceil_div(
+                requirement
+                    .quantity_milligrams
+                    .saturating_mul(offer.unit_price_cents_per_gram),
+                1_000,
+            );
+            line_items.push(QuoteLineItem {
+                step_id: step.step_id.clone(),
+                reagent_id: requirement.reagent_id.clone(),
+                display_name: requirement.display_name.clone(),
+                role: requirement.role.clone(),
+                supplier: offer.supplier.clone(),
+                sku: offer.sku.clone(),
+                quantity_milligrams: requirement.quantity_milligrams,
+                unit_price_cents_per_gram: offer.unit_price_cents_per_gram,
+                line_total_cents,
+            });
+        }
+    }
+
+    let subtotal_cents = line_items
+        .iter()
+        .map(|item| item.line_total_cents)
+        .sum::<u64>();
+    let contingency_cents = ceil_div(
+        subtotal_cents.saturating_mul(contingency_basis_points),
+        10_000,
+    );
+    let total_cents = subtotal_cents.saturating_add(contingency_cents);
+    let quote_id = format!(
+        "quote_{}",
+        &blake3_hex(
+            format!(
+                "{}:{}:{}",
+                route_artifact.id.0, route_payload_hash, total_cents
+            )
+            .as_bytes()
+        )[..16]
+    );
+
+    Ok(RouteQuote {
+        quote_id,
+        route_artifact_id: route_artifact.id.clone(),
+        route_content_hash: route_artifact.content_hash.clone(),
+        route_payload_hash,
+        target_smiles: route.target_smiles.clone(),
+        target_scale_milligrams: route.target_scale_milligrams,
+        line_items,
+        subtotal_cents,
+        contingency_cents,
+        total_cents,
+        currency: "USD".to_string(),
+    })
+}
+
+/// Skill wrapper that prices a payload-bound route proposal into a route quote.
+pub struct RouteQuoteSkill {
+    catalog: ReagentCatalog,
+    contingency_basis_points: u64,
+}
+
+impl RouteQuoteSkill {
+    #[must_use]
+    pub fn new(catalog: ReagentCatalog) -> Self {
+        Self {
+            catalog,
+            contingency_basis_points: 1_500,
+        }
+    }
+
+    #[must_use]
+    pub fn demo() -> Self {
+        Self::new(demo_reagent_catalog())
+    }
+
+    #[must_use]
+    pub fn with_contingency_basis_points(mut self, basis_points: u64) -> Self {
+        self.contingency_basis_points = basis_points;
+        self
+    }
+}
+
+impl Skill for RouteQuoteSkill {
+    fn id(&self) -> SkillId {
+        SkillId(ROUTE_QUOTE_SKILL.to_string())
+    }
+
+    fn capabilities(&self) -> Vec<chimiaclaw_schema::Capability> {
+        Vec::new()
+    }
+
+    fn consumes_tags(&self) -> Vec<SchemaTag> {
+        vec![SchemaTag(ROUTE_PROPOSAL_TAG.to_string())]
+    }
+
+    fn produces_tags(&self) -> Vec<SchemaTag> {
+        vec![SchemaTag(ROUTE_QUOTE_TAG.to_string())]
+    }
+
+    fn invoke(&self, ctx: &SkillCtx, parents: &[Artifact]) -> Result<ArtifactDraft, SkillError> {
+        let parent = parents.first().ok_or_else(|| {
+            SkillError::InvalidInput(
+                "route quote skill requires exactly one route proposal artifact".to_string(),
+            )
+        })?;
+        let route = decode_route_payload(parent).map_err(|error| match error {
+            RetroQuoteError::Artifact(inner) => {
+                SkillError::InvalidInput(format!("failed to decode route payload: {inner:?}"))
+            }
+            RetroQuoteError::Json(message) => {
+                SkillError::InvalidInput(format!("route payload was not valid JSON: {message}"))
+            }
+            RetroQuoteError::PayloadUnavailable { artifact_id } => {
+                SkillError::InvalidInput(format!(
+                    "route artifact {} did not carry an inline payload",
+                    artifact_id.0
+                ))
+            }
+            other => SkillError::Execution(format!("route quote failed: {other:?}")),
+        })?;
+        let (_quote, draft) = build_route_quote_draft(
+            &ctx.agent,
+            parent,
+            &route,
+            &self.catalog,
+            self.contingency_basis_points,
+        )
+        .map_err(|error| SkillError::Execution(format!("route quote failed: {error:?}")))?;
+        Ok(draft)
     }
 }
 
@@ -210,28 +486,16 @@ impl RetroQuoter {
         route: &RouteProposal,
         created_at_unix: u64,
     ) -> Result<SignedRouteQuote, RetroQuoteError> {
-        validate_route_artifact(route_artifact)?;
-        let quote = self.price_route(route_artifact, route)?;
-        let quote_hash = quote_hash(&quote)?;
-        let quote_payload = PayloadRef::inline_json(&quote).map_err(RetroQuoteError::Artifact)?;
-        let quote_artifact = ArtifactDraft {
-            skill: SkillId(ROUTE_QUOTE_SKILL.to_string()),
-            agent: self.agent.clone(),
-            topic: format!("supplier quote for route {}", route.route_id),
-            input_fingerprint: blake3_hex(
-                format!(
-                    "{}:{}",
-                    route_artifact.content_hash, quote.route_payload_hash
-                )
-                .as_bytes(),
-            ),
-            output_cid: Some(format!("inline://retroquoter/quote/{quote_hash}")),
-            parent_artifact_ids: vec![route_artifact.id.clone()],
-            schema_tags: BTreeSet::from([SchemaTag(ROUTE_QUOTE_TAG.to_string())]),
-            payload: Some(quote_payload),
-        }
-        .seal(&self.signer, created_at_unix)
-        .map_err(RetroQuoteError::Artifact)?;
+        let (quote, draft) = build_route_quote_draft(
+            &self.agent,
+            route_artifact,
+            route,
+            &self.catalog,
+            self.contingency_basis_points,
+        )?;
+        let quote_artifact = draft
+            .seal(&self.signer, created_at_unix)
+            .map_err(RetroQuoteError::Artifact)?;
 
         Ok(SignedRouteQuote {
             quote,
@@ -254,94 +518,17 @@ impl RetroQuoter {
         }
         Ok(())
     }
-
-    fn price_route(
-        &self,
-        route_artifact: &Artifact,
-        route: &RouteProposal,
-    ) -> Result<RouteQuote, RetroQuoteError> {
-        if route.steps.is_empty() {
-            return Err(RetroQuoteError::EmptyRoute(route.route_id.clone()));
-        }
-
-        let route_payload_hash = route_payload_hash(route)?;
-        let mut line_items = Vec::new();
-        for step in &route.steps {
-            for requirement in &step.requirements {
-                let offer = self.catalog.offer(&requirement.reagent_id).ok_or_else(|| {
-                    RetroQuoteError::UnknownReagent {
-                        reagent_id: requirement.reagent_id.clone(),
-                    }
-                })?;
-                let requested_grams = ceil_div(requirement.quantity_milligrams, 1_000);
-                if requested_grams > offer.available_grams {
-                    return Err(RetroQuoteError::InsufficientAvailability {
-                        reagent_id: requirement.reagent_id.clone(),
-                        requested_grams,
-                        available_grams: offer.available_grams,
-                    });
-                }
-                let line_total_cents = ceil_div(
-                    requirement
-                        .quantity_milligrams
-                        .saturating_mul(offer.unit_price_cents_per_gram),
-                    1_000,
-                );
-                line_items.push(QuoteLineItem {
-                    step_id: step.step_id.clone(),
-                    reagent_id: requirement.reagent_id.clone(),
-                    display_name: requirement.display_name.clone(),
-                    role: requirement.role.clone(),
-                    supplier: offer.supplier.clone(),
-                    sku: offer.sku.clone(),
-                    quantity_milligrams: requirement.quantity_milligrams,
-                    unit_price_cents_per_gram: offer.unit_price_cents_per_gram,
-                    line_total_cents,
-                });
-            }
-        }
-
-        let subtotal_cents = line_items
-            .iter()
-            .map(|item| item.line_total_cents)
-            .sum::<u64>();
-        let contingency_cents = ceil_div(
-            subtotal_cents.saturating_mul(self.contingency_basis_points),
-            10_000,
-        );
-        let total_cents = subtotal_cents.saturating_add(contingency_cents);
-        let quote_id = format!(
-            "quote_{}",
-            &blake3_hex(
-                format!(
-                    "{}:{}:{}",
-                    route_artifact.id.0, route_payload_hash, total_cents
-                )
-                .as_bytes()
-            )[..16]
-        );
-
-        Ok(RouteQuote {
-            quote_id,
-            route_artifact_id: route_artifact.id.clone(),
-            route_content_hash: route_artifact.content_hash.clone(),
-            route_payload_hash,
-            target_smiles: route.target_smiles.clone(),
-            target_scale_milligrams: route.target_scale_milligrams,
-            line_items,
-            subtotal_cents,
-            contingency_cents,
-            total_cents,
-            currency: "USD".to_string(),
-        })
-    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum RetroQuoteError {
     Artifact(ArtifactError),
     Store(ArtifactStoreError),
+    Json(String),
     MissingArtifact(ArtifactId),
+    PayloadUnavailable {
+        artifact_id: ArtifactId,
+    },
     MissingRouteProposalTag {
         artifact_id: ArtifactId,
     },
@@ -360,6 +547,10 @@ pub enum RetroQuoteError {
     QuoteArtifactDoesNotReferenceRoute {
         quote_artifact_id: ArtifactId,
         route_artifact_id: ArtifactId,
+    },
+    RoutePayloadMismatch {
+        expected: String,
+        actual: String,
     },
     QuotePayloadMismatch {
         expected: String,
@@ -700,6 +891,36 @@ mod tests {
     }
 
     #[test]
+    fn route_quote_skill_builds_payload_bound_draft() {
+        let signer = signer();
+        let route_artifact = route_artifact(
+            &signer,
+            BTreeSet::from([SchemaTag(ROUTE_PROPOSAL_TAG.to_string())]),
+        );
+        let skill = RouteQuoteSkill::new(catalog());
+        let ctx = SkillCtx {
+            agent: AgentId("node.local.chimiaclaw.eth".to_string()),
+            topic: route_artifact.topic.clone(),
+        };
+
+        let draft = skill
+            .invoke(&ctx, std::slice::from_ref(&route_artifact))
+            .expect("skill draft");
+        let quote_artifact = draft
+            .seal(&ArtifactSigner::from_seed([44; 32]), 4)
+            .expect("seal quote");
+        let bytes = quote_artifact
+            .inline_payload_bytes()
+            .expect("payload bytes")
+            .expect("inline payload");
+        let quote: RouteQuote = serde_json::from_slice(&bytes).expect("quote payload");
+
+        validate_quote_artifact(&quote_artifact, &quote).expect("valid quote artifact");
+        assert!(quote_artifact.has_parent(&route_artifact.id));
+        assert_eq!(quote.total_cents, 1_104);
+    }
+
+    #[test]
     fn rejects_tampered_route_artifact() {
         let signer = signer();
         let mut route_artifact = route_artifact(
@@ -741,15 +962,24 @@ mod tests {
     #[test]
     fn rejects_unknown_reagent() {
         let signer = signer();
-        let route_artifact = route_artifact(
-            &signer,
-            BTreeSet::from([SchemaTag(ROUTE_PROPOSAL_TAG.to_string())]),
-        );
-        let mut proposal = proposal();
-        proposal.steps[0].requirements[0].reagent_id = "unknown".to_string();
+        let mut bad_proposal = proposal();
+        bad_proposal.steps[0].requirements[0].reagent_id = "unknown".to_string();
+        let payload = PayloadRef::inline_json(&bad_proposal).expect("route payload");
+        let route_artifact = ArtifactDraft {
+            skill: SkillId("chem.retrosynth.aizynth.v1".to_string()),
+            agent: AgentId(PLANNER_AGENT.to_string()),
+            topic: "demo aspirin route with unknown reagent".to_string(),
+            input_fingerprint: "smiles:CC(=O)Oc1ccccc1C(=O)O".to_string(),
+            output_cid: Some("zg://retroquoter/routes/demo-unknown".to_string()),
+            parent_artifact_ids: Vec::new(),
+            schema_tags: BTreeSet::from([SchemaTag(ROUTE_PROPOSAL_TAG.to_string())]),
+            payload: Some(payload),
+        }
+        .seal(&signer, 1)
+        .expect("route artifact");
 
         let err = quoter()
-            .quote_route(&route_artifact, &proposal, 2)
+            .quote_route(&route_artifact, &bad_proposal, 2)
             .expect_err("unknown reagent rejected");
 
         assert_eq!(

@@ -1,0 +1,1333 @@
+{
+  "schema_version": "chimiaclaw.world-model.v1",
+  "fixture_id": "WM.CHIMIACLAW.DEMO.001",
+  "generated_at": "2026-04-27T00:00:00Z",
+  "maturity": "static-demo-fixture",
+  "title": "ChimiaClaw Lab Swarm Map",
+  "subtitle": "Signed artifact kingdom view for ChimiaDAO labs, allies, virtual swarms, and unknown laboratories.",
+  "design_language": {
+    "mode": "dark-terminal-hud",
+    "source_reference": "SciCrucible-style telemetry, sectors, swarm agents, reticles, and custody gates adapted to ChimiaClaw.",
+    "tone": "low-key scientific command surface; no claim that live ORCID, KG, swarm bus, or governance execution exists yet.",
+    "palette": {
+      "background": "oklch(0.07 0 0)",
+      "panel": "oklch(0.105 0 0)",
+      "border": "oklch(0.19 0 0)",
+      "primary": "oklch(0.76 0.17 192)",
+      "agent": "oklch(0.70 0.18 148)",
+      "warning": "oklch(0.72 0.16 78)",
+      "danger": "oklch(0.65 0.20 25)",
+      "muted": "oklch(0.46 0.006 60)"
+    }
+  },
+  "current_truth": [
+    "The canonical backend state is the signed artifact DAG.",
+    "This fixture is a frontend projection, not a live API response.",
+    "Current executable flows are local CLI demos over a file-backed store.",
+    "MSSP optimization and World Avatar RDF are represented as projection layers over artifacts, not as live schedulers or triple-store integrations yet.",
+    "Physical lab custody, human approval, ORCID identity, KG projection, and DAO governance are modeled as gates or future bindings unless explicitly marked implemented.",
+    "Science service market transactions are modeled as deterministic signed artifacts: ENS-shaped profile -> offer -> request -> quote -> settlement intent -> result.",
+    "Economic settlement is modeled as signed non-custodial lifecycle artifacts: quote acceptance -> escrow authorization -> settlement intent -> result acknowledgement -> release or refund."
+  ],
+  "layers": [
+    {
+      "id": "map",
+      "label": "Lab Network",
+      "stamp": "01 / 08 \u2014 NETWORK",
+      "description": "Physical, allied, virtual, and unknown labs shown as nodes on an abstract operational map."
+    },
+    {
+      "id": "quests",
+      "label": "Quest Queue",
+      "stamp": "02 / 08 \u2014 QUESTS",
+      "description": "Human-readable work orders mapped to CLI seed/run flows and future safety/governance gates."
+    },
+    {
+      "id": "artifacts",
+      "label": "Artifact Stream",
+      "stamp": "03 / 08 \u2014 ARTIFACTS",
+      "description": "Signed payload-bound artifacts, schema tags, and parent-child lineage."
+    },
+    {
+      "id": "agents",
+      "label": "Swarm Agents",
+      "stamp": "04 / 08 \u2014 AGENTS",
+      "description": "Skill executors and planned guardians represented as supervised swarm members."
+    },
+    {
+      "id": "market",
+      "label": "Science Service Market",
+      "stamp": "05 / 08 \u2014 MARKET",
+      "description": "ENS-shaped DFT, retrosynthesis, and literature service transactions represented as signed artifact chains."
+    },
+    {
+      "id": "trust",
+      "label": "Trust & Custody",
+      "stamp": "06 / 08 \u2014 GATES",
+      "description": "Typed trust edges, custody boundaries, and allowed information/material flows."
+    },
+    {
+      "id": "mssp",
+      "label": "MSSP Optimizer",
+      "stamp": "07 / 08 \u2014 MSSP",
+      "description": "Marchev/MSSP shown as an evolutionary artifact genealogy over routes, protocols, and strategy sets."
+    },
+    {
+      "id": "world-avatar",
+      "label": "World Avatar Projection",
+      "stamp": "08 / 08 \u2014 RDF",
+      "description": "RDF/PROV-O/OntoChimia projection for semantic federation, not the canonical store."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "automated-synthesis",
+      "label": "Automated Synthesis & Self-Driving Labs",
+      "short_label": "Auto Synth",
+      "color": "oklch(0.67 0.15 172)"
+    },
+    {
+      "id": "exp-inorganic",
+      "label": "Experimental Inorganic & Organometallic",
+      "short_label": "Exp. Inorg.",
+      "color": "oklch(0.70 0.18 28)"
+    },
+    {
+      "id": "physical-chemistry",
+      "label": "Physical Chemistry",
+      "short_label": "PChem",
+      "color": "oklch(0.68 0.15 155)"
+    },
+    {
+      "id": "procurement",
+      "label": "Procurement & Custody",
+      "short_label": "Custody",
+      "color": "oklch(0.72 0.16 78)"
+    },
+    {
+      "id": "governance",
+      "label": "DAO Governance",
+      "short_label": "Gov",
+      "color": "oklch(0.65 0.16 262)"
+    }
+  ],
+  "trust_tiers": [
+    {
+      "id": "custody-core",
+      "label": "Custody Core",
+      "description": "ChimiaDAO-controlled physical node; may hold material under human approval."
+    },
+    {
+      "id": "allied-verified",
+      "label": "Allied Verified",
+      "description": "Known external lab; can exchange signed artifacts and proposed collaborations, but material transfer requires explicit approval."
+    },
+    {
+      "id": "virtual-sandbox",
+      "label": "Virtual Sandbox",
+      "description": "Agent-run lab; may produce computations or plans, never physical custody claims."
+    },
+    {
+      "id": "quarantine",
+      "label": "Quarantine",
+      "description": "Unknown or untrusted lab; read-only claims until provenance, identity, and safety are verified."
+    }
+  ],
+  "labs": [
+    {
+      "id": "LAB.CHIMIA.01",
+      "label": "ChimiaDAO Sofia Wetlab",
+      "short_label": "Sofia",
+      "kind": "chimiadao-physical",
+      "status": "online",
+      "trust_tier": "custody-core",
+      "custody": "dao-controlled-material-custody",
+      "location": {
+        "display": "Sofia node",
+        "precision": "site-alias-only",
+        "x": 22,
+        "y": 58
+      },
+      "sectors": [
+        "automated-synthesis",
+        "exp-inorganic",
+        "procurement"
+      ],
+      "capabilities": [
+        "wetlab-intake",
+        "route-execution",
+        "sample-custody",
+        "artifact-signing"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "ChimiaDAO bench custodian",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.ORD.ADT",
+        "AGENT.RETROQUOTE",
+        "AGENT.SAFETY.GATE"
+      ],
+      "telemetry": {
+        "last_heartbeat": "2026-04-27T00:00:00Z",
+        "artifact_backlog": 2,
+        "capacity_fill": 0.72,
+        "trust_score": 0.92
+      }
+    },
+    {
+      "id": "LAB.CHIMIA.02",
+      "label": "ChimiaDAO Iberia Materials Bench",
+      "short_label": "Iberia",
+      "kind": "chimiadao-physical",
+      "status": "standby",
+      "trust_tier": "custody-core",
+      "custody": "dao-controlled-material-custody",
+      "location": {
+        "display": "Iberia node",
+        "precision": "site-alias-only",
+        "x": 15,
+        "y": 47
+      },
+      "sectors": [
+        "exp-inorganic",
+        "physical-chemistry"
+      ],
+      "capabilities": [
+        "characterisation-intake",
+        "sample-storage",
+        "artifact-signing"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "ChimiaDAO materials custodian",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.ORD.ADT",
+        "AGENT.ARTIFACT.AUDIT"
+      ],
+      "telemetry": {
+        "last_heartbeat": "2026-04-27T00:00:00Z",
+        "artifact_backlog": 0,
+        "capacity_fill": 0.38,
+        "trust_score": 0.9
+      }
+    },
+    {
+      "id": "LAB.CHIMIA.03",
+      "label": "ChimiaDAO Analysis Dock",
+      "short_label": "Analysis",
+      "kind": "chimiadao-physical",
+      "status": "online",
+      "trust_tier": "custody-core",
+      "custody": "dao-controlled-data-and-sample-custody",
+      "location": {
+        "display": "analysis node",
+        "precision": "site-alias-only",
+        "x": 31,
+        "y": 42
+      },
+      "sectors": [
+        "physical-chemistry",
+        "governance"
+      ],
+      "capabilities": [
+        "instrument-data-intake",
+        "lineage-review",
+        "artifact-inspection"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "ChimiaDAO analysis custodian",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.ARTIFACT.AUDIT",
+        "AGENT.GOV.ANCHOR"
+      ],
+      "telemetry": {
+        "last_heartbeat": "2026-04-27T00:00:00Z",
+        "artifact_backlog": 1,
+        "capacity_fill": 0.51,
+        "trust_score": 0.91
+      }
+    },
+    {
+      "id": "LAB.ALLY.01",
+      "label": "Allied Flow Chemistry Lab",
+      "short_label": "Flow Ally",
+      "kind": "allied-physical",
+      "status": "candidate",
+      "trust_tier": "allied-verified",
+      "custody": "external-human-controlled",
+      "location": {
+        "display": "EU flow chemistry partner",
+        "precision": "regional-only",
+        "x": 48,
+        "y": 36
+      },
+      "sectors": [
+        "automated-synthesis",
+        "physical-chemistry"
+      ],
+      "capabilities": [
+        "flow-screening",
+        "method-validation",
+        "signed-result-return"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "external PI or lab operator",
+        "orcid": "required-future-gate"
+      },
+      "swarm_agents": [
+        "AGENT.ARTIFACT.AUDIT"
+      ],
+      "telemetry": {
+        "last_heartbeat": null,
+        "artifact_backlog": 0,
+        "capacity_fill": 0.44,
+        "trust_score": 0.64
+      }
+    },
+    {
+      "id": "LAB.VIRTUAL.01",
+      "label": "Virtual Retrosynthesis Swarm",
+      "short_label": "Retro Swarm",
+      "kind": "virtual-agent-lab",
+      "status": "online",
+      "trust_tier": "virtual-sandbox",
+      "custody": "no-physical-custody",
+      "location": {
+        "display": "compute plane",
+        "precision": "non-physical",
+        "x": 66,
+        "y": 24
+      },
+      "sectors": [
+        "automated-synthesis",
+        "procurement"
+      ],
+      "capabilities": [
+        "route-proposal",
+        "quote-simulation",
+        "uncertainty-reporting"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "ChimiaDAO operator for promotion into wetlab queue",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.RETROQUOTE"
+      ],
+      "telemetry": {
+        "last_heartbeat": "2026-04-27T00:00:00Z",
+        "artifact_backlog": 3,
+        "capacity_fill": 0.86,
+        "trust_score": 0.57
+      }
+    },
+    {
+      "id": "LAB.UNKNOWN.01",
+      "label": "Unknown External Lab",
+      "short_label": "Unknown",
+      "kind": "unknown-physical-or-virtual",
+      "status": "quarantined",
+      "trust_tier": "quarantine",
+      "custody": "untrusted-claims-only",
+      "location": {
+        "display": "unverified",
+        "precision": "unknown",
+        "x": 82,
+        "y": 63
+      },
+      "sectors": [
+        "exp-inorganic"
+      ],
+      "capabilities": [
+        "claim-submission-only"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "identity and provenance review required",
+        "orcid": "unverified"
+      },
+      "swarm_agents": [
+        "AGENT.ARTIFACT.AUDIT"
+      ],
+      "telemetry": {
+        "last_heartbeat": null,
+        "artifact_backlog": 1,
+        "capacity_fill": 0.08,
+        "trust_score": 0.12
+      }
+    }
+  ],
+  "trust_edges": [
+    {
+      "id": "EDGE.CHIMIA.01-02",
+      "source": "LAB.CHIMIA.01",
+      "target": "LAB.CHIMIA.02",
+      "relation": "custody-peer",
+      "status": "active",
+      "allowed_flows": [
+        "artifact-read",
+        "artifact-write",
+        "sample-transfer-with-human-approval"
+      ],
+      "risk_note": "Physical movement still needs explicit operator signoff."
+    },
+    {
+      "id": "EDGE.CHIMIA.01-03",
+      "source": "LAB.CHIMIA.01",
+      "target": "LAB.CHIMIA.03",
+      "relation": "analysis-chain",
+      "status": "active",
+      "allowed_flows": [
+        "artifact-read",
+        "instrument-data-return",
+        "lineage-review"
+      ],
+      "risk_note": "Data custody is easier than material custody but still requires provenance checks."
+    },
+    {
+      "id": "EDGE.CHIMIA.01-ALLY.01",
+      "source": "LAB.CHIMIA.01",
+      "target": "LAB.ALLY.01",
+      "relation": "candidate-alliance",
+      "status": "review",
+      "allowed_flows": [
+        "artifact-read",
+        "collaboration-proposal"
+      ],
+      "risk_note": "No automatic material transfer until identity, SOP, and safety gates are signed."
+    },
+    {
+      "id": "EDGE.VIRTUAL.01-CHIMIA.01",
+      "source": "LAB.VIRTUAL.01",
+      "target": "LAB.CHIMIA.01",
+      "relation": "plan-to-wetlab-queue",
+      "status": "guarded",
+      "allowed_flows": [
+        "route-proposal",
+        "route-quote",
+        "operator-reviewed-promotion"
+      ],
+      "risk_note": "Virtual agents can draft plans but cannot claim execution."
+    },
+    {
+      "id": "EDGE.UNKNOWN.01-CHIMIA.03",
+      "source": "LAB.UNKNOWN.01",
+      "target": "LAB.CHIMIA.03",
+      "relation": "quarantine-intake",
+      "status": "blocked",
+      "allowed_flows": [
+        "claim-metadata-only"
+      ],
+      "risk_note": "Unknown claims stay read-only until identity, payload, and lineage are verified."
+    }
+  ],
+  "agents": [
+    {
+      "id": "AGENT.ORD.ADT",
+      "name": "Kepler-ORD",
+      "type": "translator",
+      "status": "implemented-local-skill",
+      "backing_skill": "chem.ord.to_adt.v1",
+      "consumes_tags": [
+        "chem.ord.reaction"
+      ],
+      "produces_tags": [
+        "chem.adt.reaction"
+      ],
+      "human_gate": "review translated ADT before physical execution"
+    },
+    {
+      "id": "AGENT.RETROQUOTE",
+      "name": "Babbage-Quote",
+      "type": "procurement-simulation",
+      "status": "implemented-local-skill",
+      "backing_skill": "chem.procurement.supplier_quote.v1",
+      "consumes_tags": [
+        "chem.retrosynth.route_proposal"
+      ],
+      "produces_tags": [
+        "chem.procurement.route_quote"
+      ],
+      "human_gate": "quote is not a purchase order; procurement execution remains separate"
+    },
+    {
+      "id": "AGENT.SAFETY.GATE",
+      "name": "Aegis-Safety",
+      "type": "chemical-safety",
+      "status": "planned",
+      "backing_skill": "chem.safety.assess.v1",
+      "consumes_tags": [
+        "chem.procurement.route_quote",
+        "chem.adt.reaction"
+      ],
+      "produces_tags": [
+        "chem.safety.assessment"
+      ],
+      "human_gate": "unknown or hazardous chemistry must fail closed"
+    },
+    {
+      "id": "AGENT.ARTIFACT.AUDIT",
+      "name": "Veritas-Audit",
+      "type": "artifact-auditor",
+      "status": "planned",
+      "backing_skill": "audit.artifact.lineage.v1",
+      "consumes_tags": [
+        "*"
+      ],
+      "produces_tags": [
+        "audit.lineage.report"
+      ],
+      "human_gate": "surface broken signatures, mismatched payloads, and missing parents"
+    },
+    {
+      "id": "AGENT.GOV.ANCHOR",
+      "name": "Sovereign-Anchor",
+      "type": "governance-anchor",
+      "status": "scaffolded-contracts-only",
+      "backing_skill": "gov.anchor.proposal.v1",
+      "consumes_tags": [
+        "chem.safety.assessment",
+        "audit.lineage.report"
+      ],
+      "produces_tags": [
+        "gov.proposal.anchor"
+      ],
+      "human_gate": "DAO execution semantics are not implemented"
+    },
+    {
+      "id": "AGENT.MARKET.RETRO",
+      "name": "Retro-Market",
+      "type": "retrosynthesis-service-provider",
+      "status": "implemented-transaction-fixture",
+      "backing_skill": "market.service.result.v1",
+      "consumes_tags": [
+        "chem.retrosynth.service_request"
+      ],
+      "produces_tags": [
+        "market.service.quote",
+        "market.service.result"
+      ],
+      "human_gate": "route proposal is not wetlab execution; custody and safety gates remain separate"
+    },
+    {
+      "id": "AGENT.MARKET.DFT",
+      "name": "Gauss-DFT",
+      "type": "dft-service-provider",
+      "status": "implemented-transaction-fixture",
+      "backing_skill": "market.service.result.v1",
+      "consumes_tags": [
+        "chem.dft.service_request"
+      ],
+      "produces_tags": [
+        "chem.dft.result",
+        "market.service.result"
+      ],
+      "human_gate": "current output is a deterministic fixture until live compute is attached"
+    },
+    {
+      "id": "AGENT.MARKET.LIT",
+      "name": "Leibniz-Lit",
+      "type": "literature-service-provider",
+      "status": "implemented-transaction-fixture",
+      "backing_skill": "market.service.result.v1",
+      "consumes_tags": [
+        "science.literature.service_request"
+      ],
+      "produces_tags": [
+        "science.literature.synthesis",
+        "market.service.result"
+      ],
+      "human_gate": "citation-bound synthesis only; no hidden paywalled ingestion claim"
+    }
+  ],
+  "quests": [
+    {
+      "id": "QUEST.001.ORD_TO_ADT",
+      "label": "Translate public reaction record into ADT",
+      "status": "implemented-demo",
+      "origin_lab": "LAB.CHIMIA.03",
+      "assigned_agents": [
+        "AGENT.ORD.ADT"
+      ],
+      "artifact_flow": [
+        "ART.DEMO.ORD.ROOT",
+        "ART.DEMO.ADT.CHILD"
+      ],
+      "backend_commands": [
+        "cargo run -p chimiaclaw-cli -- node seed-ord --store-dir \"$STORE\"",
+        "cargo run -p chimiaclaw-cli -- node run --store-dir \"$STORE\" --skills ord-adt --max-cycles 2 --interval-ms 0",
+        "cargo run -p chimiaclaw-cli -- artifact inspect --store-dir \"$STORE\""
+      ],
+      "operator_gate": "review ADT before promoting to lab execution"
+    },
+    {
+      "id": "QUEST.002.ROUTE_QUOTE",
+      "label": "Price a deterministic aspirin route proposal",
+      "status": "implemented-demo",
+      "origin_lab": "LAB.VIRTUAL.01",
+      "destination_lab": "LAB.CHIMIA.01",
+      "assigned_agents": [
+        "AGENT.RETROQUOTE"
+      ],
+      "artifact_flow": [
+        "ART.DEMO.ROUTE.ROOT",
+        "ART.DEMO.QUOTE.CHILD"
+      ],
+      "backend_commands": [
+        "cargo run -p chimiaclaw-cli -- node seed-route --store-dir \"$STORE\"",
+        "cargo run -p chimiaclaw-cli -- node run --store-dir \"$STORE\" --skills retroquoter --max-cycles 2 --interval-ms 0",
+        "cargo run -p chimiaclaw-cli -- artifact inspect --store-dir \"$STORE\""
+      ],
+      "operator_gate": "quote simulation is not physical procurement"
+    },
+    {
+      "id": "QUEST.003.SAFETY_GATE",
+      "label": "Insert fail-closed safety assessment before wetlab execution",
+      "status": "planned",
+      "origin_lab": "LAB.CHIMIA.01",
+      "assigned_agents": [
+        "AGENT.SAFETY.GATE",
+        "AGENT.ARTIFACT.AUDIT"
+      ],
+      "artifact_flow": [
+        "ART.DEMO.QUOTE.CHILD",
+        "ART.PLANNED.SAFETY"
+      ],
+      "backend_commands": [],
+      "operator_gate": "hazard, SDS, route scale, and custody review"
+    },
+    {
+      "id": "QUEST.004.UNKNOWN_LAB_INTAKE",
+      "label": "Quarantine an untrusted lab claim",
+      "status": "model-only",
+      "origin_lab": "LAB.UNKNOWN.01",
+      "destination_lab": "LAB.CHIMIA.03",
+      "assigned_agents": [
+        "AGENT.ARTIFACT.AUDIT"
+      ],
+      "artifact_flow": [
+        "ART.EXTERNAL.CLAIM",
+        "ART.PLANNED.LINEAGE.REPORT"
+      ],
+      "backend_commands": [],
+      "operator_gate": "identity, signature, payload, and parent lineage verification"
+    },
+    {
+      "id": "QUEST.005.SCIENCE_MARKET",
+      "label": "Transact DFT, retrosynthesis, and literature services with signed economic settlement",
+      "status": "implemented-demo",
+      "origin_lab": "LAB.CHIMIA.03",
+      "destination_lab": "LAB.VIRTUAL.01",
+      "assigned_agents": [
+        "AGENT.MARKET.RETRO",
+        "AGENT.MARKET.DFT",
+        "AGENT.MARKET.LIT"
+      ],
+      "artifact_flow": [
+        "ART.MARKET.PROFILE",
+        "ART.MARKET.OFFER",
+        "ART.MARKET.REQUEST",
+        "ART.MARKET.QUOTE",
+        "ART.MARKET.ACCEPTANCE",
+        "ART.MARKET.ESCROW",
+        "ART.MARKET.SETTLEMENT",
+        "ART.MARKET.RESULT",
+        "ART.MARKET.ACK",
+        "ART.MARKET.RELEASE"
+      ],
+      "backend_commands": [
+        "cargo run -p chimiaclaw-cli -- science-market-demo"
+      ],
+      "operator_gate": "deterministic non-custodial settlement lifecycle; no live token transfer until explicit adapter/operator confirmation"
+    }
+  ],
+  "artifact_cards": [
+    {
+      "id": "ART.DEMO.ORD.ROOT",
+      "label": "ORD reaction seed",
+      "schema_tag": "chem.ord.reaction",
+      "kind": "root-artifact",
+      "status": "implemented-demo",
+      "producer": "ord.importer.eth",
+      "lineage": [],
+      "payload_mode": "inline-json",
+      "ui_hint": "show as root card with payload hash and no parents"
+    },
+    {
+      "id": "ART.DEMO.ADT.CHILD",
+      "label": "ADT translated reaction",
+      "schema_tag": "chem.adt.reaction",
+      "kind": "child-artifact",
+      "status": "implemented-demo",
+      "producer": "node.local.chimiaclaw.eth",
+      "lineage": [
+        "ART.DEMO.ORD.ROOT"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show as signed child of ORD root"
+    },
+    {
+      "id": "ART.DEMO.ROUTE.ROOT",
+      "label": "Aspirin route proposal",
+      "schema_tag": "chem.retrosynth.route_proposal",
+      "kind": "root-artifact",
+      "status": "implemented-demo",
+      "producer": "planner.retroquoter.eth",
+      "lineage": [],
+      "payload_mode": "inline-json",
+      "ui_hint": "show as virtual-agent plan, not wetlab execution"
+    },
+    {
+      "id": "ART.DEMO.QUOTE.CHILD",
+      "label": "Supplier route quote",
+      "schema_tag": "chem.procurement.route_quote",
+      "kind": "child-artifact",
+      "status": "implemented-demo",
+      "producer": "node.local.chimiaclaw.eth",
+      "lineage": [
+        "ART.DEMO.ROUTE.ROOT"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show cost lines and procurement warning"
+    },
+    {
+      "id": "ART.PLANNED.SAFETY",
+      "label": "Safety assessment",
+      "schema_tag": "chem.safety.assessment",
+      "kind": "gate-artifact",
+      "status": "planned",
+      "producer": "AGENT.SAFETY.GATE",
+      "lineage": [
+        "ART.DEMO.QUOTE.CHILD",
+        "ART.DEMO.ADT.CHILD"
+      ],
+      "payload_mode": "future",
+      "ui_hint": "show as locked gate before material custody"
+    },
+    {
+      "id": "ART.PLANNED.SWITCHER.COMMIT",
+      "label": "MSSP switcher commitment",
+      "schema_tag": "opt.switcher.commit",
+      "kind": "optimization-artifact",
+      "status": "model-only",
+      "producer": "opt.switcher.commit",
+      "lineage": [
+        "ART.PLANNED.SAFETY"
+      ],
+      "payload_mode": "future",
+      "ui_hint": "show as a planned strategy-selection artifact, not an executed wetlab decision"
+    },
+    {
+      "id": "ART.MARKET.PROFILE",
+      "label": "ENS-shaped provider profile",
+      "schema_tag": "market.ens.agent_profile",
+      "kind": "identity-artifact",
+      "status": "implemented-demo",
+      "producer": "retro.service.chimiaclaw.eth / dft.service.chimiaclaw.eth / literature.service.chimiaclaw.eth",
+      "lineage": [],
+      "payload_mode": "inline-json",
+      "ui_hint": "show as service identity fixture with ENS text-record attachment points"
+    },
+    {
+      "id": "ART.MARKET.OFFER",
+      "label": "Science service offer",
+      "schema_tag": "market.service.offer",
+      "kind": "market-artifact",
+      "status": "implemented-demo",
+      "producer": "science service provider",
+      "lineage": [
+        "ART.MARKET.PROFILE"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show price, latency, custody policy, and sponsor bindings"
+    },
+    {
+      "id": "ART.MARKET.REQUEST",
+      "label": "Science service request",
+      "schema_tag": "market.service.request",
+      "kind": "market-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.OFFER"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show DFT, retrosynthesis, or literature payload"
+    },
+    {
+      "id": "ART.MARKET.QUOTE",
+      "label": "Service quote",
+      "schema_tag": "market.service.quote",
+      "kind": "market-artifact",
+      "status": "implemented-demo",
+      "producer": "science service provider",
+      "lineage": [
+        "ART.MARKET.REQUEST"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show price, asset, expiry, escrow-required payment terms, and settlement route hint"
+    },
+    {
+      "id": "ART.MARKET.SETTLEMENT",
+      "label": "Settlement intent",
+      "schema_tag": "market.settlement.intent",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.ESCROW"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show payer, payee, amount, route hint, and simulated settlement method"
+    },
+    {
+      "id": "ART.MARKET.RESULT",
+      "label": "Science service result",
+      "schema_tag": "market.service.result",
+      "kind": "result-artifact",
+      "status": "implemented-demo",
+      "producer": "science service provider",
+      "lineage": [
+        "ART.MARKET.REQUEST",
+        "ART.MARKET.SETTLEMENT"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show signed DFT, retrosynthesis, or literature output with citations/projection hints"
+    },
+    {
+      "id": "ART.MARKET.ACCEPTANCE",
+      "label": "Quote acceptance",
+      "schema_tag": "market.quote.acceptance",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.QUOTE"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show requester acceptance of exact amount, asset, expiry, and conditions"
+    },
+    {
+      "id": "ART.MARKET.ESCROW",
+      "label": "Escrow authorization",
+      "schema_tag": "market.escrow.authorization",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.ACCEPTANCE"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show simulated artifact-ledger escrow, release conditions, and refund policy; no live funds moved"
+    },
+    {
+      "id": "ART.MARKET.ACK",
+      "label": "Result acknowledgement",
+      "schema_tag": "market.result.acknowledgement",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.RESULT",
+        "ART.MARKET.ESCROW"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show accepted/rejected/needs-review result status before release or refund"
+    },
+    {
+      "id": "ART.MARKET.RELEASE",
+      "label": "Settlement release",
+      "schema_tag": "market.settlement.release",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.ACK",
+        "ART.MARKET.SETTLEMENT"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "show simulated release to provider after accepted result acknowledgement"
+    },
+    {
+      "id": "ART.MARKET.REFUND",
+      "label": "Settlement refund",
+      "schema_tag": "market.settlement.refund",
+      "kind": "settlement-artifact",
+      "status": "implemented-demo-alternative-path",
+      "producer": "operator.chimiaclaw.eth",
+      "lineage": [
+        "ART.MARKET.ESCROW",
+        "ART.MARKET.ACK"
+      ],
+      "payload_mode": "inline-json",
+      "ui_hint": "alternative terminal artifact when result is rejected, provider fails, quote expires, or operator cancels before execution"
+    }
+  ],
+  "backend_bindings": {
+    "world_model": "cargo run -p chimiaclaw-cli -- world-model",
+    "local_store_bootstrap": "STORE=$(mktemp -d /tmp/chimiaclaw-store-XXXXXX)",
+    "seed_ord": "cargo run -p chimiaclaw-cli -- node seed-ord --store-dir \"$STORE\"",
+    "seed_route": "cargo run -p chimiaclaw-cli -- node seed-route --store-dir \"$STORE\"",
+    "run_all": "cargo run -p chimiaclaw-cli -- node run --store-dir \"$STORE\" --max-cycles 3 --interval-ms 0",
+    "inspect": "cargo run -p chimiaclaw-cli -- artifact inspect --store-dir \"$STORE\"",
+    "cycle_report_type": "RunCycleReport",
+    "canonical_store": "FileArtifactStore",
+    "implemented_schema_tags": [
+      "chem.ord.reaction",
+      "chem.adt.reaction",
+      "chem.retrosynth.route_proposal",
+      "chem.procurement.route_quote",
+      "chem.procurement.procured",
+      "market.ens.agent_profile",
+      "market.service.offer",
+      "market.service.request",
+      "market.service.quote",
+      "market.settlement.intent",
+      "market.service.result",
+      "chem.dft.service_request",
+      "chem.retrosynth.service_request",
+      "science.literature.service_request",
+      "market.quote.acceptance",
+      "market.escrow.authorization",
+      "market.result.acknowledgement",
+      "market.settlement.release",
+      "market.settlement.refund"
+    ],
+    "static_world_map": "python3 -m http.server 8787 --directory demo # then open http://localhost:8787/world-map.html",
+    "science_market_demo": "cargo run -p chimiaclaw-cli -- science-market-demo"
+  },
+  "activity_ticker": [
+    {
+      "timestamp": "00s",
+      "agent": "Kepler-ORD",
+      "action": "awaiting chem.ord.reaction seed",
+      "color": "oklch(0.76 0.17 192)"
+    },
+    {
+      "timestamp": "08s",
+      "agent": "Babbage-Quote",
+      "action": "retroquoter route proposal mapped to chem.procurement.route_quote",
+      "color": "oklch(0.70 0.18 148)"
+    },
+    {
+      "timestamp": "19s",
+      "agent": "Aegis-Safety",
+      "action": "planned fail-closed gate before any wetlab custody",
+      "color": "oklch(0.72 0.16 78)"
+    },
+    {
+      "timestamp": "31s",
+      "agent": "Veritas-Audit",
+      "action": "unknown lab claims remain quarantined until payload lineage verifies",
+      "color": "oklch(0.65 0.20 25)"
+    },
+    {
+      "timestamp": "44s",
+      "agent": "MSSP-Switcher",
+      "action": "model-only strategy generation linked to artifact genealogy",
+      "color": "oklch(0.65 0.16 262)"
+    },
+    {
+      "timestamp": "58s",
+      "agent": "WorldAvatar-\u03c0",
+      "action": "projecting signed lineage into RDF/PROV-O view; DAG remains canonical",
+      "color": "oklch(0.67 0.18 222)"
+    },
+    {
+      "timestamp": "68s",
+      "agent": "ScienceMarket",
+      "action": "quotes now settle through signed acceptance, escrow, acknowledgement, and simulated release artifacts",
+      "color": "oklch(0.76 0.17 192)"
+    }
+  ],
+  "abstraction_principles": [
+    {
+      "id": "PRINCIPLE.ARTIFACT_DAG_FIRST",
+      "label": "Artifact DAG first",
+      "description": "The UI may filter, cluster, or project artifacts, but it must not invent state outside signed payload-bound lineage."
+    },
+    {
+      "id": "PRINCIPLE.CUSTODY_BEFORE_AUTONOMY",
+      "label": "Custody before autonomy",
+      "description": "Virtual agents may propose; physical custody and wetlab execution require human gates and explicit trust edges."
+    },
+    {
+      "id": "PRINCIPLE.MSSP_AS_GENEALOGY",
+      "label": "MSSP as genealogy",
+      "description": "Optimization generations are artifact families: primitive, crossover, fitness, tournament, terminal-check, and switcher decisions become signed child artifacts."
+    },
+    {
+      "id": "PRINCIPLE.WORLD_AVATAR_AS_PROJECTION",
+      "label": "World Avatar as projection",
+      "description": "RDF/PROV-O/OntoChimia triples project signed artifacts into semantic space without replacing the artifact DAG as canonical state."
+    },
+    {
+      "id": "PRINCIPLE.FAIL_CLOSED_UNKNOWN_CHEMISTRY",
+      "label": "Fail closed on unknown chemistry",
+      "description": "Missing identity, payload, SDS, or parent lineage should render as blocked/quarantined until reviewed."
+    }
+  ],
+  "mssp_projection": {
+    "id": "MSSP.DEMO.001",
+    "status": "scaffolded-model-only",
+    "description": "A UI projection of Marchev/MSSP as signed artifact genealogy for strategy search.",
+    "canonical_boundary": "MSSP state must be materialized as artifacts before it can influence lab execution or governance.",
+    "skill_families": [
+      {
+        "family": "opt.cybernetic.*",
+        "role": "eight-subsystem feedback loop",
+        "skills": [
+          "opt.cybernetic.goals",
+          "opt.cybernetic.portfolio_info",
+          "opt.cybernetic.environment_info",
+          "opt.cybernetic.predictor",
+          "opt.cybernetic.generator",
+          "opt.cybernetic.example_model",
+          "opt.cybernetic.selector",
+          "opt.cybernetic.translator"
+        ]
+      },
+      {
+        "family": "opt.mssp.*",
+        "role": "multi-stage selection genealogy",
+        "skills": [
+          "opt.mssp.primitive",
+          "opt.mssp.crossover",
+          "opt.mssp.fitness",
+          "opt.mssp.tournament",
+          "opt.mssp.terminal_check"
+        ]
+      },
+      {
+        "family": "opt.switcher.*",
+        "role": "Type-B strategy selection and commitment",
+        "skills": [
+          "opt.switcher.strategy_simulate",
+          "opt.switcher.elect",
+          "opt.switcher.commit"
+        ]
+      }
+    ],
+    "demo_generations": [
+      {
+        "id": "GEN.000",
+        "label": "Seed protocols",
+        "artifact_refs": [
+          "ART.DEMO.ORD.ROOT",
+          "ART.DEMO.ROUTE.ROOT"
+        ],
+        "status": "implemented-inputs"
+      },
+      {
+        "id": "GEN.001",
+        "label": "Translated/quoted children",
+        "artifact_refs": [
+          "ART.DEMO.ADT.CHILD",
+          "ART.DEMO.QUOTE.CHILD"
+        ],
+        "status": "implemented-children"
+      },
+      {
+        "id": "GEN.002",
+        "label": "Safety-scored candidate set",
+        "artifact_refs": [
+          "ART.PLANNED.SAFETY"
+        ],
+        "status": "planned-gate"
+      },
+      {
+        "id": "GEN.003",
+        "label": "Switcher commitment",
+        "artifact_refs": [
+          "ART.PLANNED.SWITCHER.COMMIT"
+        ],
+        "status": "model-only"
+      }
+    ]
+  },
+  "world_avatar_projection": {
+    "id": "WA.PROJECTION.DEMO.001",
+    "status": "placeholder-crate-projection",
+    "description": "Semantic view that emits RDF-style triples from signed artifacts for future World Avatar / OntoChimia interop.",
+    "canonical_boundary": "RDF triples are derived views; artifact signatures, payload hashes, and parent links remain authoritative.",
+    "namespaces": [
+      "prov",
+      "rdf",
+      "ontochimia",
+      "ontochemexp",
+      "chimiaclaw"
+    ],
+    "current_triples": [
+      {
+        "subject": "artifact.id",
+        "predicate": "rdf:type",
+        "object": "ontochimia:Artifact"
+      },
+      {
+        "subject": "child.artifact.id",
+        "predicate": "prov:wasDerivedFrom",
+        "object": "parent.artifact.id"
+      },
+      {
+        "subject": "artifact.id",
+        "predicate": "ontochimia:hasSchemaTag",
+        "object": "schema_tag"
+      },
+      {
+        "subject": "market.service.result",
+        "predicate": "prov:wasGeneratedBy",
+        "object": "ENS-shaped science service provider"
+      }
+    ],
+    "future_bindings": [
+      "map chem.adt.reaction payloads to OntoChemExp-compatible reaction nodes",
+      "map lab custody nodes to provenance agents and locations with disclosure controls",
+      "map MSSP generations to prov:Activity and prov:wasGeneratedBy chains",
+      "publish selected public roots to a federated KG without exposing private custody data",
+      "map market.service.offer artifacts to service catalog entries discoverable from ENS text records",
+      "map market.service.result payloads to OntoChimia/OntoSpecies result nodes when schema-specific adapters exist"
+    ]
+  },
+  "science_transactions": [
+    {
+      "id": "TX.SCI.RETRO.ASPIRIN.001",
+      "status": "implemented-demo",
+      "service_kind": "retrosynthesis",
+      "provider_ens": "retro.service.chimiaclaw.eth",
+      "provider_agent": "retro.service.chimiaclaw.eth",
+      "requester_agent": "operator.chimiaclaw.eth",
+      "target_lab": "LAB.CHIMIA.01",
+      "offer_id": "OFFER.RETRO.001",
+      "request_id": "REQ.RETRO.ASPIRIN.001",
+      "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+      "settlement_id": "SETTLE.RETRO.ASPIRIN.001",
+      "result_id": "RESULT.RETRO.ASPIRIN.001",
+      "price_usdc_micros": 3100000,
+      "estimated_latency_seconds": 60,
+      "summary": "Aspirin route proposal and custody warnings, not wetlab execution. Economic release is simulated as a signed artifact; no live funds move.",
+      "artifact_flow": [
+        "profile",
+        "offer",
+        "request",
+        "quote",
+        "acceptance",
+        "escrow_authorization",
+        "settlement_intent",
+        "result",
+        "result_acknowledgement",
+        "settlement_release"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "attachment": "provider ENS text records",
+          "live_status": "fixture"
+        },
+        {
+          "sponsor": "Gensyn AXL",
+          "attachment": "axl-retro-demo-peer transport target",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "0G",
+          "attachment": "service catalog and result payload storage hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "Uniswap",
+          "attachment": "settlement route hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "KeeperHub",
+          "attachment": "execution scheduling hint",
+          "live_status": "planned-live"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "retro.service.chimiaclaw.eth",
+      "asset": "USDC",
+      "settlement_method": "SimulatedArtifactLedger",
+      "acceptance_id": "ACCEPT.RETRO.ASPIRIN.001",
+      "escrow_id": "ESCROW.RETRO.ASPIRIN.001",
+      "acknowledgement_id": "ACK.RETRO.ASPIRIN.001",
+      "release_id": "RELEASE.RETRO.ASPIRIN.001",
+      "release_status": "SimulatedReleased",
+      "transaction_ref": "artifact-ledger://release/RETRO.ASPIRIN.001",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth",
+        "refundable_amount_usdc_micros": 3100000,
+        "refund_asset": "USDC",
+        "allowed_reasons": [
+          "QuoteExpired",
+          "ResultRejected",
+          "ProviderFailed",
+          "OperatorCancelledBeforeExecution"
+        ]
+      }
+    },
+    {
+      "id": "TX.SCI.DFT.FERROCENE.001",
+      "status": "implemented-demo",
+      "service_kind": "dft",
+      "provider_ens": "dft.service.chimiaclaw.eth",
+      "provider_agent": "dft.service.chimiaclaw.eth",
+      "requester_agent": "operator.chimiaclaw.eth",
+      "target_lab": "LAB.VIRTUAL.01",
+      "offer_id": "OFFER.DFT.001",
+      "request_id": "REQ.DFT.FERROCENE.001",
+      "quote_id": "QUOTE.DFT.FERROCENE.001",
+      "settlement_id": "SETTLE.DFT.FERROCENE.001",
+      "result_id": "RESULT.DFT.FERROCENE.001",
+      "price_usdc_micros": 8250000,
+      "estimated_latency_seconds": 1200,
+      "summary": "Ferrocene DFT single-point fixture with World Avatar projection hints. Economic release is simulated as a signed artifact; no live funds move.",
+      "artifact_flow": [
+        "profile",
+        "offer",
+        "request",
+        "quote",
+        "acceptance",
+        "escrow_authorization",
+        "settlement_intent",
+        "result",
+        "result_acknowledgement",
+        "settlement_release"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "attachment": "provider ENS text records",
+          "live_status": "fixture"
+        },
+        {
+          "sponsor": "Gensyn AXL",
+          "attachment": "axl-dft-demo-peer transport target",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "0G",
+          "attachment": "raw computation bundle storage hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "Uniswap",
+          "attachment": "settlement route hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "KeeperHub",
+          "attachment": "DFT execution job scheduling",
+          "live_status": "planned-live"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "dft.service.chimiaclaw.eth",
+      "asset": "USDC",
+      "settlement_method": "SimulatedArtifactLedger",
+      "acceptance_id": "ACCEPT.DFT.FERROCENE.001",
+      "escrow_id": "ESCROW.DFT.FERROCENE.001",
+      "acknowledgement_id": "ACK.DFT.FERROCENE.001",
+      "release_id": "RELEASE.DFT.FERROCENE.001",
+      "release_status": "SimulatedReleased",
+      "transaction_ref": "artifact-ledger://release/DFT.FERROCENE.001",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth",
+        "refundable_amount_usdc_micros": 8250000,
+        "refund_asset": "USDC",
+        "allowed_reasons": [
+          "QuoteExpired",
+          "ResultRejected",
+          "ProviderFailed",
+          "OperatorCancelledBeforeExecution"
+        ]
+      }
+    },
+    {
+      "id": "TX.SCI.LIT.FLOW.001",
+      "status": "implemented-demo",
+      "service_kind": "literature",
+      "provider_ens": "literature.service.chimiaclaw.eth",
+      "provider_agent": "literature.service.chimiaclaw.eth",
+      "requester_agent": "operator.chimiaclaw.eth",
+      "target_lab": "LAB.CHIMIA.03",
+      "offer_id": "OFFER.LIT.001",
+      "request_id": "REQ.LIT.FLOW.001",
+      "quote_id": "QUOTE.LIT.FLOW.001",
+      "settlement_id": "SETTLE.LIT.FLOW.001",
+      "result_id": "RESULT.LIT.FLOW.001",
+      "price_usdc_micros": 1500000,
+      "estimated_latency_seconds": 180,
+      "summary": "Open-access literature synthesis with claims, citations, and conflict notes. Economic release is simulated as a signed artifact; no live funds move.",
+      "artifact_flow": [
+        "profile",
+        "offer",
+        "request",
+        "quote",
+        "acceptance",
+        "escrow_authorization",
+        "settlement_intent",
+        "result",
+        "result_acknowledgement",
+        "settlement_release"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "attachment": "provider ENS text records",
+          "live_status": "fixture"
+        },
+        {
+          "sponsor": "Gensyn AXL",
+          "attachment": "axl-literature-demo-peer transport target",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "0G",
+          "attachment": "citation/result bundle storage hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "Uniswap",
+          "attachment": "settlement route hint",
+          "live_status": "planned-live"
+        },
+        {
+          "sponsor": "KeeperHub",
+          "attachment": "literature crawl/synthesis scheduling hint",
+          "live_status": "planned-live"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "literature.service.chimiaclaw.eth",
+      "asset": "USDC",
+      "settlement_method": "SimulatedArtifactLedger",
+      "acceptance_id": "ACCEPT.LIT.FLOW.001",
+      "escrow_id": "ESCROW.LIT.FLOW.001",
+      "acknowledgement_id": "ACK.LIT.FLOW.001",
+      "release_id": "RELEASE.LIT.FLOW.001",
+      "release_status": "SimulatedReleased",
+      "transaction_ref": "artifact-ledger://release/LIT.FLOW.001",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth",
+        "refundable_amount_usdc_micros": 1500000,
+        "refund_asset": "USDC",
+        "allowed_reasons": [
+          "QuoteExpired",
+          "ResultRejected",
+          "ProviderFailed",
+          "OperatorCancelledBeforeExecution"
+        ]
+      }
+    }
+  ]
+}

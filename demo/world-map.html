@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChimiaClaw Lab Swarm Map</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: oklch(0.07 0 0);
+      --panel: oklch(0.105 0 0);
+      --panel-2: oklch(0.13 0 0);
+      --border: oklch(0.19 0 0);
+      --text: oklch(0.92 0.008 60);
+      --muted: oklch(0.56 0.006 60);
+      --faint: oklch(0.34 0.006 60);
+      --primary: oklch(0.76 0.17 192);
+      --agent: oklch(0.70 0.18 148);
+      --warning: oklch(0.72 0.16 78);
+      --danger: oklch(0.65 0.20 25);
+      --purple: oklch(0.65 0.16 262);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 10%, oklch(0.18 0.08 192 / 0.30), transparent 32rem),
+        radial-gradient(circle at 80% 18%, oklch(0.16 0.08 262 / 0.22), transparent 30rem),
+        linear-gradient(180deg, oklch(0.075 0 0), var(--bg));
+      color: var(--text);
+    }
+
+    main {
+      width: min(1560px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 20px 0 28px;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+    }
+
+    .shell {
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 92%, black);
+      box-shadow: 0 24px 80px oklch(0 0 0 / 0.45);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 56px);
+      letter-spacing: -0.05em;
+      line-height: 0.96;
+    }
+
+    .eyebrow, .stamp, .tag, .metric-label {
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 9px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      margin-top: 14px;
+    }
+
+    .status-stack {
+      display: grid;
+      gap: 8px;
+      min-width: 260px;
+    }
+
+    .status-pill {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+
+    .status-pill strong {
+      color: var(--primary);
+      font-size: 11px;
+    }
+
+    .ticker {
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      background: oklch(0.055 0 0);
+      display: flex;
+      align-items: center;
+      height: 38px;
+    }
+
+    .ticker-anchor {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      height: 100%;
+      padding: 0 16px;
+      border-right: 1px solid var(--border);
+      background: oklch(0.07 0 0);
+    }
+
+    .ticker-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--agent);
+      box-shadow: 0 0 14px var(--agent);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 28px;
+      white-space: nowrap;
+      min-width: max-content;
+      animation: ticker 70s linear infinite;
+      padding-left: 18px;
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.85fr);
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 88%, black);
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .panel::before,
+    .panel::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--primary);
+      opacity: 0.4;
+    }
+
+    .panel::before {
+      top: -1px;
+      left: -1px;
+      border-top: 1px solid;
+      border-left: 1px solid;
+    }
+
+    .panel::after {
+      right: -1px;
+      bottom: -1px;
+      border-right: 1px solid;
+      border-bottom: 1px solid;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .stamp {
+      color: var(--faint);
+    }
+
+    .stamp strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .map {
+      position: relative;
+      height: min(640px, 64vh);
+      min-height: 500px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, oklch(0.18 0 0 / 0.35) 1px, transparent 1px),
+        linear-gradient(180deg, oklch(0.18 0 0 / 0.35) 1px, transparent 1px),
+        radial-gradient(circle at 50% 45%, oklch(0.15 0.06 192 / 0.35), transparent 30rem),
+        oklch(0.075 0 0);
+      background-size: 48px 48px, 48px 48px, auto, auto;
+      border: 1px solid var(--border);
+    }
+
+    .edge-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .lab-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      border: 1px solid var(--primary);
+      background: oklch(0.09 0 0 / 0.92);
+      padding: 10px;
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 0 0 1px oklch(0 0 0 / 0.6), 0 14px 36px oklch(0 0 0 / 0.35);
+    }
+
+    .lab-node:hover,
+    .lab-node:focus {
+      outline: 1px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    .lab-node.core { border-color: var(--agent); }
+    .lab-node.allied { border-color: var(--warning); }
+    .lab-node.virtual { border-color: var(--purple); }
+    .lab-node.quarantine { border-color: var(--danger); }
+
+    .lab-id {
+      color: var(--faint);
+      font-size: 9px;
+      margin-bottom: 6px;
+    }
+
+    .lab-name {
+      font-size: 13px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .lab-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      padding: 12px;
+    }
+
+    .card h3 {
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .transaction-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .flow-step {
+      border: 1px solid oklch(0.76 0.17 192 / 0.3);
+      color: var(--primary);
+      background: oklch(0.075 0 0);
+      padding: 5px 7px;
+      font-size: 10px;
+    }
+
+    .card p,
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 6px;
+      background: oklch(0.085 0 0);
+      letter-spacing: 0.11em;
+    }
+
+    .tag.good { color: var(--agent); border-color: oklch(0.70 0.18 148 / 0.35); }
+    .tag.warn { color: var(--warning); border-color: oklch(0.72 0.16 78 / 0.35); }
+    .tag.bad { color: var(--danger); border-color: oklch(0.65 0.20 25 / 0.35); }
+    .tag.plan { color: var(--purple); border-color: oklch(0.65 0.16 262 / 0.35); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      padding: 10px;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--primary);
+      font-size: 18px;
+      margin-top: 6px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .artifact-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-left: 2px solid var(--primary);
+      padding: 8px 10px;
+      background: oklch(0.08 0 0);
+      margin-bottom: 8px;
+    }
+
+    .generation {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .selected {
+      border-color: var(--primary);
+      box-shadow: inset 0 0 0 1px oklch(0.76 0.17 192 / 0.35);
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--faint);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1080px) {
+      .topbar, .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-2, .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-stack {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow mono">CHIMIACLAW / LAB-SWARM ABSTRACTION / STATIC DEMO</p>
+          <h1 id="title">Loading ChimiaClaw map…</h1>
+          <p id="subtitle" class="subtitle"></p>
+        </div>
+        <aside class="status-stack mono">
+          <div class="status-pill"><span>schema</span><strong id="schema">—</strong></div>
+          <div class="status-pill"><span>maturity</span><strong id="maturity">—</strong></div>
+          <div class="status-pill"><span>source</span><strong>world-model.json</strong></div>
+        </aside>
+      </header>
+
+      <section class="ticker">
+        <div class="ticker-anchor mono">
+          <span class="ticker-dot"></span>
+          <strong style="color: var(--agent); font-size: 10px;">LIVE</strong>
+          <span style="color: var(--faint); font-size: 10px;">/ STATIC FIXTURE</span>
+        </div>
+        <div id="ticker-track" class="ticker-track mono"></div>
+      </section>
+
+      <section class="layout">
+        <div class="stack">
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>01</strong> / 08 — NETWORK</span>
+              <span class="stamp" id="selected-lab-label">NO LAB SELECTED</span>
+            </div>
+            <div id="metrics" class="metric-grid"></div>
+            <div id="map" class="map" aria-label="Abstract lab network map"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>07</strong> / 08 — MSSP</span>
+              <span class="stamp">ARTIFACT GENEALOGY</span>
+            </div>
+            <div id="mssp"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>08</strong> / 08 — WORLD AVATAR</span>
+              <span class="stamp">RDF PROJECTION</span>
+            </div>
+            <div id="world-avatar"></div>
+          </section>
+        </div>
+
+        <aside class="stack">
+          <section class="panel" id="selected-lab"></section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>02</strong> / 08 — QUESTS</span>
+              <span class="stamp">CLI BINDINGS</span>
+            </div>
+            <div id="quests" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>05</strong> / 08 — MARKET</span>
+              <span class="stamp">SCIENCE TRANSACTIONS</span>
+            </div>
+            <div id="science-transactions" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>03</strong> / 08 — ARTIFACTS</span>
+              <span class="stamp">SIGNED LINEAGE</span>
+            </div>
+            <div id="artifacts"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>04</strong> / 08 — AGENTS</span>
+              <span class="stamp">SKILL SURFACE</span>
+            </div>
+            <div id="agents" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>00</strong> / 08 — PRINCIPLES</span>
+              <span class="stamp">NON-NEGOTIABLES</span>
+            </div>
+            <div id="principles" class="stack"></div>
+          </section>
+        </aside>
+      </section>
+    </section>
+    <p class="footer-note mono">
+      Static demo. It reads <code>world-model.json</code> and does not contact a backend.
+      Serve with <code>python3 -m http.server 8787 --directory demo</code>, then open <code>http://localhost:8787/world-map.html</code>.
+    </p>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function statusTag(status) {
+      const text = esc(status ?? "unknown");
+      const klass = status?.includes("implemented") || status?.includes("Released") || status === "online" || status === "active"
+        ? "good"
+        : status?.includes("planned") || status?.includes("candidate") || status?.includes("review") || status?.includes("standby")
+          ? "warn"
+          : status?.includes("quarantine") || status?.includes("blocked")
+            ? "bad"
+            : "plan";
+      return `<span class="tag ${klass}">${text}</span>`;
+    }
+
+    function trustClass(lab) {
+      if (lab.trust_tier === "custody-core") return "core";
+      if (lab.trust_tier === "allied-verified") return "allied";
+      if (lab.trust_tier === "virtual-sandbox") return "virtual";
+      return "quarantine";
+    }
+
+    function renderTicker(model) {
+      const items = [...model.activity_ticker, ...model.activity_ticker];
+      $("ticker-track").innerHTML = items.map((evt) => `
+        <span>
+          <span style="color: var(--faint);">${esc(evt.timestamp)}</span>
+          <span style="color: ${esc(evt.color)}; margin-left: 8px;">${esc(evt.agent)}</span>
+          <span style="color: var(--faint);"> · </span>
+          <span style="color: var(--muted);">${esc(evt.action)}</span>
+        </span>
+      `).join("");
+    }
+
+    function renderMetrics(model) {
+      const implemented = model.artifact_cards.filter((a) => a.status.includes("implemented")).length;
+      const planned = model.artifact_cards.length - implemented;
+      const transactions = model.science_transactions?.length ?? 0;
+      $("metrics").innerHTML = `
+        <div class="metric"><span class="metric-label">labs</span><strong>${model.labs.length}</strong></div>
+        <div class="metric"><span class="metric-label">edges</span><strong>${model.trust_edges.length}</strong></div>
+        <div class="metric"><span class="metric-label">science tx</span><strong>${transactions}</strong></div>
+        <div class="metric"><span class="metric-label">implemented artifacts</span><strong>${implemented}</strong></div>
+      `;
+    }
+
+    function renderMap(model) {
+      const map = $("map");
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const edgeSvg = `
+        <svg class="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+          ${model.trust_edges.map((edge) => {
+            const source = labsById[edge.source];
+            const target = labsById[edge.target];
+            if (!source || !target) return "";
+            const color = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
+            const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
+            return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${color}" stroke-width="0.35" opacity="0.55" ${dash}></line>`;
+          }).join("")}
+        </svg>
+      `;
+      map.innerHTML = edgeSvg + model.labs.map((lab, index) => `
+        <button class="lab-node ${trustClass(lab)}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
+          <div class="lab-id mono">${esc(lab.id)}</div>
+          <div class="lab-name">${esc(lab.short_label)}</div>
+          <div class="lab-meta mono"><span>${esc(lab.status)}</span><span>${Math.round((lab.telemetry.trust_score ?? 0) * 100)}%</span></div>
+        </button>
+      `).join("");
+
+      map.querySelectorAll(".lab-node").forEach((node) => {
+        node.addEventListener("click", () => {
+          map.querySelectorAll(".lab-node").forEach((n) => n.classList.remove("selected"));
+          node.classList.add("selected");
+          renderSelectedLab(model, labsById[node.dataset.lab]);
+        });
+      });
+
+      renderSelectedLab(model, model.labs[0]);
+      map.querySelector(".lab-node")?.classList.add("selected");
+    }
+
+    function renderSelectedLab(model, lab) {
+      $("selected-lab-label").textContent = lab.id;
+      $("selected-lab").innerHTML = `
+        <div class="panel-header">
+          <span class="stamp"><strong>SELECTED</strong> / LAB</span>
+          ${statusTag(lab.status)}
+        </div>
+        <h2>${esc(lab.label)}</h2>
+        <p class="small" style="margin-top: 8px;">${esc(lab.kind)} · ${esc(lab.custody)} · ${esc(lab.location.display)}</p>
+        <div class="tag-row">${lab.sectors.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}</div>
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="card">
+            <span class="metric-label">trust tier</span>
+            <h3>${esc(lab.trust_tier)}</h3>
+            <p>${esc(model.trust_tiers.find((tier) => tier.id === lab.trust_tier)?.description ?? "")}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">human gate</span>
+            <h3>${lab.human_overseer.required ? "required" : "not required"}</h3>
+            <p>${esc(lab.human_overseer.label)}</p>
+          </div>
+        </div>
+        <div class="tag-row">${lab.capabilities.map((cap) => `<span class="tag good">${esc(cap)}</span>`).join("")}</div>
+      `;
+    }
+
+    function renderQuests(model) {
+      $("quests").innerHTML = model.quests.map((quest) => `
+        <article class="card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(quest.id)}</span>
+            ${statusTag(quest.status)}
+          </div>
+          <h3>${esc(quest.label)}</h3>
+          <p>${esc(quest.operator_gate)}</p>
+          <div class="tag-row">${quest.artifact_flow.map((ref) => `<span class="tag">${esc(ref)}</span>`).join("")}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderArtifacts(model) {
+      $("artifacts").innerHTML = model.artifact_cards.map((artifact) => `
+        <div class="artifact-line">
+          <div>
+            <strong>${esc(artifact.label)}</strong>
+            <p class="small mono">${esc(artifact.schema_tag)} · parents: ${artifact.lineage.length ? artifact.lineage.map(esc).join(", ") : "root"}</p>
+          </div>
+          ${statusTag(artifact.status)}
+        </div>
+      `).join("");
+    }
+
+    function usdMicros(value) {
+      return `$${((value ?? 0) / 1_000_000).toFixed(2)}`;
+    }
+
+    function renderScienceTransactions(model) {
+      const transactions = model.science_transactions ?? [];
+      $("science-transactions").innerHTML = transactions.map((tx) => `
+        <article class="card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(tx.id)}</span>
+            ${statusTag(tx.status)}
+          </div>
+          <h3>${esc(tx.service_kind)} · ${esc(tx.provider_ens)}</h3>
+          <p>${esc(tx.summary)}</p>
+          <div class="transaction-flow mono">
+            ${tx.artifact_flow.map((step) => `<span class="flow-step">${esc(step)}</span>`).join("")}
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <span class="metric-label">quote</span>
+              <h3>${usdMicros(tx.price_usdc_micros)} · ${esc(tx.quote_id)}</h3>
+              <p>${esc(tx.asset ?? "USDC")} · ${esc(tx.estimated_latency_seconds)}s estimated latency</p>
+            </div>
+            <div class="card">
+              <span class="metric-label">payer → payee</span>
+              <h3>${esc(tx.payer_agent ?? tx.requester_ens)}</h3>
+              <p>→ ${esc(tx.payee_agent ?? tx.provider_ens)}</p>
+            </div>
+            <div class="card">
+              <span class="metric-label">escrow</span>
+              <h3>${esc(tx.escrow_id ?? tx.settlement_id)}</h3>
+              <p>${esc(tx.settlement_method ?? "simulated")} · no live funds moved</p>
+            </div>
+            <div class="card">
+              <span class="metric-label">release</span>
+              <h3>${esc(tx.release_id ?? tx.result_id)}</h3>
+              <p>${esc(tx.transaction_ref ?? tx.settlement_id)}</p>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="tag good">${esc(tx.release_status ?? "pending-release")}</span>
+            <span class="tag">ack:${esc(tx.acknowledgement_id ?? "pending")}</span>
+            <span class="tag">refund-to:${esc(tx.refund_policy?.refund_to_agent ?? tx.payer_agent ?? tx.requester_ens)}</span>
+          </div>
+          <div class="tag-row">
+            ${tx.sponsor_bindings.map((binding) => `<span class="tag ${binding.live_status === "fixture" ? "good" : "plan"}">${esc(binding.sponsor)}:${esc(binding.live_status)}</span>`).join("")}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderAgents(model) {
+      $("agents").innerHTML = model.agents.map((agent) => `
+        <article class="card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(agent.id)}</span>
+            ${statusTag(agent.status)}
+          </div>
+          <h3>${esc(agent.name)}</h3>
+          <p>${esc(agent.type)} · ${esc(agent.human_gate)}</p>
+          <div class="tag-row">${agent.produces_tags.map((tag) => `<span class="tag good">${esc(tag)}</span>`).join("")}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderPrinciples(model) {
+      $("principles").innerHTML = model.abstraction_principles.map((principle) => `
+        <article class="card">
+          <span class="stamp">${esc(principle.id)}</span>
+          <h3>${esc(principle.label)}</h3>
+          <p>${esc(principle.description)}</p>
+        </article>
+      `).join("");
+    }
+
+    function renderMssp(model) {
+      const projection = model.mssp_projection;
+      $("mssp").innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <span class="metric-label">status</span>
+            <h3>${esc(projection.status)}</h3>
+            <p>${esc(projection.canonical_boundary)}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">families</span>
+            <h3>${projection.skill_families.length} skill families</h3>
+            <p>${esc(projection.description)}</p>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          ${projection.demo_generations.map((gen) => `
+            <div class="generation">
+              <span class="tag plan">${esc(gen.id)}</span>
+              <div>
+                <h3>${esc(gen.label)}</h3>
+                <p class="small">${esc(gen.status)}</p>
+                <div class="tag-row">${gen.artifact_refs.map((ref) => `<span class="tag">${esc(ref)}</span>`).join("")}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderWorldAvatar(model) {
+      const projection = model.world_avatar_projection;
+      $("world-avatar").innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <span class="metric-label">status</span>
+            <h3>${esc(projection.status)}</h3>
+            <p>${esc(projection.canonical_boundary)}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">namespaces</span>
+            <div class="tag-row">${projection.namespaces.map((ns) => `<span class="tag">${esc(ns)}</span>`).join("")}</div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="card">
+            <h3>Current triples</h3>
+            ${projection.current_triples.map((triple) => `<p class="small mono">${esc(triple.subject)} → ${esc(triple.predicate)} → ${esc(triple.object)}</p>`).join("")}
+          </div>
+          <div class="card">
+            <h3>Future bindings</h3>
+            ${projection.future_bindings.map((binding) => `<p class="small">• ${esc(binding)}</p>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    async function main() {
+      try {
+        const response = await fetch("./world-model.json", { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const model = await response.json();
+        $("title").textContent = model.title;
+        $("subtitle").textContent = model.subtitle;
+        $("schema").textContent = model.schema_version;
+        $("maturity").textContent = model.maturity;
+        renderTicker(model);
+        renderMetrics(model);
+        renderMap(model);
+        renderQuests(model);
+        renderScienceTransactions(model);
+        renderArtifacts(model);
+        renderAgents(model);
+        renderPrinciples(model);
+        renderMssp(model);
+        renderWorldAvatar(model);
+      } catch (error) {
+        $("title").textContent = "Could not load world-model.json";
+        $("subtitle").textContent = `Serve this directory first: python3 -m http.server 8787 --directory demo. Error: ${error.message}`;
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>

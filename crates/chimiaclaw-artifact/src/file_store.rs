@@ -113,12 +113,18 @@ mod tests {
     }
 
     fn temp_dir() -> PathBuf {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0);
+        let count = COUNTER.fetch_add(1, Ordering::Relaxed);
         let mut path = std::env::temp_dir();
-        path.push(format!("chimiaclaw-store-{nanos}-{}", std::process::id()));
+        path.push(format!(
+            "chimiaclaw-store-{nanos}-{}-{count}",
+            std::process::id()
+        ));
         path
     }
 

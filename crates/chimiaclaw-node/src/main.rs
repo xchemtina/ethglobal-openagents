@@ -1,6 +1,6 @@
 fn main() {
     println!(
-        "chimiaclaw-node scaffold: long-running daemon not implemented yet.\n\
-         Use `chimiaclaw-cli node run-once --store-dir <path>` for the local one-shot runtime."
+        "chimiaclaw-node scaffold: direct daemon binary is not wired yet.\n\
+         Use `chimiaclaw-cli node run --store-dir <path>` for the local polling runtime."
     );
 }

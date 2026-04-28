@@ -1,14 +1,14 @@
 //! Minimal local runtime for ChimiaClaw nodes.
 //!
 //! This is intentionally simple: a node loads a profile, opens a file-backed
-//! artifact store, and runs a one-shot loop that scans for parent artifacts
-//! whose schema tags match a registered skill's `consumes_tags`. For each
-//! match, the node invokes the skill, seals the resulting draft with its
-//! signer, and writes the child artifact back to the store.
+//! artifact store, and runs polling loops that scan for parent artifacts whose
+//! schema tags match a registered skill's `consumes_tags`. For each match, the
+//! node invokes the skill, seals the resulting draft with its signer, and
+//! writes the child artifact back to the store.
 //!
-//! It is **not** a long-running daemon. It does not yet implement reactor
-//! scoring, capabilities, transport, or scheduling. It is the smallest honest
-//! step from "manual demo orchestration" toward "agents do work autonomously".
+//! It does not yet implement reactor scoring, capabilities, transport, or
+//! distributed scheduling. It is the smallest honest step from "manual demo
+//! orchestration" toward "agents do work autonomously".
 //!
 //! The development signer seed in [`NodeProfile::dev_signer_from_seed_label`]
 //! is for local testing only; production keys must not be derived this way.
@@ -38,6 +38,7 @@ use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use chimiaclaw_skill::{Skill, SkillCtx, SkillError, SkillRegistry};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::time::Duration;
 
 /// A local runtime profile: agent identity, signer, and store directory.
 pub struct NodeProfile {
@@ -97,6 +98,14 @@ pub struct RunOnceReport {
     pub agent: AgentId,
     pub store_dir: PathBuf,
     pub invocations: Vec<SkillInvocation>,
+}
+
+/// One cycle in a repeated local polling loop.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RunCycleReport {
+    pub cycle_index: u64,
+    pub created_at_unix: u64,
+    pub report: RunOnceReport,
 }
 
 /// Per-skill summary of a run-once iteration.
@@ -173,6 +182,30 @@ impl NodeRuntime {
         })
     }
 
+    /// Run a finite polling loop. This is primarily for tests and scripted
+    /// demos; CLI daemon mode can keep calling [`Self::run_once`] forever.
+    pub fn run_for_cycles(
+        &mut self,
+        cycles: u64,
+        interval: Duration,
+        created_at_start_unix: u64,
+    ) -> Result<Vec<RunCycleReport>, NodeError> {
+        let mut reports = Vec::new();
+        for cycle_index in 0..cycles {
+            let created_at_unix = created_at_start_unix.saturating_add(cycle_index);
+            let report = self.run_once(created_at_unix)?;
+            reports.push(RunCycleReport {
+                cycle_index,
+                created_at_unix,
+                report,
+            });
+            if cycle_index + 1 < cycles && !interval.is_zero() {
+                std::thread::sleep(interval);
+            }
+        }
+        Ok(reports)
+    }
+
     fn run_skill(
         &mut self,
         skill_id: &SkillId,
@@ -197,6 +230,13 @@ impl NodeRuntime {
                 continue;
             }
             matched_parents.push(parent.id.clone());
+            if let Some(existing_child) = artifacts
+                .iter()
+                .find(|candidate| candidate.skill == *skill_id && candidate.has_parent(&parent.id))
+            {
+                skipped_existing.push(existing_child.id.clone());
+                continue;
+            }
 
             let draft_result = {
                 let skill = self.skills.get(skill_id).expect("skill in registry");
@@ -293,13 +333,16 @@ mod tests {
     }
 
     fn temp_store_dir(tag: &str) -> PathBuf {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0);
+        let count = COUNTER.fetch_add(1, Ordering::Relaxed);
         let mut path = std::env::temp_dir();
         path.push(format!(
-            "chimiaclaw-node-{tag}-{nanos}-{}",
+            "chimiaclaw-node-{tag}-{nanos}-{}-{count}",
             std::process::id()
         ));
         path
@@ -365,10 +408,35 @@ mod tests {
         let first = runtime.run_once(2).expect("first");
         assert_eq!(first.invocations[0].produced_children.len(), 1);
 
-        let second = runtime.run_once(2).expect("second");
+        let second = runtime.run_once(999).expect("second");
         let invocation = &second.invocations[0];
         assert_eq!(invocation.produced_children.len(), 0);
         assert_eq!(invocation.skipped_existing.len(), 1);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn finite_polling_loop_does_not_duplicate_existing_children() {
+        let dir = temp_store_dir("poll");
+        let signer = ArtifactSigner::from_seed([9; 32]);
+        let parent = parent_artifact(&signer, "gamma");
+        let profile = NodeProfile {
+            agent: AgentId("test.local.eth".to_string()),
+            signer: ArtifactSigner::from_seed([10; 32]),
+            store_dir: dir.clone(),
+        };
+        let mut runtime = NodeRuntime::open(profile).expect("open");
+        runtime.put_artifact(parent).expect("seed");
+        runtime.register_skill(Box::new(DoublingSkill));
+
+        let reports = runtime
+            .run_for_cycles(3, Duration::ZERO, 100)
+            .expect("poll");
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].report.invocations[0].produced_children.len(), 1);
+        assert_eq!(reports[1].report.invocations[0].produced_children.len(), 0);
+        assert_eq!(reports[2].report.invocations[0].produced_children.len(), 0);
+        assert_eq!(runtime.all_artifacts().expect("all").len(), 2);
         std::fs::remove_dir_all(&dir).ok();
     }
 }

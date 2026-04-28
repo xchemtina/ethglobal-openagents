@@ -1,20 +1,23 @@
 use chimiaclaw_artifact::{
     ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore, PayloadRef,
 };
-use chimiaclaw_node::{NodeProfile, NodeRuntime};
+use chimiaclaw_market::demo_science_market;
+use chimiaclaw_node::{NodeProfile, NodeRuntime, RunCycleReport};
 use chimiaclaw_ord_adt::{
     adt_experiment_hash, demo_suzuki_ord_like, OrdToAdtSkill, OrdToAdtTranslator, ADT_REACTION_TAG,
     ORD_ADT_AGENT, ORD_REACTION_TAG,
 };
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use retroquoter::{
-    ProcurementExecutionRequest, ProcurementExecutor, ReagentCatalog, ReagentRequirement,
-    ReagentRole, RetroQuoter, RouteProposal, RouteStep, SupplierOffer, PLANNER_AGENT,
-    PROCUREMENT_AGENT, ROUTE_PROPOSAL_TAG,
+    demo_execution_request, demo_reagent_catalog, demo_route_proposal, ProcurementExecutor,
+    RetroQuoter, RouteQuoteSkill, PLANNER_AGENT, PROCUREMENT_AGENT, ROUTE_PROPOSAL_TAG,
 };
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+const DEFAULT_NODE_AGENT: &str = "node.local.chimiaclaw.eth";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -28,6 +31,20 @@ fn main() -> ExitCode {
             run_demo_ord_adt();
             ExitCode::SUCCESS
         }
+        [_, "world-model", ..] => match run_world_model() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("world-model failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "science-market-demo", ..] => match run_science_market_demo() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("science-market-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         [_, "node", "seed-ord", rest @ ..] => match run_node_seed_ord(rest) {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
@@ -35,10 +52,24 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        [_, "node", "seed-route", rest @ ..] => match run_node_seed_route(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("node seed-route failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         [_, "node", "run-once", rest @ ..] => match run_node_run_once(rest) {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("node run-once failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "node", "run", rest @ ..] => match run_node_run(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("node run failed: {error}");
                 ExitCode::FAILURE
             }
         },
@@ -54,6 +85,16 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
     }
+}
+
+fn run_science_market_demo() -> Result<(), String> {
+    let demo = demo_science_market();
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&demo)
+            .map_err(|error| format!("serialize science market demo: {error}"))?
+    );
+    Ok(())
 }
 
 fn run_demo_ord_adt() {
@@ -106,11 +147,23 @@ fn print_help() {
     println!("      Build a deterministic in-memory route -> quote -> procured DAG.");
     println!("  chimiaclaw-cli demo-ord-adt");
     println!("      Translate the demo ORD-like reaction into a signed ADT artifact.");
+    println!("  chimiaclaw-cli world-model");
+    println!("      Print the frontend-facing abstract lab network model as JSON.");
+    println!("  chimiaclaw-cli science-market-demo");
+    println!(
+        "      Print deterministic signed ENS-shaped service transactions for DFT, retrosynthesis, and literature."
+    );
     println!("  chimiaclaw-cli node seed-ord --store-dir <path>");
     println!("      Seed a file-backed store with a signed demo ORD reaction artifact.");
-    println!("  chimiaclaw-cli node run-once --store-dir <path> [--agent <id>] [--profile-label <label>]");
+    println!("  chimiaclaw-cli node seed-route --store-dir <path>");
+    println!("      Seed a file-backed store with a signed demo route proposal artifact.");
+    println!("  chimiaclaw-cli node run-once --store-dir <path> [--agent <id>] [--profile-label <label>] [--skills all|ord-adt|retroquoter] [--created-at <unix>]");
     println!(
-        "      Run one synchronous loop: scan store, invoke ORD->ADT skill, persist children."
+        "      Run one synchronous loop: scan store, invoke registered demo skills, persist children."
+    );
+    println!("  chimiaclaw-cli node run --store-dir <path> [--agent <id>] [--profile-label <label>] [--skills all|ord-adt|retroquoter] [--interval-ms <ms>] [--max-cycles <n>]");
+    println!(
+        "      Poll continuously as JSONL until Ctrl+C, or stop after --max-cycles for scripted demos."
     );
     println!("  chimiaclaw-cli artifact inspect --store-dir <path> [--id <artifact-id>]");
     println!("      List all stored artifacts (and lineage) or inspect one by id.");
@@ -129,6 +182,39 @@ fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
 
 fn require_kv<'a>(args: &'a [&'a str], key: &str) -> Result<&'a str, String> {
     parse_kv(args, key).ok_or_else(|| format!("missing required argument: {key}"))
+}
+
+fn parse_optional_u64(args: &[&str], key: &str) -> Result<Option<u64>, String> {
+    parse_kv(args, key)
+        .map(|value| {
+            value
+                .parse::<u64>()
+                .map_err(|error| format!("invalid {key} value {value:?}: {error}"))
+        })
+        .transpose()
+}
+
+fn parse_u64_or(args: &[&str], key: &str, default: u64) -> Result<u64, String> {
+    Ok(parse_optional_u64(args, key)?.unwrap_or(default))
+}
+
+fn unix_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .unwrap_or(0)
+}
+
+fn run_world_model() -> Result<(), String> {
+    let value: serde_json::Value =
+        serde_json::from_str(include_str!("../../../demo/world-model.json"))
+            .map_err(|error| format!("invalid world model fixture: {error}"))?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&value)
+            .map_err(|error| format!("serialize world model: {error}"))?
+    );
+    Ok(())
 }
 
 fn run_node_seed_ord(args: &[&str]) -> Result<(), String> {
@@ -175,11 +261,78 @@ fn run_node_seed_ord(args: &[&str]) -> Result<(), String> {
     );
     Ok(())
 }
+fn run_node_seed_route(args: &[&str]) -> Result<(), String> {
+    let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
+    let agent_id = parse_kv(args, "--agent").unwrap_or(PLANNER_AGENT);
+    let label = parse_kv(args, "--profile-label").unwrap_or("chimiaclaw-dev");
+
+    let signer = NodeProfile::dev_signer_from_seed_label(&format!("planner:{label}"));
+    let proposal = demo_route_proposal();
+    let payload = PayloadRef::inline_json(&proposal).map_err(|error| format!("{error:?}"))?;
+    let route_artifact = ArtifactDraft {
+        skill: SkillId("chem.retrosynth.aizynth.v1".to_string()),
+        agent: AgentId(agent_id.to_string()),
+        topic: "demo aspirin route proposal".to_string(),
+        input_fingerprint: format!("smiles:{}", proposal.target_smiles),
+        output_cid: Some("inline://retroquoter/route/aspirin-demo".to_string()),
+        parent_artifact_ids: Vec::new(),
+        schema_tags: BTreeSet::from([SchemaTag(ROUTE_PROPOSAL_TAG.to_string())]),
+        payload: Some(payload),
+    }
+    .seal(&signer, 1)
+    .map_err(|error| format!("seal: {error:?}"))?;
+
+    let profile = NodeProfile {
+        agent: AgentId(agent_id.to_string()),
+        signer,
+        store_dir,
+    };
+    let mut runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
+    let id = route_artifact.id.clone();
+    match runtime.put_artifact(route_artifact) {
+        Ok(())
+        | Err(chimiaclaw_node::NodeError::Store(
+            chimiaclaw_artifact::ArtifactStoreError::Conflict(_),
+        )) => {}
+        Err(other) => return Err(format!("put: {other:?}")),
+    }
+    println!(
+        "{}",
+        serde_json::json!({
+            "seeded_artifact_id": id.0,
+            "schema_tag": ROUTE_PROPOSAL_TAG,
+        })
+    );
+    Ok(())
+}
+
+fn register_node_skills(runtime: &mut NodeRuntime, skills: &str) -> Result<(), String> {
+    match skills {
+        "all" => {
+            runtime.register_skill(Box::new(OrdToAdtSkill::new()));
+            runtime.register_skill(Box::new(RouteQuoteSkill::demo()));
+            Ok(())
+        }
+        "ord-adt" => {
+            runtime.register_skill(Box::new(OrdToAdtSkill::new()));
+            Ok(())
+        }
+        "retroquoter" | "route-quote" => {
+            runtime.register_skill(Box::new(RouteQuoteSkill::demo()));
+            Ok(())
+        }
+        other => Err(format!(
+            "unknown --skills value {other:?}; expected all, ord-adt, or retroquoter"
+        )),
+    }
+}
 
 fn run_node_run_once(args: &[&str]) -> Result<(), String> {
     let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
-    let agent_id = parse_kv(args, "--agent").unwrap_or(ORD_ADT_AGENT);
+    let agent_id = parse_kv(args, "--agent").unwrap_or(DEFAULT_NODE_AGENT);
     let label = parse_kv(args, "--profile-label").unwrap_or("chimiaclaw-dev");
+    let skills = parse_kv(args, "--skills").unwrap_or("all");
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
 
     let signer = NodeProfile::dev_signer_from_seed_label(&format!("node:{label}"));
     let profile = NodeProfile {
@@ -188,13 +341,62 @@ fn run_node_run_once(args: &[&str]) -> Result<(), String> {
         store_dir,
     };
     let mut runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
-    runtime.register_skill(Box::new(OrdToAdtSkill::new()));
-    let report = runtime.run_once(2).map_err(|error| format!("{error:?}"))?;
+    register_node_skills(&mut runtime, skills)?;
+    let report = runtime
+        .run_once(created_at_unix)
+        .map_err(|error| format!("{error:?}"))?;
     println!(
         "{}",
         serde_json::to_string_pretty(&report)
             .unwrap_or_else(|error| format!("<failed to serialize report: {error}>"))
     );
+    Ok(())
+}
+
+fn run_node_run(args: &[&str]) -> Result<(), String> {
+    let store_dir = PathBuf::from(require_kv(args, "--store-dir")?);
+    let agent_id = parse_kv(args, "--agent").unwrap_or(DEFAULT_NODE_AGENT);
+    let label = parse_kv(args, "--profile-label").unwrap_or("chimiaclaw-dev");
+    let skills = parse_kv(args, "--skills").unwrap_or("all");
+    let interval_ms = parse_u64_or(args, "--interval-ms", 5_000)?;
+    let max_cycles = parse_optional_u64(args, "--max-cycles")?;
+    if max_cycles == Some(0) {
+        return Ok(());
+    }
+
+    let signer = NodeProfile::dev_signer_from_seed_label(&format!("node:{label}"));
+    let profile = NodeProfile {
+        agent: AgentId(agent_id.to_string()),
+        signer,
+        store_dir,
+    };
+    let mut runtime = NodeRuntime::open(profile).map_err(|error| format!("{error:?}"))?;
+    register_node_skills(&mut runtime, skills)?;
+
+    let interval = Duration::from_millis(interval_ms);
+    let mut cycle_index = 0;
+    loop {
+        let created_at_unix = unix_now();
+        let report = runtime
+            .run_once(created_at_unix)
+            .map_err(|error| format!("{error:?}"))?;
+        let cycle = RunCycleReport {
+            cycle_index,
+            created_at_unix,
+            report,
+        };
+        println!(
+            "{}",
+            serde_json::to_string(&cycle)
+                .unwrap_or_else(|error| format!("<failed to serialize cycle: {error}>"))
+        );
+
+        cycle_index += 1;
+        if max_cycles.is_some_and(|limit| cycle_index >= limit) {
+            break;
+        }
+        std::thread::sleep(interval);
+    }
     Ok(())
 }
 
@@ -275,7 +477,7 @@ fn run_demo_dag() {
     let quoter = RetroQuoter::new(
         AgentId(PROCUREMENT_AGENT.to_string()),
         procurement_signer,
-        demo_catalog(),
+        demo_reagent_catalog(),
     );
     let signed_quote = quoter
         .quote_route_from_store(&store, &route.id, &proposal, 2)
@@ -314,60 +516,4 @@ fn run_demo_dag() {
         "artifact_count": store.all().expect("all artifacts").len(),
     });
     println!("{}", serde_json::to_string_pretty(&report).expect("json"));
-}
-
-fn demo_route_proposal() -> RouteProposal {
-    RouteProposal {
-        route_id: "route-aspirin-demo".to_string(),
-        target_smiles: "CC(=O)Oc1ccccc1C(=O)O".to_string(),
-        target_scale_milligrams: 5_000,
-        steps: vec![RouteStep {
-            step_id: "step-1".to_string(),
-            description: "Acetylate salicylic acid with acetic anhydride".to_string(),
-            requirements: vec![
-                ReagentRequirement {
-                    reagent_id: "salicylic-acid".to_string(),
-                    display_name: "Salicylic acid".to_string(),
-                    quantity_milligrams: 4_000,
-                    role: ReagentRole::StartingMaterial,
-                },
-                ReagentRequirement {
-                    reagent_id: "acetic-anhydride".to_string(),
-                    display_name: "Acetic anhydride".to_string(),
-                    quantity_milligrams: 6_000,
-                    role: ReagentRole::Reagent,
-                },
-            ],
-        }],
-    }
-}
-
-fn demo_execution_request() -> ProcurementExecutionRequest {
-    ProcurementExecutionRequest {
-        buyer_agent: AgentId("buyer.chimiaclaw.eth".to_string()),
-        payment_reference: "uniswap-swap-demo-001".to_string(),
-        destination_profile_id: "sofia-lab-default".to_string(),
-    }
-}
-
-fn demo_catalog() -> ReagentCatalog {
-    ReagentCatalog::new()
-        .with_offer(
-            "salicylic-acid",
-            SupplierOffer {
-                supplier: "DemoChem".to_string(),
-                sku: "SAL-001".to_string(),
-                unit_price_cents_per_gram: 120,
-                available_grams: 100,
-            },
-        )
-        .with_offer(
-            "acetic-anhydride",
-            SupplierOffer {
-                supplier: "DemoChem".to_string(),
-                sku: "ACE-002".to_string(),
-                unit_price_cents_per_gram: 80,
-                available_grams: 250,
-            },
-        )
 }

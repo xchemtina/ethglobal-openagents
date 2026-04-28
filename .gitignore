@@ -9,3 +9,6 @@ contracts/broadcast/
 __pycache__/
 .venv/
 .pytest_cache/
+.DS_Store
+**/.DS_Store
+/SciCrucible_v1/

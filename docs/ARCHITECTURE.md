@@ -6,11 +6,12 @@
 
 1. **Schema layer**: stable typed identifiers, schema tags, capabilities, and `StrategySet` definitions.
 2. **Artifact layer**: immutable signed records with parent lineage.
-3. **Skill layer**: native Rust and foreign-language worker skills that consume and produce artifacts.
-4. **Reactor layer**: pressure-scored fulfillment of open needs across agents.
-5. **Optimization layer**: MSSP-compatible population, fitness, crossover, tournament, and Type-B switcher abstractions.
-6. **Governance layer**: proposals, votes, and executions as artifacts.
-7. **Adapter layer**: 0G Storage, AXL, ENS, iNFT, PoX, Uniswap, KeeperHub, and RDF projection.
+3. **Market layer**: science service profiles, offers, requests, quotes, quote acceptances, escrow authorizations, settlement intents, result payloads, acknowledgements, releases, and refunds, all represented as artifacts.
+4. **Skill layer**: native Rust and foreign-language worker skills that consume and produce artifacts.
+5. **Reactor layer**: pressure-scored fulfillment of open needs across agents.
+6. **Optimization layer**: MSSP-compatible population, fitness, crossover, tournament, and Type-B switcher abstractions.
+7. **Governance layer**: proposals, votes, and executions as artifacts.
+8. **Adapter layer**: 0G Storage, AXL, ENS, iNFT, PoX, Uniswap, KeeperHub, and RDF projection.
 
 ```mermaid
 flowchart TB
@@ -25,6 +26,28 @@ flowchart TB
     Governance --> Contracts[Solidity contracts]
     Artifacts --> Store[(Artifact stores)]
 ```
+
+## Science service market
+
+`chimiaclaw-market` adds the current prize-facing transaction spine:
+
+```mermaid
+flowchart LR
+    Profile[ENS-shaped provider profile] --> Offer[Service offer]
+    Offer --> Request[Service request]
+    Request --> Quote[Service quote]
+    Quote --> Acceptance[Quote acceptance]
+    Acceptance --> Escrow[Simulated escrow authorization]
+    Escrow --> Settlement[Settlement intent]
+    Settlement --> Result[Signed service result]
+    Request --> Result
+    Result --> Ack[Result acknowledgement]
+    Escrow --> Ack
+    Ack --> Release[Simulated release]
+    Ack --> Refund[Refund artifact]
+```
+
+The deterministic CLI fixture covers retrosynthesis, DFT, and literature. `operator.chimiaclaw.eth` pays the ENS-shaped service agent for a bounded scientific service quote, but the current implementation is non-custodial: it records acceptance, simulated escrow authorization, result acknowledgement, simulated release, and full-refund policy as signed artifacts. Sponsor integrations have explicit attachment points, but the current fixture does not resolve live ENS records, send AXL traffic, write to 0G, call Uniswap, schedule KeeperHub, or move funds.
 
 ## Artifact DAG invariants
 
@@ -89,3 +112,21 @@ flowchart LR
     Artifact --> Governance[DAO audit]
     Artifact --> Skills[Agent skills]
 ```
+
+## Frontend world-model projection
+
+The frontend lab-swarm map is a projection over the artifact DAG, not a second source of truth. `demo/world-model.json` gives the UI a deterministic model of ChimiaDAO physical labs, allied labs, virtual agent labs, unknown labs, trust edges, quests, science transactions, agents, artifact cards, MSSP generations, and World Avatar RDF views.
+
+```mermaid
+flowchart LR
+    World[demo/world-model.json] --> UI[Frontend lab-swarm map]
+    UI --> Quests[Quest queue]
+    Quests --> CLI[chimiaclaw-cli node seed/run]
+    CLI --> Store[(FileArtifactStore)]
+    Store --> DAG[Signed artifact DAG]
+    DAG --> MSSP[MSSP genealogy projection]
+    DAG --> RDF[World Avatar RDF projection]
+    DAG --> UI
+```
+
+`demo/world-map.html` renders this fixture as a dependency-free static HUD. See `docs/WORLD_MODEL.md` for the fixture shape and current backend mappings.
