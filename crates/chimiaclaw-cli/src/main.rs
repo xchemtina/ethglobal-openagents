@@ -50,7 +50,7 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
-        [_, "moladt-dft-demo", ..] => match run_moladt_dft_demo() {
+        [_, "moladt-dft-demo", rest @ ..] => match run_moladt_dft_demo(rest) {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("moladt-dft-demo failed: {error}");
@@ -367,23 +367,50 @@ fn sanitize_filename_stem(input: &str) -> String {
     }
 }
 
-fn run_moladt_dft_demo() -> Result<(), String> {
-    let molecule = demo_ferrocene_moladt();
+fn run_moladt_dft_demo(args: &[&str]) -> Result<(), String> {
+    let library_name = parse_kv(args, "--library").unwrap_or("ferrocene");
+    let functional = parse_kv(args, "--functional")
+        .unwrap_or("skala-1.1")
+        .to_string();
+    let basis_set = parse_kv(args, "--basis").unwrap_or("def2-tzvp").to_string();
+    let dispersion = parse_kv(args, "--dispersion").map(str::to_string);
+    let multiplicity: u8 = parse_kv(args, "--multiplicity")
+        .map(|v| {
+            v.parse::<u8>()
+                .map_err(|error| format!("invalid --multiplicity {v:?}: {error}"))
+        })
+        .transpose()?
+        .unwrap_or(1);
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let molecule = resolve_library_by_name(library_name).ok_or_else(|| {
+        format!(
+            "unknown --library {library_name:?}; try water/ammonia/methanol/ethanol/acetic-acid/benzene/toluene/bromobenzene/phenylboronic-acid/biphenyl/ferrocene"
+        )
+    })?;
     let agent = AgentId("operator.chimiaclaw.eth".to_string());
     let signer = NodeProfile::dev_signer_from_seed_label("moladt-dft-demo");
     let molecule_artifact = molecule_artifact(&molecule, agent.clone(), &signer, 1)
         .map_err(|error| format!("sign molecule artifact: {error}"))?;
     let molecule_ref = DftMoleculeRef::unbound(&molecule).with_artifact(&molecule_artifact);
+    let request_id = format!(
+        "REQ.MOLADT.DFT.{}.001",
+        molecule
+            .molecule_id
+            .split('.')
+            .nth(1)
+            .unwrap_or(library_name)
+            .to_ascii_uppercase()
+    );
     let request = DftRequest {
-        request_id: "REQ.MOLADT.DFT.FERROCENE.001".to_string(),
+        request_id,
         molecule: molecule_ref,
         total_charge: molecule.total_formal_charge(),
-        multiplicity: 1,
+        multiplicity,
         method: DftMethodSpec {
-            functional: "skala-1.1".to_string(),
-            basis_set: "def2-tzvp".to_string(),
+            functional: functional.clone(),
+            basis_set: basis_set.clone(),
             backend: DftBackend::PyScf,
-            dispersion: Some("dftd3".to_string()),
+            dispersion: dispersion.clone(),
             grid_level: Some(3),
         },
         job_kind: DftJobKind::SinglePoint,
@@ -396,6 +423,24 @@ fn run_moladt_dft_demo() -> Result<(), String> {
     };
     let request_artifact = dft_request_artifact(&request, agent, &signer, 2)
         .map_err(|error| format!("sign dft request artifact: {error}"))?;
+    if let Some(dir) = out_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+        let mol_path = dir.join(format!("chem_molecule_adt.{}.json", molecule_artifact.id.0));
+        let req_path = dir.join(format!("chem_dft_request.{}.json", request_artifact.id.0));
+        std::fs::write(
+            &mol_path,
+            serde_json::to_string_pretty(&molecule_artifact)
+                .map_err(|error| format!("serialize molecule artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", mol_path.display()))?;
+        std::fs::write(
+            &req_path,
+            serde_json::to_string_pretty(&request_artifact)
+                .map_err(|error| format!("serialize request artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", req_path.display()))?;
+    }
     let xyz = molecule
         .to_xyz()
         .map_err(|error| format!("render xyz projection: {error}"))?;
@@ -476,9 +521,9 @@ fn print_help() {
     println!(
         "      Print deterministic signed ENS-shaped service transactions for DFT, retrosynthesis, and literature."
     );
-    println!("  chimiaclaw-cli moladt-dft-demo");
+    println!("  chimiaclaw-cli moladt-dft-demo [--library <name>] [--functional <xc>] [--basis <name>] [--dispersion <name>] [--multiplicity <n>] [--out-dir <dir>]");
     println!(
-        "      Print a signed MolADT molecule artifact, XYZ/PySCF projections, and a signed DFT request artifact."
+        "      Print signed MolADT molecule + DFT request artifacts (functional/basis configurable). With --out-dir, also writes both artifact JSONs ready for `live dft-execute`."
     );
     println!("  chimiaclaw-cli ord-moladt-demo [--ord-json <path>] [--official-ord-json <path>] [--output-dir <dir>]");
     println!(
@@ -516,8 +561,8 @@ fn print_help() {
         "  chimiaclaw-cli live keeperhub-status --execution-id <id> [--scheduled-artifact-id <id>]"
     );
     println!("      Feature-gated KeeperHub execution status and signed status artifact.");
-    println!("  chimiaclaw-cli live dft-execute --request-artifact-json <path> [--out-dir <dir>] [--agent <id>] [--dry-run]");
-    println!("      Pipe a signed chem.dft.request artifact to CHIMIACLAW_DFT_COMMAND, sign the chem.dft.result, save both.");
+    println!("  chimiaclaw-cli live dft-execute --request-artifact-json <path> --molecule-artifact-json <path> [--out-dir <dir>] [--agent <id>] [--dry-run]");
+    println!("      Pipe {{request, molecule_adt}} to CHIMIACLAW_DFT_COMMAND, sign the chem.dft.result, save the full lineage.");
 }
 
 fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
@@ -1049,12 +1094,13 @@ fn run_live_keeperhub_schedule(args: &[&str]) -> Result<(), String> {
 #[cfg(feature = "live-sponsors")]
 fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     use chimiaclaw_dft_skala::{
-        dft_result_artifact, DftWorkerCommandConfig, DFT_WORKER_COMMAND_ENV,
+        dft_result_artifact, DftWorkerCommandConfig, DftWorkerInput, DFT_WORKER_COMMAND_ENV,
     };
     use chimiaclaw_moladt::DftRequest;
     use std::fs;
 
     let request_artifact_json = PathBuf::from(require_kv(args, "--request-artifact-json")?);
+    let molecule_artifact_json = PathBuf::from(require_kv(args, "--molecule-artifact-json")?);
     let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
     let agent = AgentId(
         parse_kv(args, "--agent")
@@ -1064,30 +1110,59 @@ fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
     let dry_run = args.iter().any(|arg| *arg == "--dry-run");
 
-    let body = fs::read_to_string(&request_artifact_json)
+    let request_body = fs::read_to_string(&request_artifact_json)
         .map_err(|error| format!("read request artifact json: {error}"))?;
-    let request_artifact: chimiaclaw_artifact::Artifact =
-        serde_json::from_str(&body).map_err(|error| format!("parse request artifact: {error}"))?;
+    let request_artifact: chimiaclaw_artifact::Artifact = serde_json::from_str(&request_body)
+        .map_err(|error| format!("parse request artifact: {error}"))?;
     request_artifact
         .verify()
         .map_err(|error| format!("request artifact verification failed: {error:?}"))?;
-    let payload = request_artifact
+    let request_payload = request_artifact
         .payload
         .as_ref()
         .ok_or_else(|| "request artifact has no inline payload".to_string())?;
-    let bytes = payload
+    let request_bytes = request_payload
         .inline_bytes()
-        .map_err(|error| format!("decode payload bytes: {error:?}"))?
+        .map_err(|error| format!("decode request payload bytes: {error:?}"))?
         .ok_or_else(|| "request artifact payload must be inline (not external)".to_string())?;
-    let request: DftRequest = serde_json::from_slice(&bytes)
+    let request: DftRequest = serde_json::from_slice(&request_bytes)
         .map_err(|error| format!("parse chem.dft.request payload: {error}"))?;
+
+    let molecule_body = fs::read_to_string(&molecule_artifact_json)
+        .map_err(|error| format!("read molecule artifact json: {error}"))?;
+    let molecule_artifact: chimiaclaw_artifact::Artifact = serde_json::from_str(&molecule_body)
+        .map_err(|error| format!("parse molecule artifact: {error}"))?;
+    molecule_artifact
+        .verify()
+        .map_err(|error| format!("molecule artifact verification failed: {error:?}"))?;
+    let molecule_payload = molecule_artifact
+        .payload
+        .as_ref()
+        .ok_or_else(|| "molecule artifact has no inline payload".to_string())?;
+    let molecule_bytes = molecule_payload
+        .inline_bytes()
+        .map_err(|error| format!("decode molecule payload bytes: {error:?}"))?
+        .ok_or_else(|| "molecule artifact payload must be inline (not external)".to_string())?;
+    let molecule_adt: chimiaclaw_moladt::MoleculeAdt = serde_json::from_slice(&molecule_bytes)
+        .map_err(|error| format!("parse chem.molecule.adt payload: {error}"))?;
+    if let Some(expected_id) = request.molecule.molecule_artifact_id.as_ref() {
+        if expected_id != &molecule_artifact.id {
+            return Err(format!(
+                "molecule artifact id mismatch: request expects {} but got {}",
+                expected_id.0, molecule_artifact.id.0
+            ));
+        }
+    }
+
+    let worker_input = DftWorkerInput::new(request.clone(), molecule_adt);
 
     if dry_run {
         let report = serde_json::json!({
             "dry_run": true,
             "would_invoke": DFT_WORKER_COMMAND_ENV,
-            "request": request,
+            "worker_input": worker_input,
             "request_artifact_id": request_artifact.id.0,
+            "molecule_artifact_id": molecule_artifact.id.0,
         });
         println!(
             "{}",
@@ -1100,7 +1175,7 @@ fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     let worker = DftWorkerCommandConfig::from_env()
         .map_err(|error| format!("{DFT_WORKER_COMMAND_ENV} not configured: {error}"))?;
     let result = worker
-        .invoke(&request)
+        .invoke(&worker_input)
         .map_err(|error| format!("dft worker failed: {error}"))?;
     let signer = NodeProfile::dev_signer_from_seed_label("live:dft-skala");
     let result_art = dft_result_artifact(

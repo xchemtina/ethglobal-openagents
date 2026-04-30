@@ -25,7 +25,7 @@ from typing import Any
 
 
 SCHEMA_TAG = "chem.dft.result"
-SUPPORTED_BACKENDS = ("pyscf-skala", "pyscf-classical", "stub")
+SUPPORTED_BACKENDS = ("pyscf-classical", "pyscf-skala", "stub")
 
 
 @dataclass
@@ -93,14 +93,30 @@ class DftResult:
         return asdict(self)
 
 
-def _read_request() -> dict[str, Any]:
+def _read_input() -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Parse stdin into (request, molecule_adt).
+
+    Accepts either the new wrapper format ({request, molecule_adt}) or, for
+    backward compat with --stub callers, a flat DftRequest with molecule_adt=None.
+    """
     raw = sys.stdin.read()
     if not raw.strip():
-        raise SystemExit("dft worker: empty stdin; expected chem.dft.request JSON")
+        raise SystemExit("dft worker: empty stdin; expected JSON")
     try:
-        return json.loads(raw)
+        document = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise SystemExit(f"dft worker: invalid JSON on stdin: {exc}") from exc
+    if isinstance(document, dict) and "request" in document and "molecule_adt" in document:
+        request = document["request"]
+        molecule_adt = document["molecule_adt"]
+        if not isinstance(request, dict):
+            raise SystemExit("dft worker: wrapper.request must be an object")
+        if not isinstance(molecule_adt, dict):
+            raise SystemExit("dft worker: wrapper.molecule_adt must be an object")
+        return request, molecule_adt
+    if isinstance(document, dict):
+        return document, None
+    raise SystemExit("dft worker: stdin must be a JSON object")
 
 
 def _stub_result(request: dict[str, Any]) -> DftResult:
@@ -141,11 +157,13 @@ def _stub_result(request: dict[str, Any]) -> DftResult:
     )
 
 
-def _real_pyscf_result(request: dict[str, Any], backend: str) -> DftResult:
-    """Stub for the real PySCF + Skala / classical functional path.
-
-    The duck-side agent fills this in.  We import lazily so `--stub` works
-    even when PySCF isn't installed.
+def _real_pyscf_result(
+    request: dict[str, Any],
+    molecule_adt: dict[str, Any] | None,
+    backend: str,
+) -> DftResult:
+    """Dispatch to the real backend.  Imported lazily so --stub doesn't need
+    PySCF.
     """
     try:
         import pyscf  # noqa: F401  pylint: disable=import-outside-toplevel
@@ -155,11 +173,20 @@ def _real_pyscf_result(request: dict[str, Any], backend: str) -> DftResult:
             "either run with --stub, or `uv sync` the project on this host."
         ) from exc
 
-    # Placeholder until the duck-side agent wires Skala / classical PySCF.
-    raise SystemExit(
-        f"dft worker: backend {backend!r} not yet implemented; "
-        "duck-side agent owns chimiaclaw_dft.{skala,pyscf_backend}.run."
-    )
+    if molecule_adt is None:
+        raise SystemExit(
+            "dft worker: real backends need molecule_adt (atoms with coordinates); "
+            "send the {request, molecule_adt} wrapper on stdin or run with --stub."
+        )
+
+    if backend in ("pyscf-classical", "pyscf-skala"):
+        # pyscf-skala maps to PBE today (with a fallback note).  The duck-side
+        # agent can replace this with a real Skala 1.1 backend later.
+        from . import pyscf_backend  # local import to avoid circular cost
+
+        return pyscf_backend.run(request, molecule_adt)
+
+    raise SystemExit(f"dft worker: unknown backend {backend!r}")
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -170,10 +197,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--backend",
         choices=SUPPORTED_BACKENDS,
-        default="pyscf-skala",
+        default="pyscf-classical",
         help=(
             "Which backend to dispatch to.  --stub overrides this and skips "
-            "all SCF code paths."
+            "all SCF code paths.  pyscf-classical handles PBE/B3LYP/...; "
+            "pyscf-skala falls back to PBE today and will use real Skala 1.1 "
+            "once weights are wired."
         ),
     )
     parser.add_argument(
@@ -203,8 +232,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    started = time.time()
-    request = _read_request()
+    request, molecule_adt = _read_input()
     schema = request.get("schema_tag")
     # The Rust DftRequest doesn't carry a schema_tag field today; this is
     # advisory.  If the operator embeds one, we accept it.
@@ -219,10 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.stub or args.backend == "stub":
         result = _stub_result(request)
     else:
-        result = _real_pyscf_result(request, args.backend)
-        # _real_pyscf_result currently raises; once implemented it will
-        # populate timings.wall_seconds itself.
-        result.timings.wall_seconds = time.time() - started
+        result = _real_pyscf_result(request, molecule_adt, args.backend)
 
     json.dump(result.to_dict(), sys.stdout, indent=2)
     sys.stdout.write("\n")

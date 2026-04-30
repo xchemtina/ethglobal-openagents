@@ -18,7 +18,7 @@
 use chimiaclaw_artifact::{
     Artifact, ArtifactDraft, ArtifactError, ArtifactId, ArtifactSigner, PayloadRef,
 };
-use chimiaclaw_moladt::DftRequest;
+use chimiaclaw_moladt::{DftRequest, MoleculeAdt};
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -27,6 +27,28 @@ use std::fmt::{Display, Formatter};
 pub const DFT_RESULT_TAG: &str = "chem.dft.result";
 pub const DFT_RESULT_SKILL: &str = "chem.dft.result.v1";
 pub const DFT_WORKER_COMMAND_ENV: &str = "CHIMIACLAW_DFT_COMMAND";
+
+/// Canonical input wrapper sent to the duck-side uv worker on stdin.
+///
+/// The worker receives a single JSON document containing:
+/// - `request`: the `chem.dft.request` payload (functional, basis, charge, ...).
+/// - `molecule_adt`: the parent `chem.molecule.adt` payload (atoms with
+///   coordinates).  This is what the worker actually feeds into PySCF.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct DftWorkerInput {
+    pub request: DftRequest,
+    pub molecule_adt: MoleculeAdt,
+}
+
+impl DftWorkerInput {
+    #[must_use]
+    pub fn new(request: DftRequest, molecule_adt: MoleculeAdt) -> Self {
+        Self {
+            request,
+            molecule_adt,
+        }
+    }
+}
 
 /// SCF convergence summary for a `DftResult`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -271,8 +293,7 @@ pub fn dft_result_artifact(
 
 #[cfg(feature = "live")]
 mod live {
-    use super::{DftResult, DftSkalaError, DFT_RESULT_TAG, DFT_WORKER_COMMAND_ENV};
-    use chimiaclaw_moladt::DftRequest;
+    use super::{DftResult, DftSkalaError, DftWorkerInput, DFT_RESULT_TAG, DFT_WORKER_COMMAND_ENV};
     use std::io::Write;
     use std::path::PathBuf;
     use std::process::{Command, Stdio};
@@ -302,12 +323,12 @@ mod live {
             })
         }
 
-        /// Pipe the request as JSON on stdin, parse the response as a
-        /// `DftResult`, validate its schema_tag.  Convergence is checked at
-        /// signing time, not here, so callers can still inspect failed
-        /// attempts.
-        pub fn invoke(&self, request: &DftRequest) -> Result<DftResult, DftSkalaError> {
-            let input_json = serde_json::to_vec(request)
+        /// Pipe the `{request, molecule_adt}` wrapper as JSON on stdin, parse
+        /// the response as a `DftResult`, validate its schema_tag.
+        /// Convergence is checked at signing time, not here, so callers can
+        /// still inspect failed attempts.
+        pub fn invoke(&self, input: &DftWorkerInput) -> Result<DftResult, DftSkalaError> {
+            let input_json = serde_json::to_vec(input)
                 .map_err(|error| DftSkalaError::Parse(error.to_string()))?;
             let mut child = Command::new(&self.program)
                 .args(&self.program_args)
