@@ -9,6 +9,10 @@
 //! adapters have precise places to attach later.
 
 use chimiaclaw_artifact::{Artifact, ArtifactDraft, ArtifactError, ArtifactSigner, PayloadRef};
+use chimiaclaw_moladt::{
+    demo_ferrocene_moladt, molecule_artifact, DftBackend, DftJobKind, DftMethodSpec,
+    DftMoleculeRef, MolAdtError, MoleculeAdt,
+};
 use chimiaclaw_schema::{AgentId, Capability, CapabilityKind, SchemaTag, SkillId, StrategySetId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -148,11 +152,11 @@ pub enum ScienceServiceInput {
         constraints: Vec<String>,
     },
     Dft {
-        smiles: String,
-        level_of_theory: String,
-        basis_set: String,
-        charge: i32,
+        molecule: DftMoleculeRef,
+        total_charge: i32,
         multiplicity: u8,
+        method: DftMethodSpec,
+        job_kind: DftJobKind,
         requested_properties: Vec<String>,
     },
     Literature {
@@ -393,6 +397,8 @@ pub struct ScienceTransactionFlow {
     pub economic_settlement: ScienceEconomicSettlement,
     pub settlement_intent: ScienceSettlementIntent,
     pub result: ScienceServiceResult,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dft_molecule: Option<MoleculeAdt>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -419,6 +425,15 @@ pub enum MarketError {
 impl From<ArtifactError> for MarketError {
     fn from(value: ArtifactError) -> Self {
         Self::Artifact(value)
+    }
+}
+
+impl From<MolAdtError> for MarketError {
+    fn from(value: MolAdtError) -> Self {
+        match value {
+            MolAdtError::Artifact(error) => Self::Artifact(error),
+            other => Self::Settlement(format!("molecule adt error: {other}")),
+        }
     }
 }
 
@@ -592,7 +607,7 @@ pub fn demo_science_market() -> ScienceMarketDemo {
 }
 
 fn sign_flow(
-    flow: ScienceTransactionFlow,
+    mut flow: ScienceTransactionFlow,
     seed_offset: u8,
 ) -> Result<SignedScienceTransactionFlow, MarketError> {
     flow.validate_economic_settlement()?;
@@ -621,6 +636,30 @@ fn sign_flow(
     )?
     .seal(&provider_signer, u64::from(seed_offset) + 1)?;
 
+    let molecule_artifact_opt = if let Some(molecule) = flow.dft_molecule.as_ref() {
+        let artifact = molecule_artifact(
+            molecule,
+            flow.request.requester_agent.clone(),
+            &requester_signer,
+            u64::from(seed_offset).saturating_add(100),
+        )?;
+        if let ScienceServiceInput::Dft {
+            molecule: ref mut molecule_ref,
+            ..
+        } = flow.request.input
+        {
+            *molecule_ref = molecule_ref.clone().with_artifact(&artifact);
+        }
+        Some(artifact)
+    } else {
+        None
+    };
+
+    let mut request_parents = vec![offer.id.clone()];
+    if let Some(molecule) = molecule_artifact_opt.as_ref() {
+        request_parents.push(molecule.id.clone());
+    }
+
     let request = artifact_draft(
         MARKET_REQUEST_SKILL,
         &flow.request.requester_agent,
@@ -631,7 +670,7 @@ fn sign_flow(
             flow.request.service_kind.request_tag(),
         ],
         &flow.request,
-        vec![offer.id.clone()],
+        request_parents,
     )?
     .seal(&requester_signer, u64::from(seed_offset) + 2)?;
 
@@ -741,21 +780,21 @@ fn sign_flow(
     )?
     .seal(&requester_signer, u64::from(seed_offset) + 9)?;
 
-    Ok(SignedScienceTransactionFlow {
-        flow,
-        artifacts: vec![
-            profile,
-            offer,
-            request,
-            quote,
-            acceptance,
-            escrow,
-            settlement,
-            result,
-            acknowledgement,
-            release,
-        ],
-    })
+    let mut artifacts = vec![profile, offer];
+    if let Some(molecule) = molecule_artifact_opt {
+        artifacts.push(molecule);
+    }
+    artifacts.extend([
+        request,
+        quote,
+        acceptance,
+        escrow,
+        settlement,
+        result,
+        acknowledgement,
+        release,
+    ]);
+    Ok(SignedScienceTransactionFlow { flow, artifacts })
 }
 
 fn artifact_draft<T: Serialize>(
@@ -889,6 +928,7 @@ fn retrosynthesis_flow() -> ScienceTransactionFlow {
         economic_settlement,
         settlement_intent,
         result,
+        dft_molecule: None,
     }
 }
 
@@ -917,17 +957,24 @@ fn dft_flow() -> ScienceTransactionFlow {
         900,
         "compute-only; no physical custody",
     );
+    let molecule = demo_ferrocene_moladt();
     let request = ScienceServiceRequest {
         request_id: "REQ.DFT.FERROCENE.001".to_string(),
         service_kind: ServiceKind::Dft,
         requester_agent: AgentId(USER_AGENT.to_string()),
         target_lab_id: "LAB.VIRTUAL.01".to_string(),
         input: ScienceServiceInput::Dft {
-            smiles: "[Fe]12(C=CC=C1)(C=CC=C2)".to_string(),
-            level_of_theory: "r2SCAN-3c".to_string(),
-            basis_set: "def2-mTZVPP".to_string(),
-            charge: 0,
+            molecule: DftMoleculeRef::unbound(&molecule),
+            total_charge: molecule.total_formal_charge(),
             multiplicity: 1,
+            method: DftMethodSpec {
+                functional: "skala-1.1".to_string(),
+                basis_set: "def2-tzvp".to_string(),
+                backend: DftBackend::PyScf,
+                dispersion: Some("dftd3".to_string()),
+                grid_level: Some(3),
+            },
+            job_kind: DftJobKind::SinglePoint,
             requested_properties: vec![
                 "total_energy".to_string(),
                 "homo_lumo_gap".to_string(),
@@ -998,6 +1045,7 @@ fn dft_flow() -> ScienceTransactionFlow {
         economic_settlement,
         settlement_intent,
         result,
+        dft_molecule: Some(molecule),
     }
 }
 
@@ -1119,6 +1167,7 @@ fn literature_flow() -> ScienceTransactionFlow {
         economic_settlement,
         settlement_intent,
         result,
+        dft_molecule: None,
     }
 }
 
@@ -1419,23 +1468,86 @@ mod tests {
             flow.flow
                 .validate_economic_settlement()
                 .expect("settlement validates");
-            assert_eq!(flow.artifacts.len(), 10);
             for artifact in &flow.artifacts {
                 artifact.verify().expect("artifact verifies");
                 assert!(artifact.payload.is_some(), "payload-bound artifact");
             }
-            assert!(flow.artifacts[1].has_parent(&flow.artifacts[0].id));
-            assert!(flow.artifacts[2].has_parent(&flow.artifacts[1].id));
-            assert!(flow.artifacts[3].has_parent(&flow.artifacts[2].id));
-            assert!(flow.artifacts[4].has_parent(&flow.artifacts[3].id));
-            assert!(flow.artifacts[5].has_parent(&flow.artifacts[4].id));
-            assert!(flow.artifacts[6].has_parent(&flow.artifacts[5].id));
-            assert!(flow.artifacts[7].has_parent(&flow.artifacts[2].id));
-            assert!(flow.artifacts[7].has_parent(&flow.artifacts[6].id));
-            assert!(flow.artifacts[8].has_parent(&flow.artifacts[7].id));
-            assert!(flow.artifacts[8].has_parent(&flow.artifacts[5].id));
-            assert!(flow.artifacts[9].has_parent(&flow.artifacts[8].id));
-            assert!(flow.artifacts[9].has_parent(&flow.artifacts[6].id));
+            let molecule_offset = match flow.flow.service_kind {
+                ServiceKind::Dft => {
+                    assert_eq!(flow.artifacts.len(), 11);
+                    1
+                }
+                _ => {
+                    assert_eq!(flow.artifacts.len(), 10);
+                    0
+                }
+            };
+            let profile_idx = 0;
+            let offer_idx = 1;
+            let request_idx = 2 + molecule_offset;
+            let quote_idx = request_idx + 1;
+            let acceptance_idx = quote_idx + 1;
+            let escrow_idx = acceptance_idx + 1;
+            let settlement_idx = escrow_idx + 1;
+            let result_idx = settlement_idx + 1;
+            let acknowledgement_idx = result_idx + 1;
+            let release_idx = acknowledgement_idx + 1;
+            assert!(flow.artifacts[offer_idx].has_parent(&flow.artifacts[profile_idx].id));
+            assert!(flow.artifacts[request_idx].has_parent(&flow.artifacts[offer_idx].id));
+            if molecule_offset == 1 {
+                let molecule_idx = 2;
+                assert!(flow.artifacts[request_idx].has_parent(&flow.artifacts[molecule_idx].id));
+                assert!(flow.artifacts[molecule_idx]
+                    .schema_tags
+                    .contains(&SchemaTag("chem.molecule.adt".to_string())));
+            }
+            assert!(flow.artifacts[quote_idx].has_parent(&flow.artifacts[request_idx].id));
+            assert!(flow.artifacts[acceptance_idx].has_parent(&flow.artifacts[quote_idx].id));
+            assert!(flow.artifacts[escrow_idx].has_parent(&flow.artifacts[acceptance_idx].id));
+            assert!(flow.artifacts[settlement_idx].has_parent(&flow.artifacts[escrow_idx].id));
+            assert!(flow.artifacts[result_idx].has_parent(&flow.artifacts[request_idx].id));
+            assert!(flow.artifacts[result_idx].has_parent(&flow.artifacts[settlement_idx].id));
+            assert!(flow.artifacts[acknowledgement_idx].has_parent(&flow.artifacts[result_idx].id));
+            assert!(flow.artifacts[acknowledgement_idx].has_parent(&flow.artifacts[escrow_idx].id));
+            assert!(flow.artifacts[release_idx].has_parent(&flow.artifacts[acknowledgement_idx].id));
+            assert!(flow.artifacts[release_idx].has_parent(&flow.artifacts[settlement_idx].id));
+        }
+    }
+
+    #[test]
+    fn dft_flow_carries_signed_molecule_artifact() {
+        let signed = sign_flow(dft_flow(), 100).expect("dft flow signs");
+        let molecule_artifact = signed
+            .artifacts
+            .iter()
+            .find(|artifact| {
+                artifact
+                    .schema_tags
+                    .contains(&SchemaTag("chem.molecule.adt".to_string()))
+            })
+            .expect("molecule artifact present in signed flow");
+        let request_artifact = signed
+            .artifacts
+            .iter()
+            .find(|artifact| {
+                artifact
+                    .schema_tags
+                    .contains(&SchemaTag(DFT_REQUEST_TAG.to_string()))
+            })
+            .expect("dft service request artifact present");
+        assert!(request_artifact.has_parent(&molecule_artifact.id));
+        match &signed.flow.request.input {
+            ScienceServiceInput::Dft { molecule, .. } => {
+                assert_eq!(
+                    molecule.molecule_artifact_id.as_ref(),
+                    Some(&molecule_artifact.id),
+                );
+                assert_eq!(
+                    molecule.molecule_payload_hash.as_ref(),
+                    molecule_artifact.payload.as_ref().map(|p| &p.hash),
+                );
+            }
+            _ => panic!("DFT flow request must carry a Dft input"),
         }
     }
 

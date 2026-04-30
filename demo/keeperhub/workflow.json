@@ -1,0 +1,61 @@
+{
+  "name": "ChimiaClaw \u2014 echo signed artifact",
+  "description": "Reference KeeperHub workflow that takes a ChimiaClaw artifact id plus optional payload metadata and emits a deterministic acknowledgement transaction. Recommended for the first end-to-end signed schedule \u2192 status round-trip without spending real funds beyond gas.",
+  "trigger": {
+    "type": "manual"
+  },
+  "inputs": [
+    {
+      "name": "artifact_id",
+      "type": "string",
+      "description": "ChimiaClaw artifact id (e.g. art_c6fb4314b4dc7ac7).",
+      "required": true
+    },
+    {
+      "name": "payload_hash",
+      "type": "string",
+      "description": "Optional payload Blake3 digest from PayloadRef.hash; pass-through only.",
+      "required": false
+    },
+    {
+      "name": "mode",
+      "type": "string",
+      "description": "Operator mode flag (default: testnet-safe).",
+      "required": false,
+      "default": "testnet-safe"
+    }
+  ],
+  "steps": [
+    {
+      "name": "log-input",
+      "kind": "log",
+      "level": "info",
+      "message": "ChimiaClaw KeeperHub echo step received artifact_id={{inputs.artifact_id}} mode={{inputs.mode}}"
+    },
+    {
+      "name": "emit-receipt",
+      "kind": "transaction",
+      "to": "{{secrets.CHIMIACLAW_RECEIPT_CONTRACT}}",
+      "value": "0",
+      "data": "0x"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "execution_id",
+      "type": "string"
+    },
+    {
+      "name": "tx_hash",
+      "type": "string"
+    },
+    {
+      "name": "block_explorer_url",
+      "type": "string"
+    }
+  ],
+  "notes": [
+    "If you do not want to deploy a receipt contract yet, replace the emit-receipt step with a kind: 'log' step. The Rust client tolerates a missing tx_hash and reports it as null in the signed status artifact.",
+    "ChimiaClaw policy: never wire this workflow to a contract that moves funds without an explicit operator-confirmation step in front of it."
+  ]
+}

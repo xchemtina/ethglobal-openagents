@@ -6,13 +6,28 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = []
+live-sponsors = [
+  "dep:chimiaclaw-exec-keeperhub",
+  "dep:chimiaclaw-identity-ens",
+  "dep:chimiaclaw-storage-0g",
+  "chimiaclaw-exec-keeperhub/live",
+  "chimiaclaw-identity-ens/live",
+  "chimiaclaw-storage-0g/live",
+]
+
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
+chimiaclaw-exec-keeperhub = { path = "../chimiaclaw-exec-keeperhub", optional = true }
 chimiaclaw-governance = { path = "../chimiaclaw-governance" }
+chimiaclaw-identity-ens = { path = "../chimiaclaw-identity-ens", optional = true }
 chimiaclaw-market = { path = "../chimiaclaw-market" }
+chimiaclaw-moladt = { path = "../chimiaclaw-moladt" }
 chimiaclaw-node = { path = "../chimiaclaw-node" }
 chimiaclaw-ord-adt = { path = "../chimiaclaw-ord-adt" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
+chimiaclaw-storage-0g = { path = "../chimiaclaw-storage-0g", optional = true }
 retroquoter = { path = "../../apps/retroquoter" }
 serde_json = "1"
 

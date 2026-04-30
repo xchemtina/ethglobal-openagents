@@ -83,3 +83,22 @@ The long-term direction is that the DAO is not bolted on after the science layer
 ## D8. Demo reliability beats integration breadth
 
 For the hackathon, one coherent artifact DAG plus one credible scientific bridge is more valuable than many shallow integrations. External adapters can be stubs if their artifact boundaries are clear.
+## D9. MolADT is the canonical molecule substrate, not SMILES
+`chimiaclaw-moladt` defines the molecule type ChimiaClaw signs and reasons about: atoms with coordinates, formal charges, sigma bonds, Dietz bonding systems, provenance, and projection hints. SMILES is a derived projection on the way out, not the source of truth on the way in. The DFT branch of `chimiaclaw-market` consumes this substrate as an explicit parent of every `chem.dft.service_request` artifact.
+MolADTs are produced through three explicit tiers, each tagged in `MoleculeProvenance.source_kind`:
+- `schematic-curated` — the curated `chimiaclaw_moladt::library` (water, ammonia, methanol, ethanol, acetic acid, benzene, toluene, bromobenzene, phenylboronic acid, biphenyl) and the ferrocene fixture.
+- `geometry-guess-covalent-radii` — the pure-Rust BFS embedder + spring relaxation for connectivity-only molecules.
+- `rdkit-etkdgv3-mmff94` (or `...-uff`) — the uv-managed `rdkit-smiles-to-moladt` worker.
+Downstream DFT workers must read this field and decide whether to re-optimize before trusting energies; ChimiaClaw will never silently treat a guess as a real geometry.
+## D10. Worker boundaries are uv-managed, not Docker-managed
+Wherever a Rust skill needs Python (or any non-Rust) tooling, the integration is shaped as a child process invoked through a `CHIMIACLAW_*_COMMAND` environment variable that points at a uv project under `skills/scienceclaw-port/workers/`. No Docker, no Homebrew, no in-process FFI. The worker contract is: read input on stdin or via flags, write a JSON document on stdout, exit non-zero with a stderr message on failure. The Rust adapter validates the payload against a typed schema before sealing it as a signed artifact.
+Current workers:
+- `cheminformatics/rdkit-smiles-to-moladt` — RDKit ETKDGv3 + MMFF94/UFF → MolADT JSON.
+- `retrosynth/askcos-retro` — user-managed ASKCOS endpoint → `chem.retrosynth.template_suggestions`.
+The ScienceClaw "scraper fallback" is intentionally not ported because it fabricates demo-like routes that should never enter the signed graph.
+## D11. Refuse to invoke external services without explicit operator configuration
+Live sponsor adapters and worker boundaries fail closed. ENS resolution, ENS publication, 0G upload, KeeperHub scheduling, ASKCOS retrosynthesis, and the SMILES worker all return a `NotConfigured` error when the relevant environment variable is unset, rather than silently using a default endpoint or fabricating output. This keeps the signed artifact graph free of plausible-looking but unverified data.
+## D12. Write-side ENS lives behind a uv worker boundary, not in-process Rust
+ENS publication uses the same `CHIMIACLAW_*_COMMAND` worker boundary as MolADT and ASKCOS rather than embedding `web3.py` (or a Rust ENS client) directly into the core crates. The worker (`skills/scienceclaw-port/workers/identity-ens`) reads `ENS_WRITE_PRIVATE_KEY` from the environment and never accepts the key on argv; it refuses chain id 1 unless `--allow-mainnet` is set; it refuses to publish if the configured account is not the registry owner; it skips records whose current value already matches so re-runs are idempotent. The Rust adapter validates the worker output, signs an `identity.ens.publication` artifact, and (via `live ens-publish`) chains the existing read-side resolver and verifier into a three-artifact publication → resolution → verification round-trip.
+## D13. Stub mode is a first-class integration tier, not a bug
+For sponsor adapters whose real path requires a heavy external binary (currently 0G), the worker exposes an explicit stub mode (`ZEROG_STUB=1`) that hashes the file with Blake2b-32 and emits a deterministic receipt with `STUB MODE` audit notes. The signed artifact still verifies, parents are real, and lineage stays auditable, but the receipt is unmistakably labelled as not-on-chain. This makes CI runs and offline demos honest: ChimiaClaw never silently impersonates a real on-chain anchor, and operators can flip from stub to real by installing `0g-storage-client` and unsetting `ZEROG_STUB` without touching code.

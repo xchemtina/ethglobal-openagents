@@ -22,6 +22,19 @@ cargo run -p chimiaclaw-cli -- node seed-route --store-dir "$STORE"
 cargo run -p chimiaclaw-cli -- node run --store-dir "$STORE" --max-cycles 3 --interval-ms 0
 cargo run -p chimiaclaw-cli -- artifact inspect --store-dir "$STORE"
 ```
+
+Feature-gated live sponsor command surfaces:
+
+```sh
+cargo run -p chimiaclaw-cli --features live-sponsors -- live ens-verify --agent dft.service.chimiaclaw.eth --ens dft.service.chimiaclaw.eth
+cargo run -p chimiaclaw-cli --features live-sponsors -- live zerog-anchor --source-artifact-json /tmp/source-artifact.json --payload-file /tmp/payload.json
+cargo run -p chimiaclaw-cli --features live-sponsors -- live keeperhub-schedule --workflow-id wf_... --input-json '{"artifact_id":"art_demo"}'
+cargo run -p chimiaclaw-cli --features live-sponsors -- live keeperhub-status --execution-id exec_...
+```
+
+See `../docs/speedrun/INTEGRATIONS.md` before running these: ENS needs
+`ENS_RPC_URL`, 0G needs an operator-provided `ZEROG_UPLOAD_COMMAND` wrapper plus
+testnet env, and KeeperHub needs `KEEPERHUB_API_KEY`.
 `world-model` prints `demo/world-model.json`, a deterministic frontend fixture
 for the abstract lab-swarm map: three ChimiaDAO physical labs, allied labs,
 virtual agent labs, unknown/quarantined labs, trust edges, quests, artifact

@@ -2,10 +2,15 @@ use chimiaclaw_artifact::{
     ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore, PayloadRef,
 };
 use chimiaclaw_market::demo_science_market;
+use chimiaclaw_moladt::{
+    demo_ferrocene_moladt, dft_request_artifact, library, molecule_artifact, render,
+    worker as moladt_worker, DftBackend, DftJobKind, DftMethodSpec, DftMoleculeRef, DftRequest,
+    MoleculeAdt,
+};
 use chimiaclaw_node::{NodeProfile, NodeRuntime, RunCycleReport};
 use chimiaclaw_ord_adt::{
-    adt_experiment_hash, demo_suzuki_ord_like, OrdToAdtSkill, OrdToAdtTranslator, ADT_REACTION_TAG,
-    ORD_ADT_AGENT, ORD_REACTION_TAG,
+    adt_experiment_hash, demo_suzuki_ord_like, translate_reaction, OrdLikeReaction, OrdToAdtSkill,
+    OrdToAdtTranslator, ADT_REACTION_TAG, ORD_ADT_AGENT, ORD_REACTION_TAG,
 };
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use retroquoter::{
@@ -45,6 +50,27 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        [_, "moladt-dft-demo", ..] => match run_moladt_dft_demo() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("moladt-dft-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "ord-moladt-demo", rest @ ..] => match run_ord_moladt_demo(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("ord-moladt-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "moladt-render", rest @ ..] => match run_moladt_render(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("moladt-render failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         [_, "node", "seed-ord", rest @ ..] => match run_node_seed_ord(rest) {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
@@ -80,11 +106,65 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "ens-verify", rest @ ..] => match run_live_ens_verify(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live ens-verify failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "ens-publish", rest @ ..] => match run_live_ens_publish(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live ens-publish failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "zerog-anchor", rest @ ..] => match run_live_zerog_anchor(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live zerog-anchor failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "keeperhub-schedule", rest @ ..] => match run_live_keeperhub_schedule(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live keeperhub-schedule failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "keeperhub-status", rest @ ..] => match run_live_keeperhub_status(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live keeperhub-status failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         _ => {
             print_help();
             ExitCode::SUCCESS
         }
     }
+}
+
+#[cfg(feature = "live-sponsors")]
+fn parse_all_kv<'a>(args: &'a [&'a str], key: &str) -> Vec<&'a str> {
+    let mut values = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == key && i + 1 < args.len() {
+            values.push(args[i + 1]);
+            i += 1;
+        }
+        i += 1;
+    }
+    values
 }
 
 fn run_science_market_demo() -> Result<(), String> {
@@ -93,6 +173,241 @@ fn run_science_market_demo() -> Result<(), String> {
         "{}",
         serde_json::to_string_pretty(&demo)
             .map_err(|error| format!("serialize science market demo: {error}"))?
+    );
+    Ok(())
+}
+
+fn run_ord_moladt_demo(args: &[&str]) -> Result<(), String> {
+    let ord = if let Some(path) = parse_kv(args, "--ord-json") {
+        let body = std::fs::read_to_string(path)
+            .map_err(|error| format!("read ORD-like JSON {path}: {error}"))?;
+        OrdLikeReaction::from_json_str(&body)
+            .map_err(|error| format!("parse ORD-like JSON: {error:?}"))?
+    } else if let Some(path) = parse_kv(args, "--official-ord-json") {
+        let body = std::fs::read_to_string(path)
+            .map_err(|error| format!("read official ORD JSON {path}: {error}"))?;
+        OrdLikeReaction::from_official_ord_json_str(&body)
+            .map_err(|error| format!("parse official ORD JSON: {error:?}"))?
+    } else {
+        demo_suzuki_ord_like()
+    };
+    let translation = translate_reaction(&ord);
+    let agent = AgentId("operator.chimiaclaw.eth".to_string());
+    let signer = NodeProfile::dev_signer_from_seed_label("ord-moladt-demo");
+    let output_dir = parse_kv(args, "--output-dir").map(PathBuf::from);
+    if let Some(dir) = output_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create output dir {}: {error}", dir.display()))?;
+    }
+    let mut artifacts = Vec::new();
+    for (index, entry) in translation.resolved.iter().enumerate() {
+        let created_at_unix = 1_u64 + index as u64;
+        let artifact = molecule_artifact(&entry.molecule, agent.clone(), &signer, created_at_unix)
+            .map_err(|error| format!("sign molecule artifact for {}: {error}", entry.smiles))?;
+        let mut entry_record = serde_json::json!({
+            "label": entry.label,
+            "smiles": entry.smiles,
+            "role": entry.role,
+            "roles_in_reaction": entry.roles_in_reaction,
+            "molecule_id": entry.molecule.molecule_id,
+            "formula": entry.molecule.formula(),
+            "artifact_id": artifact.id.0.clone(),
+            "payload_hash": artifact.payload.as_ref().map(|payload| payload.hash.clone()),
+            "artifact": artifact,
+        });
+        if let Some(dir) = output_dir.as_ref() {
+            let stem = sanitize_filename_stem(&entry.molecule.molecule_id);
+            let xyz_path = dir.join(format!("{stem}.xyz"));
+            let svg_path = dir.join(format!("{stem}.svg"));
+            entry.molecule.write_xyz_to(&xyz_path).map_err(|error| {
+                format!("write xyz for {}: {error}", entry.molecule.molecule_id)
+            })?;
+            render::write_svg_to(
+                &entry.molecule,
+                &render::SvgRenderOptions::default(),
+                &svg_path,
+            )
+            .map_err(|error| format!("write svg for {}: {error}", entry.molecule.molecule_id))?;
+            if let Some(map) = entry_record.as_object_mut() {
+                map.insert(
+                    "xyz_path".to_string(),
+                    serde_json::Value::String(xyz_path.display().to_string()),
+                );
+                map.insert(
+                    "svg_path".to_string(),
+                    serde_json::Value::String(svg_path.display().to_string()),
+                );
+            }
+        }
+        artifacts.push(entry_record);
+    }
+    let report = serde_json::json!({
+        "reaction": translation.reaction_name,
+        "resolved_count": translation.resolved.len(),
+        "skipped": translation.skipped,
+        "resolved": artifacts,
+        "dft_ready": translation.dft_ready(),
+        "output_dir": output_dir.as_ref().map(|dir| dir.display().to_string()),
+        "note": "Resolved entries carry curated schematic geometries; a live DFT worker must run a geometry pass before trusting energies.",
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize ord moladt demo: {error}"))?
+    );
+    Ok(())
+}
+
+fn run_moladt_render(args: &[&str]) -> Result<(), String> {
+    let library_name = parse_kv(args, "--library");
+    let smiles = parse_kv(args, "--smiles");
+    let xyz_path = parse_kv(args, "--xyz").map(PathBuf::from);
+    let svg_path = parse_kv(args, "--svg").map(PathBuf::from);
+    let allow_worker = !args.iter().any(|arg| *arg == "--no-worker");
+    let molecule = match (library_name, smiles) {
+        (Some(name), None) => resolve_library_by_name(name).ok_or_else(|| {
+            format!("unknown library molecule {name:?}; try water/ammonia/methanol/ethanol/acetic-acid/benzene/toluene/bromobenzene/phenylboronic-acid/biphenyl/ferrocene")
+        })?,
+        (None, Some(smiles)) => {
+            if let Some(molecule) = library::resolve_smiles(smiles) {
+                molecule
+            } else if library::is_known_unsafe_for_dft(smiles) {
+                return Err(format!(
+                    "SMILES {smiles:?} is flagged unsafe-for-direct-DFT (multi-component or metal complex); refusing to render"
+                ));
+            } else if allow_worker {
+                match moladt_worker::resolve_with_worker(smiles) {
+                    Ok(Some(molecule)) => molecule,
+                    Ok(None) => {
+                        return Err(format!(
+                            "SMILES {smiles:?} is not in the curated library and {} is not configured",
+                            moladt_worker::SMILES_WORKER_ENV
+                        ));
+                    }
+                    Err(error) => return Err(format!("smiles worker failed: {error}")),
+                }
+            } else {
+                return Err(format!(
+                    "SMILES {smiles:?} is not in the curated library (--no-worker disabled the external worker)"
+                ));
+            }
+        }
+        (Some(_), Some(_)) => {
+            return Err("--library and --smiles are mutually exclusive".to_string());
+        }
+        (None, None) => demo_ferrocene_moladt(),
+    };
+    if let Some(path) = xyz_path.as_ref() {
+        molecule
+            .write_xyz_to(path)
+            .map_err(|error| format!("write xyz {}: {error}", path.display()))?;
+    }
+    if let Some(path) = svg_path.as_ref() {
+        render::write_svg_to(&molecule, &render::SvgRenderOptions::default(), path)
+            .map_err(|error| format!("write svg {}: {error}", path.display()))?;
+    }
+    let report = serde_json::json!({
+        "molecule_id": molecule.molecule_id,
+        "name": molecule.name,
+        "formula": molecule.formula(),
+        "source_kind": molecule.provenance.source_kind,
+        "atom_count": molecule.atoms.len(),
+        "bond_count": molecule.local_bonds.len(),
+        "projections": molecule.projections,
+        "xyz_path": xyz_path.as_ref().map(|path| path.display().to_string()),
+        "svg_path": svg_path.as_ref().map(|path| path.display().to_string()),
+        "xyz": molecule.to_xyz().unwrap_or_default(),
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize moladt render report: {error}"))?
+    );
+    Ok(())
+}
+
+fn resolve_library_by_name(name: &str) -> Option<MoleculeAdt> {
+    match name.to_ascii_lowercase().replace('_', "-").as_str() {
+        "water" | "h2o" => Some(library::water()),
+        "ammonia" | "nh3" => Some(library::ammonia()),
+        "methanol" | "methyl-alcohol" => Some(library::methanol()),
+        "ethanol" | "ethyl-alcohol" => Some(library::ethanol()),
+        "acetic-acid" | "acetic" => Some(library::acetic_acid()),
+        "benzene" => Some(library::benzene()),
+        "toluene" | "methylbenzene" => Some(library::toluene()),
+        "bromobenzene" => Some(library::bromobenzene()),
+        "phenylboronic-acid" | "phenylboronicacid" => Some(library::phenylboronic_acid()),
+        "biphenyl" => Some(library::biphenyl()),
+        "ferrocene" => Some(demo_ferrocene_moladt()),
+        _ => None,
+    }
+}
+
+fn sanitize_filename_stem(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    for ch in input.chars() {
+        if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+            out.push(ch);
+        } else {
+            out.push('_');
+        }
+    }
+    if out.is_empty() {
+        "molecule".to_string()
+    } else {
+        out
+    }
+}
+
+fn run_moladt_dft_demo() -> Result<(), String> {
+    let molecule = demo_ferrocene_moladt();
+    let agent = AgentId("operator.chimiaclaw.eth".to_string());
+    let signer = NodeProfile::dev_signer_from_seed_label("moladt-dft-demo");
+    let molecule_artifact = molecule_artifact(&molecule, agent.clone(), &signer, 1)
+        .map_err(|error| format!("sign molecule artifact: {error}"))?;
+    let molecule_ref = DftMoleculeRef::unbound(&molecule).with_artifact(&molecule_artifact);
+    let request = DftRequest {
+        request_id: "REQ.MOLADT.DFT.FERROCENE.001".to_string(),
+        molecule: molecule_ref,
+        total_charge: molecule.total_formal_charge(),
+        multiplicity: 1,
+        method: DftMethodSpec {
+            functional: "skala-1.1".to_string(),
+            basis_set: "def2-tzvp".to_string(),
+            backend: DftBackend::PyScf,
+            dispersion: Some("dftd3".to_string()),
+            grid_level: Some(3),
+        },
+        job_kind: DftJobKind::SinglePoint,
+        requested_properties: vec![
+            "total_energy".to_string(),
+            "homo_lumo_gap".to_string(),
+            "dipole".to_string(),
+        ],
+        worker_hint: Some("CHIMIACLAW_DFT_COMMAND".to_string()),
+    };
+    let request_artifact = dft_request_artifact(&request, agent, &signer, 2)
+        .map_err(|error| format!("sign dft request artifact: {error}"))?;
+    let xyz = molecule
+        .to_xyz()
+        .map_err(|error| format!("render xyz projection: {error}"))?;
+    let pyscf = molecule
+        .to_pyscf_atom_block()
+        .map_err(|error| format!("render pyscf atom block: {error}"))?;
+    let report = serde_json::json!({
+        "molecule": molecule,
+        "projections": {
+            "xyz": xyz,
+            "pyscf_atom_block": pyscf,
+        },
+        "molecule_artifact": molecule_artifact,
+        "dft_request": request,
+        "dft_request_artifact": request_artifact,
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize moladt dft demo: {error}"))?
     );
     Ok(())
 }
@@ -153,6 +468,18 @@ fn print_help() {
     println!(
         "      Print deterministic signed ENS-shaped service transactions for DFT, retrosynthesis, and literature."
     );
+    println!("  chimiaclaw-cli moladt-dft-demo");
+    println!(
+        "      Print a signed MolADT molecule artifact, XYZ/PySCF projections, and a signed DFT request artifact."
+    );
+    println!("  chimiaclaw-cli ord-moladt-demo [--ord-json <path>] [--official-ord-json <path>] [--output-dir <dir>]");
+    println!(
+        "      Translate every substrate in an ORD-like or official ORD reaction into signed MolADT artifacts via the curated library, listing skipped entries that still need an external geometry pre-pass. With --output-dir, writes one .xyz and one .svg per resolved substrate."
+    );
+    println!("  chimiaclaw-cli moladt-render [--library <name>|--smiles <smiles>] [--xyz <path>] [--svg <path>] [--no-worker]");
+    println!(
+        "      Render a curated library molecule (or SMILES via the optional CHIMIACLAW_SMILES_TO_MOLADT_COMMAND worker) to XYZ and pure-Rust SVG, printing a JSON summary that includes the inline XYZ block."
+    );
     println!("  chimiaclaw-cli node seed-ord --store-dir <path>");
     println!("      Seed a file-backed store with a signed demo ORD reaction artifact.");
     println!("  chimiaclaw-cli node seed-route --store-dir <path>");
@@ -167,6 +494,20 @@ fn print_help() {
     );
     println!("  chimiaclaw-cli artifact inspect --store-dir <path> [--id <artifact-id>]");
     println!("      List all stored artifacts (and lineage) or inspect one by id.");
+    println!("  chimiaclaw-cli live ens-verify --agent <id> --ens <name> [--expect-address <0x..>] [--expect-text key=value]");
+    println!("      Feature-gated live ENS text/address resolution; compile with --features live-sponsors.");
+    println!("  chimiaclaw-cli live ens-publish --agent <id> --ens <name> --record key=value ... [--out-dir <dir>] [--dry-run] [--no-verify]");
+    println!("      Publish ChimiaClaw text records via the configured ENS publisher worker, then sign publication+resolution+verification artifacts (round-trip).");
+    println!("  chimiaclaw-cli live zerog-anchor --source-artifact-json <path> --payload-file <path> [--agent <id>]");
+    println!(
+        "      Feature-gated 0G upload through ZEROG_UPLOAD_COMMAND and signed anchor artifact."
+    );
+    println!("  chimiaclaw-cli live keeperhub-schedule --workflow-id <id> [--input-json <json>] [--parent-artifact-id <id>]");
+    println!("      Feature-gated KeeperHub workflow execution and signed scheduled artifact.");
+    println!(
+        "  chimiaclaw-cli live keeperhub-status --execution-id <id> [--scheduled-artifact-id <id>]"
+    );
+    println!("      Feature-gated KeeperHub execution status and signed status artifact.");
 }
 
 fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
@@ -449,6 +790,286 @@ fn run_artifact_inspect(args: &[&str]) -> Result<(), String> {
                 .unwrap_or_else(|error| format!("<failed to serialize summary: {error}>"))
         );
     }
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_ens_verify(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_identity_ens::{
+        default_text_keys, resolution_artifact, verification_artifact, verify_resolution,
+        EnsVerificationExpectation, LiveEnsResolver,
+    };
+    use std::collections::BTreeMap;
+
+    let agent = AgentId(require_kv(args, "--agent")?.to_string());
+    let ens_name = require_kv(args, "--ens")?;
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let expected_address = parse_kv(args, "--expect-address").map(str::to_string);
+    let expected_axl_peer_id = parse_kv(args, "--expect-axl-peer-id").map(str::to_string);
+    let expected_head_artifact_cid = parse_kv(args, "--expect-head-cid").map(str::to_string);
+    let mut required_text_records = BTreeMap::new();
+    for spec in parse_all_kv(args, "--expect-text") {
+        let (key, value) = spec
+            .split_once('=')
+            .ok_or_else(|| format!("--expect-text must be key=value, got {spec:?}"))?;
+        required_text_records.insert(key.to_string(), value.to_string());
+    }
+    let mut text_keys = default_text_keys();
+    for key in required_text_records.keys() {
+        if !text_keys.iter().any(|candidate| candidate == key) {
+            text_keys.push(key.clone());
+        }
+    }
+    for key in parse_all_kv(args, "--text-key") {
+        if !text_keys.iter().any(|candidate| candidate == key) {
+            text_keys.push(key.to_string());
+        }
+    }
+
+    let resolver = LiveEnsResolver::from_env().map_err(|error| error.to_string())?;
+    let resolution = resolver
+        .resolve(agent.clone(), ens_name, &text_keys, created_at_unix)
+        .map_err(|error| error.to_string())?;
+    let expectation = EnsVerificationExpectation {
+        agent,
+        ens_name: ens_name.to_string(),
+        expected_address,
+        expected_axl_peer_id,
+        expected_head_artifact_cid,
+        required_text_records,
+    };
+    let report = verify_resolution(&expectation, &resolution);
+    let signer = NodeProfile::dev_signer_from_seed_label("live:ens");
+    let resolution_artifact = resolution_artifact(&resolution, &signer, created_at_unix)
+        .map_err(|error| error.to_string())?;
+    let verification_artifact = verification_artifact(
+        &report,
+        &signer,
+        Some(resolution_artifact.id.clone()),
+        created_at_unix + 1,
+    )
+    .map_err(|error| error.to_string())?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "resolution": resolution,
+            "verification": report,
+            "artifacts": [resolution_artifact, verification_artifact],
+        }))
+        .map_err(|error| format!("serialize: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_ens_publish(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_identity_ens::{
+        default_text_keys, publication_artifact, resolution_artifact, verification_artifact,
+        verify_resolution, EnsPublication, EnsPublisherCommandConfig, ENS_PUBLISHER_COMMAND_ENV,
+    };
+
+    let agent = AgentId(require_kv(args, "--agent")?.to_string());
+    let ens_name = require_kv(args, "--ens")?.to_string();
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let dry_run = args.iter().any(|arg| *arg == "--dry-run");
+    let allow_mainnet = args.iter().any(|arg| *arg == "--allow-mainnet");
+    let skip_verify = args.iter().any(|arg| *arg == "--no-verify");
+    let mut record_specs: Vec<(String, String)> = Vec::new();
+    for spec in parse_all_kv(args, "--record") {
+        let (key, value) = spec
+            .split_once('=')
+            .ok_or_else(|| format!("--record must be key=value, got {spec:?}"))?;
+        record_specs.push((key.to_string(), value.to_string()));
+    }
+    if record_specs.is_empty() {
+        return Err("at least one --record key=value is required".to_string());
+    }
+
+    let publisher = EnsPublisherCommandConfig::from_env()
+        .map_err(|error| format!("{ENS_PUBLISHER_COMMAND_ENV} not configured: {error}"))?;
+    let publication: EnsPublication = publisher
+        .invoke(&ens_name, &record_specs, dry_run, allow_mainnet)
+        .map_err(|error| format!("ens publisher failed: {error}"))?;
+
+    let signer = NodeProfile::dev_signer_from_seed_label("live:ens-publish");
+    let publication_art =
+        publication_artifact(&publication, agent.clone(), &signer, created_at_unix)
+            .map_err(|error| format!("sign publication artifact: {error}"))?;
+
+    let mut artifacts = vec![publication_art.clone()];
+    let mut resolution_artifact_opt = None;
+    let mut verification_artifact_opt = None;
+    if !skip_verify {
+        let resolver =
+            chimiaclaw_identity_ens::LiveEnsResolver::from_env().map_err(|e| e.to_string())?;
+        let mut text_keys = default_text_keys();
+        for (key, _) in &record_specs {
+            if !text_keys.iter().any(|candidate| candidate == key) {
+                text_keys.push(key.clone());
+            }
+        }
+        let resolution = resolver
+            .resolve(agent.clone(), &ens_name, &text_keys, created_at_unix + 1)
+            .map_err(|error| format!("live ens resolve: {error}"))?;
+        let resolution_art = resolution_artifact(&resolution, &signer, created_at_unix + 2)
+            .map_err(|error| format!("sign resolution artifact: {error}"))?;
+        let expectation = publication.verification_expectation(agent.clone());
+        let report = verify_resolution(&expectation, &resolution);
+        let verification_art = verification_artifact(
+            &report,
+            &signer,
+            Some(resolution_art.id.clone()),
+            created_at_unix + 3,
+        )
+        .map_err(|error| format!("sign verification artifact: {error}"))?;
+        resolution_artifact_opt = Some(resolution_art.clone());
+        verification_artifact_opt = Some(verification_art.clone());
+        artifacts.push(resolution_art);
+        artifacts.push(verification_art);
+    }
+
+    if let Some(dir) = out_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+        for artifact in &artifacts {
+            let stem = artifact
+                .schema_tags
+                .iter()
+                .next()
+                .map(|tag| tag.0.replace('.', "_"))
+                .unwrap_or_else(|| "artifact".to_string());
+            let path = dir.join(format!("{stem}.{}.json", artifact.id.0));
+            let serialized = serde_json::to_string_pretty(artifact)
+                .map_err(|error| format!("serialize artifact: {error}"))?;
+            std::fs::write(&path, serialized)
+                .map_err(|error| format!("write {}: {error}", path.display()))?;
+        }
+    }
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "publication": publication,
+            "publication_artifact": publication_art,
+            "resolution_artifact": resolution_artifact_opt,
+            "verification_artifact": verification_artifact_opt,
+            "out_dir": out_dir.as_ref().map(|p| p.display().to_string()),
+        }))
+        .map_err(|error| format!("serialize report: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_zerog_anchor(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_storage_0g::{upload_anchor_artifact, ZeroGCommandUploader};
+    use std::fs;
+
+    let source_artifact_json = PathBuf::from(require_kv(args, "--source-artifact-json")?);
+    let payload_file = PathBuf::from(require_kv(args, "--payload-file")?);
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("storage.zerog.operator.chimiaclaw.eth")
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let source: chimiaclaw_artifact::Artifact = serde_json::from_str(
+        &fs::read_to_string(&source_artifact_json)
+            .map_err(|error| format!("read source artifact json: {error}"))?,
+    )
+    .map_err(|error| format!("parse source artifact json: {error}"))?;
+    source
+        .verify()
+        .map_err(|error| format!("source artifact verification failed: {error:?}"))?;
+    let uploader = ZeroGCommandUploader::from_env().map_err(|error| error.to_string())?;
+    let receipt = uploader
+        .upload_file(&payload_file, created_at_unix)
+        .map_err(|error| error.to_string())?;
+    let signer = NodeProfile::dev_signer_from_seed_label("live:zerog");
+    let anchor = upload_anchor_artifact(&source, receipt, agent, &signer, created_at_unix + 1)
+        .map_err(|error| error.to_string())?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&anchor).map_err(|error| format!("serialize: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_keeperhub_schedule(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_exec_keeperhub::{scheduled_artifact, KeeperHubClient};
+
+    let workflow_id = require_kv(args, "--workflow-id")?;
+    let input = parse_kv(args, "--input-json").unwrap_or("{}");
+    let input: serde_json::Value =
+        serde_json::from_str(input).map_err(|error| format!("invalid --input-json: {error}"))?;
+    let parent_artifact_id =
+        parse_kv(args, "--parent-artifact-id").map(|id| ArtifactId(id.to_string()));
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("keeperhub.operator.chimiaclaw.eth")
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let client = KeeperHubClient::from_env().map_err(|error| error.to_string())?;
+    let scheduled = client
+        .execute_workflow(workflow_id, input, created_at_unix)
+        .map_err(|error| error.to_string())?;
+    let signer = NodeProfile::dev_signer_from_seed_label("live:keeperhub");
+    let artifact = scheduled_artifact(
+        &scheduled,
+        parent_artifact_id,
+        agent,
+        &signer,
+        created_at_unix + 1,
+    )
+    .map_err(|error| error.to_string())?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "scheduled": scheduled,
+            "artifact": artifact,
+        }))
+        .map_err(|error| format!("serialize: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_keeperhub_status(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_exec_keeperhub::{status_artifact, KeeperHubClient};
+
+    let execution_id = require_kv(args, "--execution-id")?;
+    let scheduled_artifact_id =
+        parse_kv(args, "--scheduled-artifact-id").map(|id| ArtifactId(id.to_string()));
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("keeperhub.operator.chimiaclaw.eth")
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let client = KeeperHubClient::from_env().map_err(|error| error.to_string())?;
+    let status = client
+        .execution_status(execution_id, created_at_unix)
+        .map_err(|error| error.to_string())?;
+    let signer = NodeProfile::dev_signer_from_seed_label("live:keeperhub");
+    let artifact = status_artifact(
+        &status,
+        scheduled_artifact_id,
+        agent,
+        &signer,
+        created_at_unix + 1,
+    )
+    .map_err(|error| error.to_string())?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "status": status,
+            "artifact": artifact,
+        }))
+        .map_err(|error| format!("serialize: {error}"))?
+    );
     Ok(())
 }
 

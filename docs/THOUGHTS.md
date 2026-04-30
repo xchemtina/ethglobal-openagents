@@ -77,3 +77,26 @@ The submission video should show lineage more than code:
 - emphasize deterministic verification
 
 The story: ChimiaDAO can run scientific work as auditable, composable, signed computation.
+## MolADT geometry tiers and what they're worth
+The tiered geometry story is now concrete and visible at `demo/molecules/`:
+- the curated library is hand-built schematic geometry, perfect for visualization and connectivity sanity, useless for energies;
+- `chimiaclaw_moladt::geometry::guess_coordinates` is a covalent-radii BFS embed plus a few spring iterations — still schematic, but enough to surface obvious connectivity bugs in seconds;
+- `rdkit-etkdgv3-mmff94` is a real conformer + force-field optimization that costs RDKit but produces something a DFT worker can re-optimize from cheaply.
+The key honesty pressure is to keep `provenance.source_kind` truthful at every tier so downstream agents (and human reviewers) cannot accidentally treat a schematic as a DFT-ready geometry.
+## ASKCOS / retrosynthesis pressure
+The ChimiaClaw `askcos-retro` worker is intentionally minimal: one `template-relevance` POST per template set, no tree expansion, no in-stock filtering, no caching. The next pressure points are:
+- expand from template relevance to the full ASKCOS tree-expansion endpoint so we get multi-step routes, not single-step precursor candidates;
+- add an in-stock filter (eMolecules / ChemSpace / Sigma-Aldrich) so route proposals are filtered to commercially-available reagents before they reach `apps/retroquoter`;
+- ✅ a content-hashed disk cache (`~/.cache/chimiaclaw/askcos` by default) deduplicates identical `(endpoint, target_smiles, sorted_template_sets, top_k)` requests; the signed artifact now carries an `AskcosCacheRecord { hit, key, path }` so consumers can tell at a glance whether a given suggestion was served fresh or replayed;
+- keep refusing to fabricate routes when the endpoint isn't configured — the previous ScienceClaw scraper fallback is the wrong shape for a signed graph.
+A real downstream test is: feed the ASKCOS suggestion artifact into `apps/retroquoter` and confirm that the route quote, the procurement receipt, the safety gate, and the eventual MolADT artifacts all chain back to a single signed retrosynthesis root.
+## Worker pressure more generally
+Every worker boundary should pass the same five questions D7 / THOUGHTS pose for integrations: input artifact, output artifact, schema tag, signature/capability, parent lineage. The MolADT worker passes by signing `chem.molecule.adt`; the ASKCOS worker passes by signing `chem.retrosynth.template_suggestions`; the ENS publisher passes by signing `identity.ens.publication`; the 0G uploader passes by signing `storage.zerog.upload`. The future Skala/PySCF DFT worker has to pass the same way — it consumes a `chem.dft.request`, emits a `chem.dft.result`, signs both.
+## Stub-mode integrations as a CI/demo affordance
+The 0G uploader's `ZEROG_STUB=1` mode is the right shape for any sponsor adapter whose real path needs a heavy external binary or paid network. Three properties matter:
+- the receipt is **deterministic** — same file in, same root_hash and tx_hash out — so tests and demos are reproducible without hitting the network;
+- the receipt is **clearly labelled** — `audit_notes` explicitly says STUB MODE, and `provenance.source_kind` reflects the stub path, so a downstream reviewer cannot mistake it for a real on-chain anchor;
+- the boundary is **flip-by-env** — installing `0g-storage-client` and unsetting `ZEROG_STUB` switches to real upload with zero code change.
+This pattern should generalize: future Uniswap quoting, AXL transit, and on-chain anchoring should all expose a stub tier so CI is honest and operator-credentialed paths are an env-var away.
+## Write-side ENS: keep the key out of Rust, out of argv
+ENS publication is the first write-side adapter we shipped. The pressure that drove its design is keeping the controller key off argv and out of any Rust process: the key reaches `web3.py` only via `ENS_WRITE_PRIVATE_KEY`, the worker refuses mainnet without `--allow-mainnet`, and idempotent skip-if-equal means re-running the publisher cannot churn the registry. The Rust adapter only consumes the worker's JSON output. This boundary should stay even if we later add a native Rust ENS client — the operator surface is what makes the audit story credible.

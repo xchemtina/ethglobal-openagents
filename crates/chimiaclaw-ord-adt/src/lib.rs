@@ -14,6 +14,12 @@ use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub mod moladt;
+pub use moladt::{
+    translate_reaction, OrdMoladtTranslation, OrdSubstrateRole, ResolvedSubstrate, SkipReason,
+    SkippedSubstrate,
+};
+
 pub const ORD_REACTION_TAG: &str = "chem.ord.reaction";
 pub const ADT_REACTION_TAG: &str = "chem.adt.reaction";
 pub const ORD_TO_ADT_SKILL: &str = "chem.ord.to_adt.v1";

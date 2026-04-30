@@ -6,9 +6,15 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = []
+live = ["dep:serde_json"]
+
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", optional = true }
 
 [lints]
 workspace = true

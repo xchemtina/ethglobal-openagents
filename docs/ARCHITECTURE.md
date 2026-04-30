@@ -35,6 +35,7 @@ flowchart TB
 flowchart LR
     Profile[ENS-shaped provider profile] --> Offer[Service offer]
     Offer --> Request[Service request]
+    Molecule[MolADT molecule artifact] --> Request
     Request --> Quote[Service quote]
     Quote --> Acceptance[Quote acceptance]
     Acceptance --> Escrow[Simulated escrow authorization]
@@ -48,6 +49,19 @@ flowchart LR
 ```
 
 The deterministic CLI fixture covers retrosynthesis, DFT, and literature. `operator.chimiaclaw.eth` pays the ENS-shaped service agent for a bounded scientific service quote, but the current implementation is non-custodial: it records acceptance, simulated escrow authorization, result acknowledgement, simulated release, and full-refund policy as signed artifacts. Sponsor integrations have explicit attachment points, but the current fixture does not resolve live ENS records, send AXL traffic, write to 0G, call Uniswap, schedule KeeperHub, or move funds.
+
+## MolADT-as-canonical DFT substrate
+
+The DFT branch of the market spine uses `chimiaclaw-moladt` as its source of truth instead of raw SMILES. The `chimiaclaw-moladt` crate mirrors a portable subset of the adjacent Haskell `MolADT-Bayes` molecule representation (atoms, coordinates, formal charges, sigma bonds, Dietz bonding systems, provenance, and projection hints) without vendoring its source. The canonical artifact format is JSON so Rust, Haskell, Python, and remote DFT workers can agree on the same signed payload bytes.
+
+A DFT request now carries:
+
+- a `chem.molecule.adt` molecule artifact with payload-bound canonical bytes;
+- a `DftMoleculeRef` inside the service request that names the molecule artifact id and its `payload.hash`;
+- a `DftMethodSpec` (functional, basis, backend, dispersion, grid level) that the worker boundary translates into PySCF/GPU4PySCF/ASE invocations;
+- the `chem.molecule.adt` artifact as an explicit parent of the `chem.dft.service_request` artifact, so verifiers can re-derive the molecule from the DAG.
+
+`MoleculeAdt::to_xyz` and `MoleculeAdt::to_pyscf_atom_block` are the deterministic projections used to drive the future Skala/PySCF worker; SMILES becomes a derived projection rather than the canonical input. `cargo run -p chimiaclaw-cli -- moladt-dft-demo` is the minimal hand-off surface for that worker boundary.
 
 ## Artifact DAG invariants
 

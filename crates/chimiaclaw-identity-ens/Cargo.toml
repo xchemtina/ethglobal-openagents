@@ -6,9 +6,18 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = []
+live = ["dep:hex", "dep:reqwest", "dep:sha3"]
+
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
+hex = { version = "0.4", optional = true }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"], optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha3 = { version = "0.10", optional = true }
 
 [lints]
 workspace = true

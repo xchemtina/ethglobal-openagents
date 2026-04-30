@@ -6,8 +6,8 @@ Rust-native scaffold for autonomous scientific agents, signed payload-bound arti
 
 ## Maturity at a glance
 
-- **Implemented and tested:** `chimiaclaw-artifact` (signed artifacts with `PayloadRef` binding, file-backed store), `chimiaclaw-ord-adt` (ORD/ORD-like to ADT translator + `OrdToAdtSkill`), `chimiaclaw-market` (deterministic signed science service transactions for DFT, retrosynthesis, and literature, including quote acceptance, escrow authorization, result acknowledgement, simulated release, and refund policy artifacts), `apps/retroquoter` (route → quote → procured receipt + `RouteQuoteSkill`), `chimiaclaw-node` minimal local polling runtime, CLI `demo-dag`, `demo-ord-adt`, `science-market-demo`, `node seed-ord`, `node seed-route`, `node run-once`, `node run`, and `artifact inspect` flows, Foundry scaffold tests.
-- **Scaffolded (intentional placeholders, no autonomous behavior):** `chimiaclaw-skill` registry only, `chimiaclaw-reactor`, `chimiaclaw-optimization`, `chimiaclaw-governance`, `chimiaclaw-mutator`, all `chimiaclaw-storage-0g` / `transport-axl` / `identity-ens` / `inft` / `onchain-pox` / `settle-uniswap` / `exec-keeperhub` / `semantic-rdf` adapters, live DFT execution in `apps/dft-daemon`, `apps/marchev-mssp`.
+- **Implemented and tested:** `chimiaclaw-artifact` (signed artifacts with `PayloadRef` binding, file-backed store), `chimiaclaw-moladt` (portable Molecular ADT, validation, XYZ/PySCF projections, signed `chem.molecule.adt` and `chem.dft.request` artifacts, curated SMILES→MoleculeAdt library), `chimiaclaw-ord-adt` (ORD/ORD-like to ADT translator + `OrdToAdtSkill` plus an ORD→MolADT bridge that explicitly skips multi-component salts and metal complexes), `chimiaclaw-market` (deterministic signed science service transactions for DFT, retrosynthesis, and literature, including a MolADT-backed DFT molecule artifact parented to the service request and the full quote acceptance, escrow authorization, result acknowledgement, simulated release, and refund policy artifacts), feature-gated ENS/0G/KeeperHub adapter surfaces (`identity.ens.*`, `storage.zerog.upload`, `exec.keeperhub.*` artifacts), `apps/retroquoter` (route → quote → procured receipt + `RouteQuoteSkill`), `chimiaclaw-node` minimal local polling runtime, CLI `demo-dag`, `demo-ord-adt`, `science-market-demo`, `moladt-dft-demo`, `ord-moladt-demo`, `node seed-ord`, `node seed-route`, `node run-once`, `node run`, `artifact inspect`, and `live ...` flows, Foundry scaffold tests.
+- **Scaffolded (intentional placeholders, no autonomous behavior):** `chimiaclaw-skill` registry only, `chimiaclaw-reactor`, `chimiaclaw-optimization`, `chimiaclaw-governance`, `chimiaclaw-mutator`, `chimiaclaw-transport-axl` / `inft` / `onchain-pox` / `settle-uniswap` / `semantic-rdf` adapters, live DFT execution in `apps/dft-daemon`, `apps/marchev-mssp`.
 - **Design-only (described, not built):** direct `chimiaclaw-node` daemon binary, cross-machine consensus, governance execution, on-chain anchoring, MSSP/cybernetic Marchev stack, World Avatar RDF projection, real procurement APIs.
 
 When this README says "DAO substrate" or "reference swarm", read it as direction, not present capability.
@@ -17,7 +17,7 @@ When this README says "DAO substrate" or "reference swarm", read it as direction
 This is an OpenAgents hackathon scaffold for what may eventually become the first practical ChimiaDAO agent runtime:
 
 - A Rust workspace whose **only** currently-implemented agent surfaces are the artifact substrate, a local file-backed polling loop, two deterministic skill flows (procurement, ORD→ADT), and deterministic science service transaction fixtures.
-- Placeholder crates for skills, reactor, optimization, governance, mutator, node, and the various adapters (0G, AXL, ENS, iNFT, PoX, Uniswap, KeeperHub, RDF).
+- Placeholder crates for skills, reactor, optimization, governance, mutator, node, and the still-shape-only adapters (AXL, iNFT, PoX, Uniswap, RDF), plus feature-gated ENS, 0G, and KeeperHub adapter surfaces.
 - A working payload-bound signed artifact DAG smoke demo: route proposal → quote → procured receipt, where each artifact commits to its canonical payload digest.
 - A working ORD→ADT bridge: ORD-like or official ORD JSON → minimal ADT experiment → signed child artifact.
 - A working local science transaction fixture: ENS-shaped provider profile → service offer → request → quote → quote acceptance → simulated escrow authorization → operator-confirmation-required settlement intent → result → result acknowledgement → simulated release, for DFT, retrosynthesis, and literature.
@@ -49,6 +49,7 @@ The artifact DAG is the canonical state. On-chain contracts anchor high-value ro
 - `crates/chimiaclaw-optimization`: population, fitness, crossover, tournament, and switcher traits.
 - `crates/chimiaclaw-governance`: proposal/vote/execution artifact types.
 - `crates/chimiaclaw-market`: science service market primitives and deterministic signed DFT/retrosynthesis/literature transaction fixtures.
+- `crates/chimiaclaw-moladt`: portable Molecular ADT (mirrored from `MolADT-Bayes`) used as the canonical molecule substrate for DFT requests, with validation, XYZ/PySCF projections, and signed `chem.molecule.adt` / `chem.dft.request` artifacts.
 - `crates/chimiaclaw-ord-adt`: ORD/ORD-like reaction JSON to ADT translation.
 - `crates/chimiaclaw-node`: minimal local runtime over the file-backed artifact store; the direct daemon binary is still scaffolded.
 - `crates/chimiaclaw-cli`: operator/developer CLI entrypoint.
@@ -86,7 +87,88 @@ Print the deterministic science service market transaction bundle:
 cargo run -p chimiaclaw-cli -- science-market-demo
 ```
 
-This emits three signed payload-bound artifact chains for ENS-shaped DFT, retrosynthesis, and literature providers. Each chain includes the economic settlement lifecycle: the operator accepts the quote, authorizes a simulated artifact-ledger escrow, receives the result, acknowledges it, and emits a simulated release to the provider. It does not resolve live ENS records, send AXL traffic, store payloads on 0G, request live Uniswap quotes, schedule KeeperHub jobs, or move funds.
+This emits three signed payload-bound artifact chains for ENS-shaped DFT, retrosynthesis, and literature providers. The DFT chain now uses a canonical MolADT molecule artifact (`chem.molecule.adt`) as an explicit parent of the service request, replacing raw SMILES as the source of truth, and the request input carries a `DftMoleculeRef` bound to the molecule artifact id and payload hash. Each chain includes the economic settlement lifecycle: the operator accepts the quote, authorizes a simulated artifact-ledger escrow, receives the result, acknowledges it, and emits a simulated release to the provider. It does not resolve live ENS records, send AXL traffic, store payloads on 0G, request live Uniswap quotes, schedule KeeperHub jobs, or move funds.
+
+Print a standalone signed MolADT molecule and DFT request:
+
+```sh
+cargo run -p chimiaclaw-cli -- moladt-dft-demo
+```
+
+This emits a deterministic ferrocene `MoleculeAdt`, its XYZ and PySCF atom-block projections, the signed `chem.molecule.adt` artifact, and a signed `chem.dft.request` artifact whose method is the deep-learned Skala 1.1 functional with a `def2-tzvp` basis and a `CHIMIACLAW_DFT_COMMAND` worker hint. It is the canonical hand-off shape for the future Skala/PySCF DFT worker on `duck@olympus.local`.
+
+Translate every substrate of an ORD reaction into signed MolADT artifacts:
+
+```sh
+cargo run -p chimiaclaw-cli -- ord-moladt-demo
+cargo run -p chimiaclaw-cli -- ord-moladt-demo --official-ord-json /path/to/reaction.json
+cargo run -p chimiaclaw-cli -- ord-moladt-demo --output-dir /tmp/ord-moladt
+```
+
+Without flags, this resolves the demo Suzuki ORD-like reaction's substrates against the curated `chimiaclaw-moladt` library (water, bromobenzene, phenylboronic acid, biphenyl, toluene, methanol, ethanol, acetic acid, ammonia, benzene), emits one signed `chem.molecule.adt` artifact per resolved substrate, and reports the rest in `skipped[]` with an explicit reason (`NotInLibrary` or `UnsafeForDirectDft`). Multi-component salts and transition-metal complexes are flagged rather than mis-translated, so the wrapper boundary for a real Skala/PySCF DFT worker can refuse them or route them through an external geometry pre-pass. With `--output-dir`, the command also writes one `.xyz` (deterministic XYZ block from `MoleculeAdt::write_xyz_to`) and one `.svg` (pure-Rust CPK depiction from `chimiaclaw_moladt::render`) per resolved substrate so they can be inspected visually before being handed to a DFT or rendering downstream.
+
+Render any curated MolADT (or any SMILES the worker can resolve) directly:
+
+```sh
+cargo run -p chimiaclaw-cli -- moladt-render --library ferrocene --xyz /tmp/ferrocene.xyz --svg /tmp/ferrocene.svg
+cargo run -p chimiaclaw-cli -- moladt-render --smiles 'Cc1ccccc1' --svg /tmp/toluene.svg
+```
+
+`moladt-render` resolves a curated library entry by name (`water`, `ammonia`, `methanol`, `ethanol`, `acetic-acid`, `benzene`, `toluene`, `bromobenzene`, `phenylboronic-acid`, `biphenyl`, `ferrocene`) or, with `--smiles`, falls through the curated library to the optional external SMILES worker (see below); it then writes XYZ and a pure-Rust SVG to disk and prints a JSON summary. There is also a pure-Rust covalent-radii geometry guesser at `chimiaclaw_moladt::geometry::guess_coordinates` for connectivity-only molecules that need a quick sanity-check geometry without an external chemistry stack.
+
+A pre-rendered gallery of every curated entry plus seven worker-tier targets (benzaldehyde, aspirin, salicylic acid, pyridine, methylamine, imidazole, acetone) lives in `demo/molecules/` so the curated vs. RDKit-tier story is visible without running anything; see `demo/molecules/README.md`. The RDKit round-trip has been verified end to end: `O=Cc1ccccc1` produces a 14-atom MolADT with `provenance.source_kind = "rdkit-etkdgv3-mmff94"`.
+
+## Worker boundaries (uv-managed, no Docker)
+
+Two external Python skills attach behind environment-variable boundaries; both live under `skills/scienceclaw-port/workers/` and are intentionally fresh re-implementations of the upstream ScienceClaw skills (not literal vendoring).
+
+SMILES → MolADT (RDKit ETKDGv3 + MMFF94, UFF fallback):
+
+```sh
+export CHIMIACLAW_SMILES_TO_MOLADT_COMMAND="uvx --from skills/scienceclaw-port/workers/cheminformatics rdkit-smiles-to-moladt"
+cargo run -p chimiaclaw-cli -- moladt-render --smiles 'O=Cc1ccccc1' --xyz /tmp/benzaldehyde.xyz --svg /tmp/benzaldehyde.svg
+```
+
+ASKCOS retrosynthesis template-relevance (user-managed endpoint, no Docker fallback, no scraper):
+
+```sh
+export CHIMIACLAW_ASKCOS_ENDPOINT="http://duck.olympus.local:9410"
+export CHIMIACLAW_ASKCOS_COMMAND="uvx --from skills/scienceclaw-port/workers/retrosynth askcos-retro"
+# Optional cache override; defaults to ~/.cache/chimiaclaw/askcos.
+export CHIMIACLAW_ASKCOS_CACHE_DIR="$HOME/.cache/chimiaclaw/askcos"
+```
+
+The Rust crate `chimiaclaw-retrosynth-askcos` runs that worker and signs the response as a `chem.retrosynth.template_suggestions` artifact, which `apps/retroquoter` can then attach as the parent of its existing route-quote artifacts. The crate refuses to invoke ASKCOS unless the env var is configured, and rejects empty/wrongly-tagged worker output rather than fabricating routes. The worker also carries a content-hashed disk cache (see `skills/scienceclaw-port/workers/retrosynth/README.md`); cache hits are recorded in the signed artifact via the optional `AskcosCacheRecord` field.
+
+ENS write-side publication (web3.py + ens.set_text, idempotent, mainnet-refusing):
+
+```sh
+export CHIMIACLAW_ENS_PUBLISH_COMMAND="uv run --project skills/scienceclaw-port/workers/identity-ens ens-publish-text-records"
+export ENS_WRITE_RPC_URL="https://sepolia.infura.io/v3/..."
+export ENS_WRITE_PRIVATE_KEY="0x..."  # never passed on argv
+```
+
+The worker reads the private key from the environment, refuses chain id 1 unless `--allow-mainnet` is set, refuses to publish if the configured account is not the registry owner, and skips records whose current value already matches (idempotent re-runs). The Rust crate `chimiaclaw-identity-ens` consumes the worker output and signs an `identity.ens.publication` artifact, optionally chained with the existing read-side resolver + verifier into a three-artifact round-trip via `live ens-publish` (see `demo/ens-roundtrip.sh`).
+
+0G upload wrapper (real binary or deterministic stub):
+
+```sh
+export ZEROG_UPLOAD_COMMAND="uv run --project skills/scienceclaw-port/workers/storage-0g zerog-upload"
+export ZEROG_PRIVATE_KEY="0x..."
+# Optional stub mode for CI/demos: skips network and emits a Blake2b-hashed receipt
+export ZEROG_STUB=1
+```
+
+The worker shells out to `${ZEROG_BINARY:-0g-storage-client}` for the real upload and parses root/tx hashes from its stdout. With `ZEROG_STUB=1` it skips the network entirely, hashes the file with Blake2b-32, and emits a deterministic receipt with explicit `STUB MODE` audit notes — useful for CI and demos without ever silently impersonating a real on-chain anchor. End-to-end stub run: `demo/zerog-roundtrip.sh`.
+
+KeeperHub workflow runbook (no Python worker; existing Rust REST client):
+
+```sh
+export KEEPERHUB_API_KEY="..."
+export KEEPERHUB_BASE_URL="https://app.keeperhub.io"
+```
+
+`demo/keeperhub/workflow.json` is a reference manual-trigger workflow that takes `artifact_id`, `payload_hash`, and `mode` as inputs and emits a log step plus a zero-value transaction step. `demo/keeperhub/README.md` is the operator runbook for registering it and chaining DFT request → KeeperHub schedule → 0G anchor through `live keeperhub-schedule` and `live keeperhub-status`.
 
 Serve the static lab-swarm map:
 
@@ -124,12 +206,29 @@ keeps polling until interrupted. Repeated cycles are idempotent: once a parent
 artifact already has a child produced by a given skill, later cycles skip it
 instead of creating timestamp-only duplicates.
 
+## Live sponsor adapters
+
+The first ENS, 0G Storage, and KeeperHub surfaces are implemented behind the
+`live-sponsors` feature flag. The default commands above remain offline and
+deterministic.
+
+```sh
+cargo run -p chimiaclaw-cli --features live-sponsors -- live ens-verify --agent dft.service.chimiaclaw.eth --ens dft.service.chimiaclaw.eth
+cargo run -p chimiaclaw-cli --features live-sponsors -- live zerog-anchor --source-artifact-json /tmp/source-artifact.json --payload-file /tmp/payload.json
+cargo run -p chimiaclaw-cli --features live-sponsors -- live keeperhub-schedule --workflow-id wf_... --input-json '{"artifact_id":"art_demo"}'
+```
+
+See `docs/speedrun/INTEGRATIONS.md` for required environment variables,
+testnet assumptions, and the 0G wrapper boundary that keeps private keys out of
+process arguments.
+
 ## Validate
 
 ```sh
 cargo fmt --all -- --check
 cargo check --workspace
 cargo test --workspace
+cargo check --workspace --all-features
 forge test --root contracts
 ```
 
