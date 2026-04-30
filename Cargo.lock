@@ -122,6 +122,7 @@ name = "chimiaclaw-cli"
 version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
+ "chimiaclaw-dft-skala",
  "chimiaclaw-exec-keeperhub",
  "chimiaclaw-governance",
  "chimiaclaw-identity-ens",
@@ -132,6 +133,17 @@ dependencies = [
  "chimiaclaw-schema",
  "chimiaclaw-storage-0g",
  "retroquoter",
+ "serde_json",
+]
+
+[[package]]
+name = "chimiaclaw-dft-skala"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-moladt",
+ "chimiaclaw-schema",
+ "serde",
  "serde_json",
 ]
 

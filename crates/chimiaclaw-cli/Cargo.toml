@@ -9,9 +9,11 @@ authors.workspace = true
 [features]
 default = []
 live-sponsors = [
+  "dep:chimiaclaw-dft-skala",
   "dep:chimiaclaw-exec-keeperhub",
   "dep:chimiaclaw-identity-ens",
   "dep:chimiaclaw-storage-0g",
+  "chimiaclaw-dft-skala/live",
   "chimiaclaw-exec-keeperhub/live",
   "chimiaclaw-identity-ens/live",
   "chimiaclaw-storage-0g/live",
@@ -19,6 +21,7 @@ live-sponsors = [
 
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
+chimiaclaw-dft-skala = { path = "../chimiaclaw-dft-skala", optional = true }
 chimiaclaw-exec-keeperhub = { path = "../chimiaclaw-exec-keeperhub", optional = true }
 chimiaclaw-governance = { path = "../chimiaclaw-governance" }
 chimiaclaw-identity-ens = { path = "../chimiaclaw-identity-ens", optional = true }

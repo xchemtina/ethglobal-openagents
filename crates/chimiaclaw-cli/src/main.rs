@@ -146,6 +146,14 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "dft-execute", rest @ ..] => match run_live_dft_execute(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live dft-execute failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         _ => {
             print_help();
             ExitCode::SUCCESS
@@ -508,6 +516,8 @@ fn print_help() {
         "  chimiaclaw-cli live keeperhub-status --execution-id <id> [--scheduled-artifact-id <id>]"
     );
     println!("      Feature-gated KeeperHub execution status and signed status artifact.");
+    println!("  chimiaclaw-cli live dft-execute --request-artifact-json <path> [--out-dir <dir>] [--agent <id>] [--dry-run]");
+    println!("      Pipe a signed chem.dft.request artifact to CHIMIACLAW_DFT_COMMAND, sign the chem.dft.result, save both.");
 }
 
 fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
@@ -1032,6 +1042,106 @@ fn run_live_keeperhub_schedule(args: &[&str]) -> Result<(), String> {
             "artifact": artifact,
         }))
         .map_err(|error| format!("serialize: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_dft_skala::{
+        dft_result_artifact, DftWorkerCommandConfig, DFT_WORKER_COMMAND_ENV,
+    };
+    use chimiaclaw_moladt::DftRequest;
+    use std::fs;
+
+    let request_artifact_json = PathBuf::from(require_kv(args, "--request-artifact-json")?);
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("dft.worker.chimiaclaw.eth")
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let dry_run = args.iter().any(|arg| *arg == "--dry-run");
+
+    let body = fs::read_to_string(&request_artifact_json)
+        .map_err(|error| format!("read request artifact json: {error}"))?;
+    let request_artifact: chimiaclaw_artifact::Artifact =
+        serde_json::from_str(&body).map_err(|error| format!("parse request artifact: {error}"))?;
+    request_artifact
+        .verify()
+        .map_err(|error| format!("request artifact verification failed: {error:?}"))?;
+    let payload = request_artifact
+        .payload
+        .as_ref()
+        .ok_or_else(|| "request artifact has no inline payload".to_string())?;
+    let bytes = payload
+        .inline_bytes()
+        .map_err(|error| format!("decode payload bytes: {error:?}"))?
+        .ok_or_else(|| "request artifact payload must be inline (not external)".to_string())?;
+    let request: DftRequest = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse chem.dft.request payload: {error}"))?;
+
+    if dry_run {
+        let report = serde_json::json!({
+            "dry_run": true,
+            "would_invoke": DFT_WORKER_COMMAND_ENV,
+            "request": request,
+            "request_artifact_id": request_artifact.id.0,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report)
+                .map_err(|error| format!("serialize dry-run report: {error}"))?
+        );
+        return Ok(());
+    }
+
+    let worker = DftWorkerCommandConfig::from_env()
+        .map_err(|error| format!("{DFT_WORKER_COMMAND_ENV} not configured: {error}"))?;
+    let result = worker
+        .invoke(&request)
+        .map_err(|error| format!("dft worker failed: {error}"))?;
+    let signer = NodeProfile::dev_signer_from_seed_label("live:dft-skala");
+    let result_art = dft_result_artifact(
+        &result,
+        request_artifact.id.clone(),
+        agent,
+        &signer,
+        created_at_unix,
+    )
+    .map_err(|error| format!("sign dft result artifact: {error}"))?;
+
+    if let Some(dir) = out_dir.as_ref() {
+        fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+        let request_path = dir.join(format!("chem_dft_request.{}.json", request_artifact.id.0));
+        let result_path = dir.join(format!("chem_dft_result.{}.json", result_art.id.0));
+        fs::write(
+            &request_path,
+            serde_json::to_string_pretty(&request_artifact)
+                .map_err(|error| format!("serialize request artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", request_path.display()))?;
+        fs::write(
+            &result_path,
+            serde_json::to_string_pretty(&result_art)
+                .map_err(|error| format!("serialize result artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", result_path.display()))?;
+    }
+
+    let report = serde_json::json!({
+        "summary": result.one_line_summary(),
+        "result": result,
+        "result_artifact": result_art,
+        "request_artifact_id": request_artifact.id.0,
+        "out_dir": out_dir.as_ref().map(|p| p.display().to_string()),
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize dft execute report: {error}"))?
     );
     Ok(())
 }

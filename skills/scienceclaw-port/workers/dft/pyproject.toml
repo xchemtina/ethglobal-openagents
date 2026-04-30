@@ -1,0 +1,29 @@
+[project]
+name = "chimiaclaw-dft"
+version = "0.1.0"
+description = "ChimiaClaw DFT worker (PySCF + Skala 1.1) — stdin JSON → stdout JSON, no Docker, no pip-only flows."
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.12",
+  "h5py>=3.10",
+  "pyscf>=2.7",
+]
+
+[project.optional-dependencies]
+# Real Skala / dispersion backend.  Filled in by the duck-side agent;
+# kept optional so this scaffold can run --stub mode without weights.
+skala = []
+dispersion = [
+  "dftd3>=0.7",
+]
+
+[project.scripts]
+chimiaclaw-dft = "chimiaclaw_dft.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chimiaclaw_dft"]

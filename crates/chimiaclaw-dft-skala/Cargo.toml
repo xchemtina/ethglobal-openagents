@@ -1,0 +1,21 @@
+[package]
+name = "chimiaclaw-dft-skala"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+live = []
+
+[dependencies]
+chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
+chimiaclaw-moladt = { path = "../chimiaclaw-moladt" }
+chimiaclaw-schema = { path = "../chimiaclaw-schema" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lints]
+workspace = true
