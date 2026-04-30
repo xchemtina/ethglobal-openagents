@@ -170,6 +170,14 @@ export KEEPERHUB_BASE_URL="https://app.keeperhub.io"
 
 `demo/keeperhub/workflow.json` is a reference manual-trigger workflow that takes `artifact_id`, `payload_hash`, and `mode` as inputs and emits a log step plus a zero-value transaction step. `demo/keeperhub/README.md` is the operator runbook for registering it and chaining DFT request → KeeperHub schedule → 0G anchor through `live keeperhub-schedule` and `live keeperhub-status`.
 
+DFT execution (PySCF + Skala-1.1-fallback uv worker, real signed results):
+
+```sh
+export CHIMIACLAW_DFT_COMMAND="ssh duck@olympus.local /Users/duck/.local/bin/uv run --project /Users/duck/Documents/ChimiaDAO-QM/DFT/skills/scienceclaw-port/workers/dft chimiaclaw-dft --backend pyscf-classical"
+```
+
+The worker reads a `{request, molecule_adt}` JSON wrapper on stdin, runs a real PySCF SCF (RKS for closed-shell, UKS otherwise), and writes a `chem.dft.result` JSON document on stdout. The Rust adapter `chimiaclaw-dft-skala` signs the result as a payload-bound artifact parented to the `chem.dft.request` artifact, refusing to sign if `convergence.converged = false` or the schema tag is wrong. Real PBE/def2-tzvp end-to-end was first verified on water on 2026-04-30: signed `chem.dft.result` `art_be0fbeb3bc1abbe1` with E=-76.376421 Ha, gap=6.964 eV, wall=0.18s; full lineage saved at `demo/dft/`. The `--backend pyscf-skala` flag is wired but currently falls back to PBE with a tagged provenance note until the duck-side agent installs Skala 1.1 weights.
+
 Serve the static lab-swarm map:
 
 ```sh
