@@ -22,10 +22,15 @@ cargo run -p chimiaclaw-cli --features live-sponsors -- \
 ## Gallery (PBE/def2-tzvp on `Olympus.local`)
 
 ```
-MOLADT.WATER.001         E=  -76.376421Ha   HOMO/LUMO gap=6.964eV   wall=0.18s
-MOLADT.METHANOL.001      E= -115.626291Ha   HOMO/LUMO gap=6.025eV   wall=0.76s
-MOLADT.BENZENE.001       E= -232.018795Ha   HOMO/LUMO gap=5.129eV   wall=9.12s
+MOLADT.WATER.001         E=  -76.376421Ha   gap=6.964eV   |μ|=2.028D   wall=0.16s
+MOLADT.METHANOL.001      E= -115.626291Ha   gap=6.025eV   |μ|=1.706D   wall=0.76s
+MOLADT.BENZENE.001       E= -232.018795Ha   gap=5.129eV   |μ|=0.000D   wall=9.34s
 ```
+
+Dipole magnitudes match chemistry intuition: water and methanol are polar
+(literature: ~1.85 D and ~1.69 D respectively; PBE/def2-tzvp slightly
+overestimates water as expected); benzene's six-fold symmetry forces
+|μ| → 0 (numerically 0.000 D, recovered correctly).
 
 ## Files
 
@@ -40,9 +45,9 @@ MOLADT.BENZENE.001       E= -232.018795Ha   HOMO/LUMO gap=5.129eV   wall=9.12s
 
 | molecule  | molecule artifact          | request artifact           | result artifact            |
 | --------- | -------------------------- | -------------------------- | -------------------------- |
-| water     | `art_a1260505a4c2c867`     | `art_c297438e1d252604`     | `art_be0fbeb3bc1abbe1`     |
-| methanol  | `art_3270cc598fcb7c73`     | `art_8c77e87b34c6c65a`     | `art_0d1e7a173fa28c50`     |
-| benzene   | `art_fff6d384b83ab849`     | `art_30b545be1442d883`     | `art_07b7f247952fbf9e`     |
+| water     | `art_a1260505a4c2c867`     | `art_c297438e1d252604`     | `art_c5094c8d71bda378`     |
+| methanol  | `art_3270cc598fcb7c73`     | `art_8c77e87b34c6c65a`     | `art_7a93e7a0a013f675`     |
+| benzene   | `art_fff6d384b83ab849`     | `art_30b545be1442d883`     | `art_b189177794da6f32`     |
 
 ## Verification
 
@@ -73,9 +78,9 @@ artifact graph cannot contain a fake SCF.
 
 - HOMO/LUMO gaps from PBE are systematically too small (well-known DFT
   problem). Trust the chemistry pattern, not the absolute eV numbers.
-- Dipole extraction is a known TODO; current results report `dipole = null`
-  because the worker's PySCF dipole-moment call needs to be migrated to the
-  modern `mf.dip_moment` API. The gap and energy are unaffected.
 - All MolADT geometries here are `schematic-curated`, not relaxed. A
   production DFT pipeline should run a geometry optimization or take RDKit
   ETKDGv3+MMFF94 input via `CHIMIACLAW_SMILES_TO_MOLADT_COMMAND` first.
+- `convergence.n_cycles` currently reports `0` because PySCF doesn't expose
+  the cycle count on the `mf` attribute we read; the SCF really did converge
+  (verified by `mf.converged = True`). Cycle accounting is a known TODO.

@@ -136,12 +136,11 @@ def run(request: dict[str, Any], molecule_adt: dict[str, Any]) -> DftResult:
     except Exception:  # pylint: disable=broad-except
         orbitals = None
 
-    # Dipole moment (PySCF returns it in Debye when called via mol.dip_moment).
+    # Dipole moment (mf.dip_moment returns a numpy array in the requested unit).
     dipole: Dipole | None = None
     try:
-        dm = mf.make_rdm1()
-        dipole_au = mol.dip_moment(dm=dm, unit="DEBYE", verbose=0)
-        dx, dy, dz = (float(v) for v in dipole_au)
+        dipole_vec = mf.dip_moment(unit="DEBYE", verbose=0)
+        dx, dy, dz = (float(v) for v in dipole_vec)
         magnitude = (dx * dx + dy * dy + dz * dz) ** 0.5
         dipole = Dipole(
             x_debye=dx,
