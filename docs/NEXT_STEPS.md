@@ -44,9 +44,13 @@ This is the near-term build order after the current scaffold.
 - ✅ uv-managed `rdkit-smiles-to-moladt` worker under `skills/scienceclaw-port/workers/cheminformatics` (RDKit ETKDGv3 + MMFF94/UFF) wired through `CHIMIACLAW_SMILES_TO_MOLADT_COMMAND` and consumed by `chimiaclaw_moladt::worker::resolve_with_worker`.
 - ✅ uv-managed `askcos-retro` worker under `skills/scienceclaw-port/workers/retrosynth` plus `chimiaclaw-retrosynth-askcos` Rust adapter that signs the response as a `chem.retrosynth.template_suggestions` artifact; refuses to run without `CHIMIACLAW_ASKCOS_ENDPOINT` + `CHIMIACLAW_ASKCOS_COMMAND` and rejects empty proposals so no fabricated routes can enter the signed graph.
 - ✅ First end-to-end SMILES→MolADT round-trip through the uv RDKit worker (`O=Cc1ccccc1` → 14 atoms, source_kind `rdkit-etkdgv3-mmff94`) with seven verified non-curated targets (benzaldehyde, aspirin, salicylic acid, pyridine, methylamine, imidazole, acetone) materialized at `demo/molecules/`.
-- ✅ Real PBE/def2-tzvp DFT calculations on `duck@olympus.local` through `CHIMIACLAW_DFT_COMMAND` and the `chimiaclaw-dft` uv worker; signed `chem.dft.result` artifact `art_be0fbeb3bc1abbe1` (water, E=-76.376421 Ha, gap=6.964 eV, wall=0.18s) saved at `demo/dft/`.
+- ✅ Real PBE/def2-tzvp DFT calculations on `duck@olympus.local` through `CHIMIACLAW_DFT_COMMAND` and the `chimiaclaw-dft` uv worker.
+- ✅ Six-molecule signed DFT gallery (water, methanol, benzene, propylene glycol, caprylic acid C8, capric acid C10) saved at `demo/dft/`.
+- ✅ Orbital density cubes (HOMO, LUMO, total electron density) generated via `pyscf.tools.cubegen`, content-addressed via SHA-256 in the signed `chem.dft.result.orbital_densities[]` block; 18 cubes under `demo/dft/cubes/`.
+- ✅ Arbitrary SMILES via `moladt-dft-demo --smiles` resolved through the RDKit ETKDGv3 + MMFF94 worker (`CHIMIACLAW_SMILES_TO_MOLADT_COMMAND`) on duck.
 - 🟡 Wire real Skala 1.1 weights on duck so `--backend pyscf-skala` stops falling back to PBE.
-- 🟡 Run benzene + a small organometallic through `live dft-execute` and snapshot the signed results.
+- 🟡 Run a transition-metal organometallic through `live dft-execute` (UKS for open-shell d-block).
+- 🟡 Optional: anchor a representative cube file on 0G Galileo (the existing `live zerog-anchor` already accepts arbitrary payload files).
 - ✅ Content-hashed disk cache for `askcos-retro` (`~/.cache/chimiaclaw/askcos` by default, override via `--cache-dir` or `CHIMIACLAW_ASKCOS_CACHE_DIR`); first call populates the cache, identical follow-up calls return zero-network cache hits; `--cache-only` mode supports offline replay; the signed artifact now carries an `AskcosCacheRecord { hit, key, path }`.
 - 🟡 Wire `chimiaclaw-retrosynth-askcos` into `apps/retroquoter` so the existing deterministic route quote becomes a child of a real ASKCOS template-suggestions artifact (the cache is now in place to keep that wiring fast and offline-replayable).
 - 🟡 Extend `askcos-retro` from `template-relevance` to ASKCOS tree-expansion plus an in-stock filter (eMolecules / ChemSpace / Sigma-Aldrich) so multi-step routes only reference commercially-available reagents.
