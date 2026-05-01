@@ -140,11 +140,13 @@ dependencies = [
 name = "chimiaclaw-dft-skala"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "chimiaclaw-artifact",
  "chimiaclaw-moladt",
  "chimiaclaw-schema",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]

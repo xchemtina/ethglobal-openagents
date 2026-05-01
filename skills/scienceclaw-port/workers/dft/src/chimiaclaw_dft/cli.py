@@ -70,6 +70,22 @@ class Provenance:
 
 
 @dataclass
+class OrbitalCube:
+    """Worker-side orbital cube carrier (label + sha256 + base64 bytes).
+
+    The Rust adapter materializes the cube file locally and signs only
+    {label, sha256, bytes, grid_resolution, local_path} into the artifact.
+    """
+
+    label: str
+    sha256: str
+    bytes: int
+    grid_resolution: int
+    worker_path: str
+    bytes_base64: str
+
+
+@dataclass
 class DftResult:
     schema_tag: str
     request_id: str
@@ -86,6 +102,7 @@ class DftResult:
     timings: Timings
     requested_properties: list[str]
     provenance: Provenance
+    orbital_cubes: list[OrbitalCube] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         # asdict gives nested dicts; replace Nones-as-missing where the
@@ -93,11 +110,12 @@ class DftResult:
         return asdict(self)
 
 
-def _read_input() -> tuple[dict[str, Any], dict[str, Any] | None]:
-    """Parse stdin into (request, molecule_adt).
+def _read_input() -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
+    """Parse stdin into (request, molecule_adt, cube_grid).
 
-    Accepts either the new wrapper format ({request, molecule_adt}) or, for
-    backward compat with --stub callers, a flat DftRequest with molecule_adt=None.
+    Accepts either the new wrapper format ({request, molecule_adt, cube_grid?})
+    or, for backward compat with --stub callers, a flat DftRequest with
+    molecule_adt=None and cube_grid=None.
     """
     raw = sys.stdin.read()
     if not raw.strip():
@@ -109,13 +127,16 @@ def _read_input() -> tuple[dict[str, Any], dict[str, Any] | None]:
     if isinstance(document, dict) and "request" in document and "molecule_adt" in document:
         request = document["request"]
         molecule_adt = document["molecule_adt"]
+        cube_grid = document.get("cube_grid")
         if not isinstance(request, dict):
             raise SystemExit("dft worker: wrapper.request must be an object")
         if not isinstance(molecule_adt, dict):
             raise SystemExit("dft worker: wrapper.molecule_adt must be an object")
-        return request, molecule_adt
+        if cube_grid is not None and not isinstance(cube_grid, dict):
+            raise SystemExit("dft worker: wrapper.cube_grid must be an object or absent")
+        return request, molecule_adt, cube_grid
     if isinstance(document, dict):
-        return document, None
+        return document, None, None
     raise SystemExit("dft worker: stdin must be a JSON object")
 
 
@@ -160,6 +181,7 @@ def _stub_result(request: dict[str, Any]) -> DftResult:
 def _real_pyscf_result(
     request: dict[str, Any],
     molecule_adt: dict[str, Any] | None,
+    cube_grid: dict[str, Any] | None,
     backend: str,
 ) -> DftResult:
     """Dispatch to the real backend.  Imported lazily so --stub doesn't need
@@ -184,7 +206,7 @@ def _real_pyscf_result(
         # agent can replace this with a real Skala 1.1 backend later.
         from . import pyscf_backend  # local import to avoid circular cost
 
-        return pyscf_backend.run(request, molecule_adt)
+        return pyscf_backend.run(request, molecule_adt, cube_grid)
 
     raise SystemExit(f"dft worker: unknown backend {backend!r}")
 
@@ -232,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    request, molecule_adt = _read_input()
+    request, molecule_adt, cube_grid = _read_input()
     schema = request.get("schema_tag")
     # The Rust DftRequest doesn't carry a schema_tag field today; this is
     # advisory.  If the operator embeds one, we accept it.
@@ -247,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.stub or args.backend == "stub":
         result = _stub_result(request)
     else:
-        result = _real_pyscf_result(request, molecule_adt, args.backend)
+        result = _real_pyscf_result(request, molecule_adt, cube_grid, args.backend)
 
     json.dump(result.to_dict(), sys.stdout, indent=2)
     sys.stdout.write("\n")

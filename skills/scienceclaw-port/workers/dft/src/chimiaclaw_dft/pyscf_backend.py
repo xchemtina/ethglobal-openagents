@@ -16,8 +16,12 @@ Output:
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import platform
+import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
 from .cli import (
@@ -25,6 +29,7 @@ from .cli import (
     Convergence,
     DftResult,
     Dipole,
+    OrbitalCube,
     Orbitals,
     Provenance,
     Timings,
@@ -84,7 +89,110 @@ def _resolve_functional(requested: str) -> tuple[str, str | None]:
     return canonical, None
 
 
-def run(request: dict[str, Any], molecule_adt: dict[str, Any]) -> DftResult:
+def _generate_cubes(
+    mol: Any,
+    mf: Any,
+    grid: dict[str, Any],
+    molecule_id: str,
+) -> list[OrbitalCube]:
+    """Generate HOMO / LUMO / total-density cube files via pyscf.tools.cubegen.
+
+    Each cube is hashed with SHA-256 and returned along with its base64-
+    encoded bytes so the Rust adapter can materialize the file locally and
+    sign the hash into the chem.dft.result artifact.
+    """
+    from pyscf.tools import cubegen
+
+    resolution = int(grid.get("resolution", 60))
+    margin = float(grid.get("margin_angstrom", 3.0))
+    include_homo = bool(grid.get("include_homo", True))
+    include_lumo = bool(grid.get("include_lumo", True))
+    include_total = bool(grid.get("include_total_density", True))
+
+    cubes: list[OrbitalCube] = []
+    occ = mf.mo_occ
+    energies = mf.mo_energy
+    coeff = mf.mo_coeff
+    occupied = [i for i, o in enumerate(occ) if o > 0]
+    unoccupied = [i for i, o in enumerate(occ) if o == 0]
+    homo_idx = occupied[-1] if occupied else None
+    lumo_idx = unoccupied[0] if unoccupied else None
+
+    with tempfile.TemporaryDirectory(prefix="chimiaclaw-dft-cubes-") as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        tasks: list[tuple[str, callable]] = []
+
+        def _orbital(label: str, idx: int):
+            path = tmp_path / f"{molecule_id}_{label}.cube"
+
+            def _gen():
+                cubegen.orbital(
+                    mol,
+                    str(path),
+                    coeff[:, idx],
+                    nx=resolution,
+                    ny=resolution,
+                    nz=resolution,
+                    margin=margin,
+                )
+                return path
+
+            return label, _gen
+
+        if include_homo and homo_idx is not None:
+            tasks.append(_orbital("HOMO", homo_idx))
+        if include_lumo and lumo_idx is not None:
+            tasks.append(_orbital("LUMO", lumo_idx))
+        if include_total:
+            density_path = tmp_path / f"{molecule_id}_TOTAL_DENSITY.cube"
+
+            def _gen_density():
+                cubegen.density(
+                    mol,
+                    str(density_path),
+                    mf.make_rdm1(),
+                    nx=resolution,
+                    ny=resolution,
+                    nz=resolution,
+                    margin=margin,
+                )
+                return density_path
+
+            tasks.append(("TOTAL_DENSITY", _gen_density))
+
+        for label, gen in tasks:
+            try:
+                path = gen()
+            except Exception as exc:  # pylint: disable=broad-except
+                # Cubegen can fail on edge cases (basis quirks, etc.).  Skip
+                # this cube rather than aborting the whole result.
+                print(
+                    f"dft worker: cubegen failed for {label}: {exc}",
+                    file=__import__("sys").stderr,
+                )
+                continue
+            data = path.read_bytes()
+            sha256 = hashlib.sha256(data).hexdigest()
+            cubes.append(
+                OrbitalCube(
+                    label=label,
+                    sha256=sha256,
+                    bytes=len(data),
+                    grid_resolution=resolution,
+                    worker_path=str(path),
+                    bytes_base64=base64.standard_b64encode(data).decode("ascii"),
+                )
+            )
+        # Suppress lint about unused variable.
+        _ = energies
+    return cubes
+
+
+def run(
+    request: dict[str, Any],
+    molecule_adt: dict[str, Any],
+    cube_grid: dict[str, Any] | None = None,
+) -> DftResult:
     from pyscf import dft, gto  # imported lazily so --stub doesn't need it
 
     method = request.get("method", {})
@@ -172,10 +280,18 @@ def run(request: dict[str, Any], molecule_adt: dict[str, Any]) -> DftResult:
         pyscf_version = None
 
     molecule = request.get("molecule", {})
+    molecule_id = str(molecule.get("molecule_id", "unknown"))
+    cubes: list[OrbitalCube] = []
+    if cube_grid is not None and converged:
+        try:
+            cubes = _generate_cubes(mol, mf, cube_grid, molecule_id)
+        except Exception as exc:  # pylint: disable=broad-except
+            notes.append(f"orbital cube generation failed: {exc}")
+
     return DftResult(
         schema_tag=SCHEMA_TAG,
         request_id=str(request.get("request_id", "REQ.UNKNOWN")),
-        molecule_id=str(molecule.get("molecule_id", "unknown")),
+        molecule_id=molecule_id,
         functional=requested_xc,
         basis_set=basis,
         backend="PyScf",
@@ -201,4 +317,5 @@ def run(request: dict[str, Any], molecule_adt: dict[str, Any]) -> DftResult:
             dispersion=method.get("dispersion"),
             notes=notes,
         ),
+        orbital_cubes=cubes,
     )

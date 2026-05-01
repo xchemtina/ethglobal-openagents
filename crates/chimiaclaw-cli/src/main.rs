@@ -368,7 +368,8 @@ fn sanitize_filename_stem(input: &str) -> String {
 }
 
 fn run_moladt_dft_demo(args: &[&str]) -> Result<(), String> {
-    let library_name = parse_kv(args, "--library").unwrap_or("ferrocene");
+    let library_name = parse_kv(args, "--library");
+    let smiles = parse_kv(args, "--smiles");
     let functional = parse_kv(args, "--functional")
         .unwrap_or("skala-1.1")
         .to_string();
@@ -382,11 +383,46 @@ fn run_moladt_dft_demo(args: &[&str]) -> Result<(), String> {
         .transpose()?
         .unwrap_or(1);
     let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
-    let molecule = resolve_library_by_name(library_name).ok_or_else(|| {
-        format!(
-            "unknown --library {library_name:?}; try water/ammonia/methanol/ethanol/acetic-acid/benzene/toluene/bromobenzene/phenylboronic-acid/biphenyl/ferrocene"
-        )
-    })?;
+    let allow_worker = !args.iter().any(|arg| *arg == "--no-worker");
+    let (molecule, source_label) = match (library_name, smiles) {
+        (Some(_), Some(_)) => {
+            return Err("--library and --smiles are mutually exclusive".to_string());
+        }
+        (Some(name), None) => {
+            let mol = resolve_library_by_name(name).ok_or_else(|| {
+                format!(
+                    "unknown --library {name:?}; try water/ammonia/methanol/ethanol/acetic-acid/benzene/toluene/bromobenzene/phenylboronic-acid/biphenyl/ferrocene"
+                )
+            })?;
+            (mol, name.to_string())
+        }
+        (None, Some(s)) => {
+            let mol = if let Some(mol) = library::resolve_smiles(s) {
+                mol
+            } else if library::is_known_unsafe_for_dft(s) {
+                return Err(format!(
+                    "SMILES {s:?} is flagged unsafe-for-direct-DFT (multi-component or metal complex); refusing"
+                ));
+            } else if allow_worker {
+                match moladt_worker::resolve_with_worker(s) {
+                    Ok(Some(mol)) => mol,
+                    Ok(None) => {
+                        return Err(format!(
+                            "SMILES {s:?} not in curated library and {} is not configured",
+                            moladt_worker::SMILES_WORKER_ENV
+                        ));
+                    }
+                    Err(error) => return Err(format!("smiles worker failed: {error}")),
+                }
+            } else {
+                return Err(format!(
+                    "SMILES {s:?} not in curated library (--no-worker disabled the external worker)"
+                ));
+            };
+            (mol, sanitize_filename_stem(s))
+        }
+        (None, None) => (demo_ferrocene_moladt(), "ferrocene".to_string()),
+    };
     let agent = AgentId("operator.chimiaclaw.eth".to_string());
     let signer = NodeProfile::dev_signer_from_seed_label("moladt-dft-demo");
     let molecule_artifact = molecule_artifact(&molecule, agent.clone(), &signer, 1)
@@ -398,7 +434,8 @@ fn run_moladt_dft_demo(args: &[&str]) -> Result<(), String> {
             .molecule_id
             .split('.')
             .nth(1)
-            .unwrap_or(library_name)
+            .map(str::to_string)
+            .unwrap_or_else(|| source_label.clone())
             .to_ascii_uppercase()
     );
     let request = DftRequest {
@@ -521,9 +558,9 @@ fn print_help() {
     println!(
         "      Print deterministic signed ENS-shaped service transactions for DFT, retrosynthesis, and literature."
     );
-    println!("  chimiaclaw-cli moladt-dft-demo [--library <name>] [--functional <xc>] [--basis <name>] [--dispersion <name>] [--multiplicity <n>] [--out-dir <dir>]");
+    println!("  chimiaclaw-cli moladt-dft-demo [--library <name>|--smiles <smi>] [--functional <xc>] [--basis <name>] [--dispersion <name>] [--multiplicity <n>] [--out-dir <dir>]");
     println!(
-        "      Print signed MolADT molecule + DFT request artifacts (functional/basis configurable). With --out-dir, also writes both artifact JSONs ready for `live dft-execute`."
+        "      Print signed MolADT molecule + DFT request artifacts (functional/basis configurable). With --smiles, resolves via CHIMIACLAW_SMILES_TO_MOLADT_COMMAND. With --out-dir, also writes both artifact JSONs ready for `live dft-execute`."
     );
     println!("  chimiaclaw-cli ord-moladt-demo [--ord-json <path>] [--official-ord-json <path>] [--output-dir <dir>]");
     println!(
@@ -561,8 +598,8 @@ fn print_help() {
         "  chimiaclaw-cli live keeperhub-status --execution-id <id> [--scheduled-artifact-id <id>]"
     );
     println!("      Feature-gated KeeperHub execution status and signed status artifact.");
-    println!("  chimiaclaw-cli live dft-execute --request-artifact-json <path> --molecule-artifact-json <path> [--out-dir <dir>] [--agent <id>] [--dry-run]");
-    println!("      Pipe {{request, molecule_adt}} to CHIMIACLAW_DFT_COMMAND, sign the chem.dft.result, save the full lineage.");
+    println!("  chimiaclaw-cli live dft-execute --request-artifact-json <path> --molecule-artifact-json <path> [--out-dir <dir>] [--cube-out-dir <dir>] [--cube-resolution <n>] [--agent <id>] [--dry-run]");
+    println!("      Pipe {{request, molecule_adt, cube_grid?}} to CHIMIACLAW_DFT_COMMAND, sign the chem.dft.result, save lineage. With --cube-out-dir, the worker also generates HOMO/LUMO/total-density cubes via pyscf.tools.cubegen and the result commits to their SHA-256.");
 }
 
 fn parse_kv<'a>(args: &'a [&'a str], key: &str) -> Option<&'a str> {
@@ -1094,7 +1131,8 @@ fn run_live_keeperhub_schedule(args: &[&str]) -> Result<(), String> {
 #[cfg(feature = "live-sponsors")]
 fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     use chimiaclaw_dft_skala::{
-        dft_result_artifact, DftWorkerCommandConfig, DftWorkerInput, DFT_WORKER_COMMAND_ENV,
+        dft_result_artifact, CubeGridRequest, DftWorkerCommandConfig, DftWorkerInput,
+        DFT_WORKER_COMMAND_ENV,
     };
     use chimiaclaw_moladt::DftRequest;
     use std::fs;
@@ -1102,6 +1140,13 @@ fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     let request_artifact_json = PathBuf::from(require_kv(args, "--request-artifact-json")?);
     let molecule_artifact_json = PathBuf::from(require_kv(args, "--molecule-artifact-json")?);
     let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let cube_out_dir = parse_kv(args, "--cube-out-dir").map(PathBuf::from);
+    let cube_resolution: Option<u8> = parse_kv(args, "--cube-resolution")
+        .map(|v| {
+            v.parse::<u8>()
+                .map_err(|error| format!("invalid --cube-resolution {v:?}: {error}"))
+        })
+        .transpose()?;
     let agent = AgentId(
         parse_kv(args, "--agent")
             .unwrap_or("dft.worker.chimiaclaw.eth")
@@ -1154,7 +1199,14 @@ fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
         }
     }
 
-    let worker_input = DftWorkerInput::new(request.clone(), molecule_adt);
+    let mut worker_input = DftWorkerInput::new(request.clone(), molecule_adt);
+    if cube_out_dir.is_some() {
+        let mut grid = CubeGridRequest::default();
+        if let Some(res) = cube_resolution {
+            grid.resolution = res;
+        }
+        worker_input = worker_input.with_cube_grid(grid);
+    }
 
     if dry_run {
         let report = serde_json::json!({
@@ -1175,7 +1227,7 @@ fn run_live_dft_execute(args: &[&str]) -> Result<(), String> {
     let worker = DftWorkerCommandConfig::from_env()
         .map_err(|error| format!("{DFT_WORKER_COMMAND_ENV} not configured: {error}"))?;
     let result = worker
-        .invoke(&worker_input)
+        .invoke(&worker_input, cube_out_dir.as_deref())
         .map_err(|error| format!("dft worker failed: {error}"))?;
     let signer = NodeProfile::dev_signer_from_seed_label("live:dft-skala");
     let result_art = dft_result_artifact(
