@@ -277,6 +277,122 @@
       font-size: 10px;
     }
 
+    .lab-tx-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 11px;
+      border: 1px solid var(--primary);
+      background: oklch(0.07 0 0);
+      color: var(--primary);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px oklch(0.76 0.17 192 / 0.45);
+      pointer-events: none;
+    }
+
+    .lab-node.core .lab-tx-count { border-color: var(--agent); color: var(--agent); box-shadow: 0 0 12px oklch(0.70 0.18 148 / 0.45); }
+    .lab-node.allied .lab-tx-count { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 12px oklch(0.72 0.16 78 / 0.45); }
+    .lab-node.virtual .lab-tx-count { border-color: var(--purple); color: var(--purple); box-shadow: 0 0 12px oklch(0.65 0.16 262 / 0.45); }
+    .lab-node.quarantine .lab-tx-count { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 12px oklch(0.65 0.20 25 / 0.45); }
+
+    .tx-flow-line {
+      stroke-width: 0.6;
+      stroke-dasharray: 1.2 1.6;
+      animation: tx-dash 18s linear infinite;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    @keyframes tx-dash {
+      to { stroke-dashoffset: -120; }
+    }
+
+    .tx-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 14px 0 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .tx-section-header strong {
+      color: var(--primary);
+      font-size: 10px;
+    }
+
+    .tx-section-header.first { margin-top: 0; }
+
+    .tx-filter-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border: 1px solid oklch(0.76 0.17 192 / 0.35);
+      background: oklch(0.76 0.17 192 / 0.05);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--primary);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .tx-filter-banner button {
+      border: 1px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+    }
+
+    .tx-filter-banner button:hover { background: oklch(0.76 0.17 192 / 0.12); }
+
+    .tag.real {
+      color: var(--agent);
+      border-color: oklch(0.70 0.18 148 / 0.55);
+      background: oklch(0.70 0.18 148 / 0.10);
+      font-weight: 700;
+    }
+
+    .tx-handoff {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 8px 0 4px;
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .tx-handoff .pill {
+      padding: 3px 6px;
+      border: 1px solid var(--border);
+      background: oklch(0.085 0 0);
+      color: var(--text);
+    }
+
+    .tx-handoff .pill.target { color: var(--primary); border-color: oklch(0.76 0.17 192 / 0.35); }
+    .tx-handoff .arrow { color: var(--primary); }
+
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -526,14 +642,17 @@
 
     function statusTag(status) {
       const text = esc(status ?? "unknown");
-      const klass = status?.includes("implemented") || status?.includes("Released") || status === "online" || status === "active"
-        ? "good"
-        : status?.includes("planned") || status?.includes("candidate") || status?.includes("review") || status?.includes("standby")
-          ? "warn"
-          : status?.includes("quarantine") || status?.includes("blocked")
-            ? "bad"
-            : "plan";
-      return `<span class="tag ${klass}">${text}</span>`;
+      const klass = status === "real-execution" || status?.includes("real-pyscf")
+        ? "real"
+        : status?.includes("implemented") || status?.includes("Released") || status === "online" || status === "active"
+          ? "good"
+          : status?.includes("planned") || status?.includes("candidate") || status?.includes("review") || status?.includes("standby")
+            ? "warn"
+            : status?.includes("quarantine") || status?.includes("blocked")
+              ? "bad"
+              : "plan";
+      const labelOverride = klass === "real" ? "REAL EXECUTION" : text;
+      return `<span class="tag ${klass}">${esc(labelOverride)}</span>`;
     }
 
     function trustClass(lab) {
@@ -567,39 +686,88 @@
       `;
     }
 
+    function txCountByLab(model) {
+      const counts = {};
+      for (const tx of model.science_transactions ?? []) {
+        if (!tx.target_lab) continue;
+        counts[tx.target_lab] = (counts[tx.target_lab] ?? 0) + 1;
+      }
+      return counts;
+    }
+
+    function txColor(tx) {
+      if (tx.status === "real-execution") return "oklch(0.70 0.18 148)"; // agent green
+      if (tx.service_kind === "dft") return "oklch(0.76 0.17 192)";       // primary cyan
+      if (tx.service_kind === "retrosynthesis") return "oklch(0.72 0.16 78)"; // warning amber
+      if (tx.service_kind === "literature") return "oklch(0.65 0.16 262)";  // purple
+      return "var(--muted)";
+    }
+
+    // Position of the operator anchor on the map; transactions originate visually here.
+    const OPERATOR_ANCHOR = { x: 6, y: 8 };
+
     function renderMap(model) {
       const map = $("map");
       const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const trustEdgeSvg = model.trust_edges.map((edge) => {
+        const source = labsById[edge.source];
+        const target = labsById[edge.target];
+        if (!source || !target) return "";
+        const color = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
+        const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
+        return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${color}" stroke-width="0.35" opacity="0.55" ${dash}></line>`;
+      }).join("");
       const edgeSvg = `
         <svg class="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-          ${model.trust_edges.map((edge) => {
-            const source = labsById[edge.source];
-            const target = labsById[edge.target];
-            if (!source || !target) return "";
-            const color = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
-            const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
-            return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${color}" stroke-width="0.35" opacity="0.55" ${dash}></line>`;
-          }).join("")}
+          <g id="trust-edges">${trustEdgeSvg}</g>
+          <g id="tx-flow-edges"></g>
         </svg>
       `;
-      map.innerHTML = edgeSvg + model.labs.map((lab, index) => `
-        <button class="lab-node ${trustClass(lab)}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
-          <div class="lab-id mono">${esc(lab.id)}</div>
-          <div class="lab-name">${esc(lab.short_label)}</div>
-          <div class="lab-meta mono"><span>${esc(lab.status)}</span><span>${Math.round((lab.telemetry.trust_score ?? 0) * 100)}%</span></div>
-        </button>
-      `).join("");
+      const counts = txCountByLab(model);
+      map.innerHTML = edgeSvg + model.labs.map((lab) => {
+        const count = counts[lab.id] ?? 0;
+        const badge = count > 0
+          ? `<span class="lab-tx-count" title="${count} incoming transactions">${count}×</span>`
+          : "";
+        return `
+          <button class="lab-node ${trustClass(lab)}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
+            ${badge}
+            <div class="lab-id mono">${esc(lab.id)}</div>
+            <div class="lab-name">${esc(lab.short_label)}</div>
+            <div class="lab-meta mono"><span>${esc(lab.status)}</span><span>${Math.round((lab.telemetry.trust_score ?? 0) * 100)}%</span></div>
+          </button>
+        `;
+      }).join("");
 
       map.querySelectorAll(".lab-node").forEach((node) => {
         node.addEventListener("click", () => {
           map.querySelectorAll(".lab-node").forEach((n) => n.classList.remove("selected"));
           node.classList.add("selected");
-          renderSelectedLab(model, labsById[node.dataset.lab]);
+          const lab = labsById[node.dataset.lab];
+          renderSelectedLab(model, lab);
+          renderTxFlowEdges(model, lab);
+          renderScienceTransactions(model, lab.id);
         });
       });
 
       renderSelectedLab(model, model.labs[0]);
       map.querySelector(".lab-node")?.classList.add("selected");
+      renderTxFlowEdges(model, model.labs[0]);
+    }
+
+    function renderTxFlowEdges(model, selectedLab) {
+      const layer = document.getElementById("tx-flow-edges");
+      if (!layer) return;
+      const txs = (model.science_transactions ?? []).filter((tx) => tx.target_lab === selectedLab.id);
+      const lines = txs.map((tx) => {
+        const color = txColor(tx);
+        const x1 = OPERATOR_ANCHOR.x;
+        const y1 = OPERATOR_ANCHOR.y;
+        const x2 = selectedLab.location.x;
+        const y2 = selectedLab.location.y;
+        return `<line class="tx-flow-line" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" opacity="0.85"></line>`;
+      }).join("");
+      layer.innerHTML = lines;
     }
 
     function renderSelectedLab(model, lab) {
@@ -658,51 +826,136 @@
       return `$${((value ?? 0) / 1_000_000).toFixed(2)}`;
     }
 
-    function renderScienceTransactions(model) {
-      const transactions = model.science_transactions ?? [];
-      $("science-transactions").innerHTML = transactions.map((tx) => `
-        <article class="card">
-          <div class="panel-header" style="margin-bottom: 8px;">
-            <span class="stamp">${esc(tx.id)}</span>
-            ${statusTag(tx.status)}
+    const TX_KIND_LABEL = {
+      dft: "DFT compute",
+      retrosynthesis: "Retrosynthesis",
+      literature: "Literature",
+    };
+
+    function renderScienceTransactions(model, filterLabId) {
+      const root = $("science-transactions");
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.science_transactions ?? [];
+      const transactions = filterLabId
+        ? all.filter((tx) => tx.target_lab === filterLabId)
+        : all;
+
+      // Banner that tells the user what's filtering the list.
+      let banner = "";
+      if (filterLabId) {
+        const lab = labsById[filterLabId];
+        const labelText = lab ? lab.short_label : filterLabId;
+        banner = `
+          <div class="tx-filter-banner">
+            <span>Filter · transactions targeting ${esc(labelText)} (${transactions.length} of ${all.length})</span>
+            <button id="tx-clear-filter" type="button">Show all</button>
           </div>
-          <h3>${esc(tx.service_kind)} · ${esc(tx.provider_ens)}</h3>
-          <p>${esc(tx.summary)}</p>
-          <div class="transaction-flow mono">
-            ${tx.artifact_flow.map((step) => `<span class="flow-step">${esc(step)}</span>`).join("")}
+        `;
+      }
+
+      // Group by service_kind so DFT, retro, lit each get their own header.
+      const groups = {};
+      for (const tx of transactions) {
+        const k = tx.service_kind ?? "other";
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(tx);
+      }
+      const groupOrder = ["dft", "retrosynthesis", "literature"];
+      const orderedKeys = [
+        ...groupOrder.filter((k) => groups[k]),
+        ...Object.keys(groups).filter((k) => !groupOrder.includes(k)),
+      ];
+
+      const renderTxCard = (tx) => {
+        const requesterLabel = esc(tx.requester_agent ?? tx.payer_agent ?? "");
+        const targetLab = labsById[tx.target_lab];
+        const targetLabel = esc(targetLab ? targetLab.short_label : (tx.target_lab ?? ""));
+        const handoff = `
+          <div class="tx-handoff">
+            <span class="pill">${requesterLabel}</span>
+            <span class="arrow">▶</span>
+            <span class="pill target">${targetLabel}</span>
           </div>
-          <div class="grid-2">
-            <div class="card">
-              <span class="metric-label">quote</span>
-              <h3>${usdMicros(tx.price_usdc_micros)} · ${esc(tx.quote_id)}</h3>
-              <p>${esc(tx.asset ?? "USDC")} · ${esc(tx.estimated_latency_seconds)}s estimated latency</p>
+        `;
+        const chemSummary = tx.summary_chem
+          ? `<p class="small mono" style="color: var(--primary); margin-top: 6px;">${esc(tx.summary_chem)}</p>`
+          : "";
+        return `
+          <article class="card">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <span class="stamp">${esc(tx.id)}</span>
+              ${statusTag(tx.status)}
             </div>
-            <div class="card">
-              <span class="metric-label">payer → payee</span>
-              <h3>${esc(tx.payer_agent ?? tx.requester_ens)}</h3>
-              <p>→ ${esc(tx.payee_agent ?? tx.provider_ens)}</p>
+            <h3>${esc(tx.service_kind)} · ${esc(tx.provider_ens)}</h3>
+            ${handoff}
+            <p>${esc(tx.summary)}</p>
+            ${chemSummary}
+            <div class="transaction-flow mono">
+              ${tx.artifact_flow.map((step) => `<span class="flow-step">${esc(step)}</span>`).join("")}
             </div>
-            <div class="card">
-              <span class="metric-label">escrow</span>
-              <h3>${esc(tx.escrow_id ?? tx.settlement_id)}</h3>
-              <p>${esc(tx.settlement_method ?? "simulated")} · no live funds moved</p>
+            <div class="grid-2">
+              <div class="card">
+                <span class="metric-label">quote</span>
+                <h3>${usdMicros(tx.price_usdc_micros)} · ${esc(tx.quote_id)}</h3>
+                <p>${esc(tx.asset ?? "USDC")} · ${esc(tx.estimated_latency_seconds)}s estimated latency</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">payer → payee</span>
+                <h3>${esc(tx.payer_agent ?? tx.requester_ens)}</h3>
+                <p>→ ${esc(tx.payee_agent ?? tx.provider_ens)}</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">escrow</span>
+                <h3>${esc(tx.escrow_id ?? tx.settlement_id)}</h3>
+                <p>${esc(tx.settlement_method ?? "simulated")} · no live funds moved</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">release</span>
+                <h3>${esc(tx.release_id ?? tx.result_id)}</h3>
+                <p>${esc(tx.transaction_ref ?? tx.settlement_id)}</p>
+              </div>
             </div>
-            <div class="card">
-              <span class="metric-label">release</span>
-              <h3>${esc(tx.release_id ?? tx.result_id)}</h3>
-              <p>${esc(tx.transaction_ref ?? tx.settlement_id)}</p>
+            <div class="tag-row">
+              <span class="tag good">${esc(tx.release_status ?? "pending-release")}</span>
+              <span class="tag">ack:${esc(tx.acknowledgement_id ?? "pending")}</span>
+              <span class="tag">refund-to:${esc(tx.refund_policy?.refund_to_agent ?? tx.payer_agent ?? tx.requester_ens)}</span>
             </div>
+            <div class="tag-row">
+              ${tx.sponsor_bindings.map((binding) => `<span class="tag ${binding.live_status === "fixture" ? "good" : "plan"}">${esc(binding.sponsor)}:${esc(binding.live_status)}</span>`).join("")}
+            </div>
+          </article>
+        `;
+      };
+
+      const groupHtml = orderedKeys.map((k, i) => {
+        const realCount = groups[k].filter((t) => t.status === "real-execution").length;
+        const realBadge = realCount > 0
+          ? ` <strong style="color: var(--agent);">· ${realCount} real‑exec</strong>`
+          : "";
+        return `
+          <div class="tx-section-header${i === 0 ? " first" : ""}">
+            <span><strong>${esc(TX_KIND_LABEL[k] ?? k)}</strong>${realBadge}</span>
+            <span>${groups[k].length}</span>
           </div>
-          <div class="tag-row">
-            <span class="tag good">${esc(tx.release_status ?? "pending-release")}</span>
-            <span class="tag">ack:${esc(tx.acknowledgement_id ?? "pending")}</span>
-            <span class="tag">refund-to:${esc(tx.refund_policy?.refund_to_agent ?? tx.payer_agent ?? tx.requester_ens)}</span>
-          </div>
-          <div class="tag-row">
-            ${tx.sponsor_bindings.map((binding) => `<span class="tag ${binding.live_status === "fixture" ? "good" : "plan"}">${esc(binding.sponsor)}:${esc(binding.live_status)}</span>`).join("")}
-          </div>
-        </article>
-      `).join("");
+          ${groups[k].map(renderTxCard).join("")}
+        `;
+      }).join("");
+
+      const empty = transactions.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No transactions target this lab.</p>`
+        : "";
+
+      root.innerHTML = banner + groupHtml + empty;
+
+      const clearBtn = document.getElementById("tx-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderScienceTransactions(model);
+          // also clear the map highlight overlay
+          const layer = document.getElementById("tx-flow-edges");
+          if (layer) layer.innerHTML = "";
+        });
+      }
     }
 
     function renderAgents(model) {
