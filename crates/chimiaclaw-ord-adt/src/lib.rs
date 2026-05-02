@@ -1,10 +1,10 @@
 //! ORD-like reaction JSON to ChimiaDAO ADT reaction translation.
 //!
-//! The initial target is the minimal ADT schema from
-//! `/Users/crischimiadao/Desktop/ChimiaDAO-OxAI_ADTHack/schema/adt.schema.json`
-//! and the ORD-like JSON produced by that hackathon stack. The crate also
-//! accepts a lightweight subset of official Open Reaction Database JSON as
-//! emitted by `google.protobuf.json_format.MessageToJson(...,
+//! The initial target is the minimal ADT schema from the upstream
+//! `ChimiaDAO-OxAI_ADTHack` reference (`schema/adt.schema.json`) and the
+//! ORD-like JSON produced by that hackathon stack. The crate also accepts a
+//! lightweight subset of official Open Reaction Database JSON as emitted by
+//! `google.protobuf.json_format.MessageToJson(...,
 //! preserving_proto_field_name=True)` without depending on protobuf bindings.
 
 use chimiaclaw_artifact::{

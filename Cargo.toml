@@ -7,9 +7,9 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-license = "Apache-2.0 OR MIT"
-repository = "https://github.com/ChimiaDAO/chimiaclaw"
-authors = ["ChimiaDAO"]
+license = "Apache-2.0"
+repository = "https://github.com/xchemtina/ethglobal-openagents"
+authors = ["ChimiaDAO <info@chimiadao.io>"]
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+title: "ChimiaClaw: Rust-native signed artifact DAG for autonomous scientific agents"
+message: >-
+  If you use ChimiaClaw — including the MolADT canonical molecule substrate,
+  the chem.dft.{request,result} schema, the orbital-density content-addressing
+  pattern, or any of the signed-artifact worker boundaries — please cite this
+  repository.
+type: software
+authors:
+  - name: ChimiaDAO
+    email: info@chimiadao.io
+    website: "https://chimiadao.io"
+repository-code: "https://github.com/xchemtina/ethglobal-openagents"
+url: "https://github.com/xchemtina/ethglobal-openagents"
+abstract: >-
+  ChimiaClaw is a Rust-native runtime for autonomous scientific agents in
+  which every action — chemistry computation, retrosynthesis, literature
+  synthesis, procurement, governance vote, payment — is a signed,
+  content-addressed artifact in a payload-bound DAG. The repository ships:
+  a portable Molecular ADT substrate; an ORD→ADT bridge; a real PBE/def2-tzvp
+  PySCF DFT path that signs chem.dft.result artifacts with HOMO/LUMO/total-
+  density orbital cubes content-addressed via SHA-256; and feature-gated
+  ENS / 0G / KeeperHub adapter surfaces. Built for the ETHGlobal "OpenAgents"
+  hackathon track as a substrate for the future ChimiaDAO governance runtime.
+keywords:
+  - decentralized-science
+  - rust
+  - artifact-graph
+  - dft
+  - pyscf
+  - chemistry
+  - molecular-adt
+  - ethereum
+  - chimia-dao
+license: Apache-2.0
+version: "0.1.0"
+date-released: "2026-05-02"
