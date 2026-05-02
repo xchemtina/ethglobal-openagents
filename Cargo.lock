@@ -122,6 +122,7 @@ name = "chimiaclaw-cli"
 version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
+ "chimiaclaw-crucible",
  "chimiaclaw-dft-skala",
  "chimiaclaw-exec-keeperhub",
  "chimiaclaw-governance",

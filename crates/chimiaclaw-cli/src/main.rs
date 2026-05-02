@@ -1,5 +1,9 @@
 use chimiaclaw_artifact::{
-    ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore, PayloadRef,
+    Artifact, ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore,
+    PayloadRef,
+};
+use chimiaclaw_crucible::{
+    vote_artifact, ReviewVote, VoteKind, VoteProvenance, VoterIdentity, VOTE_SCHEMA_TAG,
 };
 use chimiaclaw_market::demo_science_market;
 use chimiaclaw_moladt::{
@@ -36,10 +40,31 @@ fn main() -> ExitCode {
             run_demo_ord_adt();
             ExitCode::SUCCESS
         }
+        [_, "world-model", "verify", rest @ ..] => match run_world_model_verify(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("world-model verify failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
         [_, "world-model", ..] => match run_world_model() {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("world-model failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "crucible", "vote", rest @ ..] => match run_crucible_vote(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("crucible vote failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "crucible-demo", rest @ ..] => match run_crucible_demo(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("crucible-demo failed: {error}");
                 ExitCode::FAILURE
             }
         },
@@ -647,6 +672,328 @@ fn run_world_model() -> Result<(), String> {
         serde_json::to_string_pretty(&value)
             .map_err(|error| format!("serialize world model: {error}"))?
     );
+    Ok(())
+}
+
+// ---------------- world-model verify ---------------- //
+
+/// Resolve every `art_*` referenced from the world-model and verify it
+/// against an on-disk signed-artifact directory (default: `demo/dft/`).
+///
+/// Pre-flight check before going public: every transaction `result_id` and
+/// every `crucible_votes[].target_artifact_id` must resolve to a signed
+/// artifact whose payload + signature verify cleanly.
+fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
+    let world_model_path = parse_kv(args, "--world-model")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("demo/world-model.json"));
+    let artifact_dir = parse_kv(args, "--artifact-dir")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("demo/dft"));
+    let body = std::fs::read_to_string(&world_model_path)
+        .map_err(|error| format!("read {}: {error}", world_model_path.display()))?;
+    let model: serde_json::Value = serde_json::from_str(&body)
+        .map_err(|error| format!("parse {}: {error}", world_model_path.display()))?;
+
+    let mut refs: Vec<(String, String)> = Vec::new(); // (source, artifact_id)
+    if let Some(txs) = model.get("science_transactions").and_then(|v| v.as_array()) {
+        for tx in txs {
+            let tx_id = tx
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("<unknown-tx>")
+                .to_string();
+            if let Some(result_id) = tx.get("result_id").and_then(|v| v.as_str()) {
+                if result_id.starts_with("art_") {
+                    refs.push((format!("science_transactions[{tx_id}].result_id"), result_id.to_string()));
+                }
+            }
+        }
+    }
+    if let Some(votes) = model.get("crucible_votes").and_then(|v| v.as_array()) {
+        for vote in votes {
+            let vote_id = vote
+                .get("vote_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("<unknown-vote>")
+                .to_string();
+            if let Some(target) = vote.get("target_artifact_id").and_then(|v| v.as_str()) {
+                refs.push((
+                    format!("crucible_votes[{vote_id}].target_artifact_id"),
+                    target.to_string(),
+                ));
+            }
+        }
+    }
+
+    let mut report = Vec::new();
+    let mut failures = 0usize;
+    for (source, art_id) in &refs {
+        // Try every common prefix; the same id may live as result/request/molecule/vote.
+        let candidates = [
+            format!("chem_dft_result.{art_id}.json"),
+            format!("chem_dft_request.{art_id}.json"),
+            format!("chem_molecule_adt.{art_id}.json"),
+            format!("crucible_review_vote.{art_id}.json"),
+        ];
+        let path = candidates.iter().map(|f| artifact_dir.join(f)).find(|p| p.exists());
+        let entry = match path {
+            Some(p) => match std::fs::read_to_string(&p) {
+                Ok(body) => match serde_json::from_str::<Artifact>(&body) {
+                    Ok(artifact) => match artifact.verify() {
+                        Ok(()) => serde_json::json!({
+                            "source": source,
+                            "artifact_id": art_id,
+                            "path": p.display().to_string(),
+                            "verified": true,
+                        }),
+                        Err(err) => {
+                            failures += 1;
+                            serde_json::json!({
+                                "source": source,
+                                "artifact_id": art_id,
+                                "path": p.display().to_string(),
+                                "verified": false,
+                                "error": format!("{err:?}"),
+                            })
+                        }
+                    },
+                    Err(err) => {
+                        failures += 1;
+                        serde_json::json!({
+                            "source": source,
+                            "artifact_id": art_id,
+                            "path": p.display().to_string(),
+                            "verified": false,
+                            "error": format!("deserialize: {err}"),
+                        })
+                    }
+                },
+                Err(err) => {
+                    failures += 1;
+                    serde_json::json!({
+                        "source": source,
+                        "artifact_id": art_id,
+                        "path": p.display().to_string(),
+                        "verified": false,
+                        "error": format!("read: {err}"),
+                    })
+                }
+            },
+            None => {
+                failures += 1;
+                serde_json::json!({
+                    "source": source,
+                    "artifact_id": art_id,
+                    "verified": false,
+                    "error": format!("no on-disk artifact found in {}", artifact_dir.display()),
+                })
+            }
+        };
+        report.push(entry);
+    }
+
+    let summary = serde_json::json!({
+        "world_model": world_model_path.display().to_string(),
+        "artifact_dir": artifact_dir.display().to_string(),
+        "total_refs": refs.len(),
+        "verified": refs.len() - failures,
+        "failed": failures,
+        "entries": report,
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&summary)
+            .map_err(|error| format!("serialize verify report: {error}"))?
+    );
+    if failures > 0 {
+        Err(format!("{failures} reference(s) failed to verify"))
+    } else {
+        Ok(())
+    }
+}
+
+// ---------------- crucible vote ---------------- //
+
+fn parse_vote_kind(s: &str) -> Result<VoteKind, String> {
+    match s.to_ascii_lowercase().replace('_', "-").as_str() {
+        "approve" | "approved" => Ok(VoteKind::Approve),
+        "reject" | "rejected" => Ok(VoteKind::Reject),
+        "abstain" => Ok(VoteKind::Abstain),
+        "request-revision" | "revision" | "needs-revision" => Ok(VoteKind::RequestRevision),
+        other => Err(format!(
+            "unknown --kind {other:?}; expected one of approve|reject|abstain|request-revision"
+        )),
+    }
+}
+
+fn build_vote_from_args(args: &[&str], created_at: u64) -> Result<(ReviewVote, AgentId), String> {
+    let target_id = require_kv(args, "--target-id")?;
+    let target_content_hash = require_kv(args, "--target-content-hash")?;
+    let target_schema_tag = require_kv(args, "--target-schema-tag")?;
+    let kind = parse_vote_kind(require_kv(args, "--kind")?)?;
+    let vote_id = parse_kv(args, "--vote-id")
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("vote_{created_at:x}_{}", &target_content_hash[..6]));
+    let mut identity = VoterIdentity::default();
+    if let Some(orcid) = parse_kv(args, "--orcid") {
+        identity.orcid = Some(orcid.to_string());
+    }
+    if let Some(ens) = parse_kv(args, "--ens") {
+        identity.ens_name = Some(ens.to_string());
+    }
+    if let Some(eth) = parse_kv(args, "--eth-address") {
+        identity.eth_address = Some(eth.to_string());
+    }
+    if identity.is_empty() {
+        return Err(
+            "at least one of --orcid, --ens, --eth-address must be provided".to_string()
+        );
+    }
+    let provenance = VoteProvenance {
+        source_kind: parse_kv(args, "--source-kind")
+            .unwrap_or("chimiaclaw-cli")
+            .to_string(),
+        source_ref: parse_kv(args, "--source-ref")
+            .unwrap_or("crucible vote")
+            .to_string(),
+        user_agent: parse_kv(args, "--user-agent").map(str::to_string),
+        notes: Vec::new(),
+    };
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("reviewer.chimiaclaw.eth")
+            .to_string(),
+    );
+    let mut vote = ReviewVote::new(
+        vote_id,
+        identity,
+        ArtifactId(target_id.to_string()),
+        target_content_hash,
+        SchemaTag(target_schema_tag.to_string()),
+        kind,
+        created_at,
+        provenance,
+    );
+    if let Some(rationale) = parse_kv(args, "--rationale") {
+        vote = vote.with_rationale(rationale);
+    }
+    Ok((vote, agent))
+}
+
+fn run_crucible_vote(args: &[&str]) -> Result<(), String> {
+    let created_at = parse_optional_u64(args, "--created-at")?.unwrap_or_else(unix_now);
+    let (vote, agent) = build_vote_from_args(args, created_at)?;
+    let signer = NodeProfile::dev_signer_from_seed_label(
+        parse_kv(args, "--seed-label").unwrap_or("crucible-vote"),
+    );
+    let artifact = vote_artifact(&vote, agent, &signer, created_at)
+        .map_err(|error| format!("sign vote artifact: {error}"))?;
+    if let Some(out_dir) = parse_kv(args, "--out-dir") {
+        let out_dir = PathBuf::from(out_dir);
+        std::fs::create_dir_all(&out_dir)
+            .map_err(|error| format!("create out-dir {}: {error}", out_dir.display()))?;
+        let path = out_dir.join(format!("crucible_review_vote.{}.json", artifact.id.0));
+        std::fs::write(
+            &path,
+            serde_json::to_string_pretty(&artifact)
+                .map_err(|error| format!("serialize vote artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", path.display()))?;
+    }
+    let report = serde_json::json!({
+        "schema_tag": VOTE_SCHEMA_TAG,
+        "vote": vote,
+        "artifact": artifact,
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize vote report: {error}"))?
+    );
+    Ok(())
+}
+
+fn run_crucible_demo(args: &[&str]) -> Result<(), String> {
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let signer = NodeProfile::dev_signer_from_seed_label("crucible-demo");
+    let agent = AgentId("reviewer.chimiaclaw.eth".to_string());
+    // Two example votes against real DFT result artifact ids. Their content
+    // hashes are placeholders here (64-char hex sentinels); the demo's intent
+    // is to show the schema + signature path. For real binding to a specific
+    // result, use `crucible vote --target-content-hash $(jq -r .content_hash
+    // demo/dft/chem_dft_result.<id>.json)`.
+    let placeholder_hash = "0".repeat(64);
+    let water = ReviewVote::new(
+        "vote_demo_water_approve_001",
+        VoterIdentity::from_orcid("0000-0001-2345-6789"),
+        ArtifactId("art_3d5c1283b1a8f79f".to_string()),
+        placeholder_hash.clone(),
+        SchemaTag("chem.dft.result".to_string()),
+        VoteKind::Approve,
+        1,
+        VoteProvenance {
+            source_kind: "chimiaclaw-cli".to_string(),
+            source_ref: "crucible-demo:water".to_string(),
+            user_agent: None,
+            notes: vec!["placeholder content hash; bind real hash via `crucible vote`".to_string()],
+        },
+    )
+    .with_rationale(
+        "PBE/def2-tzvp on olympus.local; dipole 2.028 D matches H2O experimental within 0.1 D.",
+    );
+    let benzene = ReviewVote::new(
+        "vote_demo_benzene_request_revision_001",
+        VoterIdentity {
+            orcid: Some("0000-0001-2345-6789".to_string()),
+            ens_name: Some("reviewer.chimiaclaw.eth".to_string()),
+            eth_address: None,
+        },
+        ArtifactId("art_87a648cd3b5f6490".to_string()),
+        placeholder_hash,
+        SchemaTag("chem.dft.result".to_string()),
+        VoteKind::RequestRevision,
+        2,
+        VoteProvenance {
+            source_kind: "chimiaclaw-cli".to_string(),
+            source_ref: "crucible-demo:benzene".to_string(),
+            user_agent: None,
+            notes: vec!["placeholder content hash".to_string()],
+        },
+    )
+    .with_rationale(
+        "Re-run with PBE0+D3(BJ) for a fairer comparison; PBE underestimates HOMO-LUMO gap.",
+    );
+    let water_artifact = vote_artifact(&water, agent.clone(), &signer, 3)
+        .map_err(|error| format!("sign water vote: {error}"))?;
+    let benzene_artifact = vote_artifact(&benzene, agent, &signer, 4)
+        .map_err(|error| format!("sign benzene vote: {error}"))?;
+    if let Some(dir) = out_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+        for art in [&water_artifact, &benzene_artifact] {
+            let path = dir.join(format!("crucible_review_vote.{}.json", art.id.0));
+            std::fs::write(
+                &path,
+                serde_json::to_string_pretty(art)
+                    .map_err(|error| format!("serialize vote artifact: {error}"))?,
+            )
+            .map_err(|error| format!("write {}: {error}", path.display()))?;
+        }
+    }
+    let report = serde_json::json!({
+        "schema_tag": VOTE_SCHEMA_TAG,
+        "votes": [
+            { "vote": water, "artifact": water_artifact },
+            { "vote": benzene, "artifact": benzene_artifact },
+        ],
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize crucible demo: {error}"))?
+    );
+    let _ = args;
     Ok(())
 }
 

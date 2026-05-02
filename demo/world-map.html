@@ -593,10 +593,17 @@
           </section>
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>05</strong> / 08 — MARKET</span>
+              <span class="stamp"><strong>05</strong> / 09 — MARKET</span>
               <span class="stamp">SCIENCE TRANSACTIONS</span>
             </div>
             <div id="science-transactions" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>09</strong> / 09 — DISCOURSE</span>
+              <span class="stamp" id="discourse-stamp">CRUCIBLE.REVIEW.VOTE</span>
+            </div>
+            <div id="crucible-discourse" class="stack"></div>
           </section>
           <section class="panel">
             <div class="panel-header">
@@ -747,6 +754,7 @@
           renderSelectedLab(model, lab);
           renderTxFlowEdges(model, lab);
           renderScienceTransactions(model, lab.id);
+          renderCrucibleDiscourse(model, lab.id);
         });
       });
 
@@ -1020,6 +1028,86 @@
       `).join("");
     }
 
+    const VOTE_KIND_LABEL = {
+      Approve: { label: "APPROVE", color: "oklch(0.70 0.18 148)" },
+      Reject: { label: "REJECT", color: "oklch(0.65 0.20 25)" },
+      Abstain: { label: "ABSTAIN", color: "oklch(0.46 0.006 60)" },
+      RequestRevision: { label: "REQUEST REVISION", color: "oklch(0.72 0.16 78)" },
+    };
+
+    function renderCrucibleDiscourse(model, filterLabId) {
+      const root = $("crucible-discourse");
+      if (!root) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.crucible_votes ?? [];
+      const votes = filterLabId
+        ? all.filter((v) => v.target_lab === filterLabId)
+        : all;
+
+      const banner = filterLabId
+        ? `<div class="tx-filter-banner">
+             <span>Filter · votes targeting ${esc(labsById[filterLabId]?.short_label ?? filterLabId)} (${votes.length} of ${all.length})</span>
+             <button id="discourse-clear-filter" type="button">Show all</button>
+           </div>`
+        : "";
+
+      const intro = `
+        <p class="small" style="margin-bottom: 10px;">
+          Each vote is a <span class="mono" style="color: var(--primary);">crucible.review.vote</span>
+          signed artifact whose <span class="mono">target_content_hash</span> is bound to the
+          target's payload bytes. Tampering with the target invalidates every vote against it.
+          Reproduce both votes locally with
+          <span class="mono" style="color: var(--primary);">cargo run -p chimiaclaw-cli -- crucible-demo</span>.
+        </p>
+      `;
+
+      const cards = votes.map((vote) => {
+        const kindMeta = VOTE_KIND_LABEL[vote.kind] ?? { label: vote.kind, color: "var(--muted)" };
+        const targetLab = labsById[vote.target_lab];
+        const idents = [];
+        if (vote.voter_identity?.orcid) idents.push(`ORCID ${esc(vote.voter_identity.orcid)}`);
+        if (vote.voter_identity?.ens_name) idents.push(`ENS ${esc(vote.voter_identity.ens_name)}`);
+        if (vote.voter_identity?.eth_address) idents.push(`ETH ${esc(vote.voter_identity.eth_address)}`);
+        return `
+          <article class="card">
+            <div class="panel-header" style="margin-bottom: 6px;">
+              <span class="stamp">${esc(vote.vote_id)}</span>
+              <span class="tag" style="color: ${kindMeta.color}; border-color: ${kindMeta.color}55; background: ${kindMeta.color}11; font-weight: 700;">${esc(kindMeta.label)}</span>
+            </div>
+            <h3>${esc(vote.target_label ?? vote.target_artifact_id)}</h3>
+            <div class="tx-handoff">
+              <span class="pill">${esc(idents[0] ?? "identity")}</span>
+              <span class="arrow">▶</span>
+              <span class="pill target">${esc(targetLab ? targetLab.short_label : (vote.target_lab ?? ""))}</span>
+            </div>
+            <p class="small" style="margin-top: 6px;"><em>${esc(vote.rationale ?? "")}</em></p>
+            <div class="tag-row">
+              <span class="tag" style="color: var(--primary); border-color: oklch(0.76 0.17 192 / 0.35);">target ${esc(vote.target_artifact_id)}</span>
+              <span class="tag">${esc(vote.target_schema_tag)}</span>
+            </div>
+            <div class="tag-row">
+              ${idents.slice(1).map((s) => `<span class="tag good">${s}</span>`).join("")}
+              ${vote.provenance?.source_kind ? `<span class="tag">src:${esc(vote.provenance.source_kind)}</span>` : ""}
+              ${vote.provenance?.source_ref ? `<span class="tag">ref:${esc(vote.provenance.source_ref)}</span>` : ""}
+              <span class="tag plan">${esc(vote.status ?? "projection")}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const empty = votes.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No discourse votes target this lab. Project new votes via <span class="mono">crucible vote</span>.</p>`
+        : "";
+      root.innerHTML = banner + intro + cards + empty;
+
+      const clearBtn = document.getElementById("discourse-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderCrucibleDiscourse(model);
+        });
+      }
+    }
+
     function renderPrinciples(model) {
       $("principles").innerHTML = model.abstraction_principles.map((principle) => `
         <article class="card">
@@ -1101,6 +1189,7 @@
         renderMap(model);
         renderQuests(model);
         renderScienceTransactions(model);
+        renderCrucibleDiscourse(model);
         renderArtifacts(model);
         renderAgents(model);
         renderPrinciples(model);

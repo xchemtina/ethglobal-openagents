@@ -76,8 +76,14 @@
     {
       "id": "world-avatar",
       "label": "World Avatar Projection",
-      "stamp": "08 / 08 \u2014 RDF",
+      "stamp": "08 / 09 \u2014 RDF",
       "description": "RDF/PROV-O/OntoChimia projection for semantic federation, not the canonical store."
+    },
+    {
+      "id": "discourse",
+      "label": "SciCrucible Discourse",
+      "stamp": "09 / 09 \u2014 DISCOURSE",
+      "description": "Projection over signed crucible.review.vote artifacts. Each upvote / peer-review / revision-request action is a content-hash-bound signed artifact parented to its target, not a comment outside the artifact graph."
     }
   ],
   "sectors": [
@@ -1711,6 +1717,45 @@
           "OperatorCancelledBeforeExecution"
         ]
       }
+    }
+  ],
+  "crucible_votes": [
+    {
+      "vote_id": "vote_demo_water_approve_001",
+      "target_artifact_id": "art_3d5c1283b1a8f79f",
+      "target_schema_tag": "chem.dft.result",
+      "target_label": "water (H2O) DFT result",
+      "target_lab": "LAB.CHIMIA.04",
+      "kind": "Approve",
+      "voter_identity": {
+        "orcid": "0000-0001-2345-6789"
+      },
+      "rationale": "PBE/def2-tzvp on olympus.local; dipole 2.028 D matches H2O experimental within 0.1 D.",
+      "provenance": {
+        "source_kind": "chimiaclaw-cli",
+        "source_ref": "crucible-demo:water"
+      },
+      "status": "projection-over-signed-artifact",
+      "reproduce_with": "cargo run -p chimiaclaw-cli -- crucible-demo --out-dir /tmp/crucible-demo"
+    },
+    {
+      "vote_id": "vote_demo_benzene_request_revision_001",
+      "target_artifact_id": "art_87a648cd3b5f6490",
+      "target_schema_tag": "chem.dft.result",
+      "target_label": "benzene (C6H6) DFT result",
+      "target_lab": "LAB.CHIMIA.04",
+      "kind": "RequestRevision",
+      "voter_identity": {
+        "orcid": "0000-0001-2345-6789",
+        "ens_name": "reviewer.chimiaclaw.eth"
+      },
+      "rationale": "Re-run with PBE0+D3(BJ) for a fairer comparison; PBE underestimates HOMO-LUMO gap.",
+      "provenance": {
+        "source_kind": "chimiaclaw-cli",
+        "source_ref": "crucible-demo:benzene"
+      },
+      "status": "projection-over-signed-artifact",
+      "reproduce_with": "cargo run -p chimiaclaw-cli -- crucible-demo --out-dir /tmp/crucible-demo"
     }
   ]
 }

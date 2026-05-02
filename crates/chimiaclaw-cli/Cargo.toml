@@ -21,6 +21,7 @@ live-sponsors = [
 
 [dependencies]
 chimiaclaw-artifact = { path = "../chimiaclaw-artifact" }
+chimiaclaw-crucible = { path = "../chimiaclaw-crucible" }
 chimiaclaw-dft-skala = { path = "../chimiaclaw-dft-skala", optional = true }
 chimiaclaw-exec-keeperhub = { path = "../chimiaclaw-exec-keeperhub", optional = true }
 chimiaclaw-governance = { path = "../chimiaclaw-governance" }
