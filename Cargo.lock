@@ -137,6 +137,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "chimiaclaw-crucible"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-schema",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "chimiaclaw-dft-skala"
 version = "0.1.0"
 dependencies = [
