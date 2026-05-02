@@ -757,17 +757,65 @@
 
     function renderTxFlowEdges(model, selectedLab) {
       const layer = document.getElementById("tx-flow-edges");
+      const trustLayer = document.getElementById("trust-edges");
       if (!layer) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
       const txs = (model.science_transactions ?? []).filter((tx) => tx.target_lab === selectedLab.id);
-      const lines = txs.map((tx) => {
+
+      // 1. Operator -> selected lab: each transaction targeting this lab gets
+      //    its own animated dashed line, colored by service kind.
+      const intoLines = txs.map((tx) => {
         const color = txColor(tx);
-        const x1 = OPERATOR_ANCHOR.x;
-        const y1 = OPERATOR_ANCHOR.y;
-        const x2 = selectedLab.location.x;
-        const y2 = selectedLab.location.y;
-        return `<line class="tx-flow-line" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" opacity="0.85"></line>`;
+        return `<line class="tx-flow-line" x1="${OPERATOR_ANCHOR.x}" y1="${OPERATOR_ANCHOR.y}" x2="${selectedLab.location.x}" y2="${selectedLab.location.y}" stroke="${color}" opacity="0.85"></line>`;
       }).join("");
-      layer.innerHTML = lines;
+
+      // 2. Selected lab -> any lab it returns results to (i.e. any active
+      //    trust_edge with a result-return / lineage flow whose source is the
+      //    selected lab). This makes the lab-to-lab handoff visible: e.g.
+      //    olympus -> analysis dock for chem.dft.result return.
+      const returnEdges = (model.trust_edges ?? []).filter((edge) =>
+        edge.source === selectedLab.id
+        && edge.status === "active"
+        && (edge.allowed_flows ?? []).some((flow) =>
+          /result|lineage|chem\.dft|return|chem\.molecule|chem\.adt/i.test(flow)
+        )
+      );
+      const returnLines = returnEdges.map((edge) => {
+        const target = labsById[edge.target];
+        if (!target) return "";
+        return `<line class="tx-flow-line tx-flow-return" x1="${selectedLab.location.x}" y1="${selectedLab.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="oklch(0.70 0.18 148)" opacity="0.9"></line>`;
+      }).join("");
+
+      // 3. Inbound dispatch edges: any active trust_edge whose target is the
+      //    selected lab (e.g. virtual retro swarm dispatching jobs into
+      //    olympus). Drawn dim-cyan.
+      const inboundEdges = (model.trust_edges ?? []).filter((edge) =>
+        edge.target === selectedLab.id && edge.status === "active"
+      );
+      const inboundLines = inboundEdges.map((edge) => {
+        const source = labsById[edge.source];
+        if (!source) return "";
+        return `<line class="tx-flow-line tx-flow-inbound" x1="${source.location.x}" y1="${source.location.y}" x2="${selectedLab.location.x}" y2="${selectedLab.location.y}" stroke="oklch(0.76 0.17 192)" opacity="0.55"></line>`;
+      }).join("");
+
+      layer.innerHTML = intoLines + returnLines + inboundLines;
+
+      // 4. Highlight the underlying trust edges that involve this lab so
+      //    the static lab graph itself responds to the selection.
+      if (trustLayer) {
+        const baseEdges = (model.trust_edges ?? []).map((edge) => {
+          const source = labsById[edge.source];
+          const target = labsById[edge.target];
+          if (!source || !target) return "";
+          const involves = edge.source === selectedLab.id || edge.target === selectedLab.id;
+          const baseColor = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
+          const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
+          const opacity = involves ? 0.95 : 0.30;
+          const width = involves ? 0.55 : 0.30;
+          return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${baseColor}" stroke-width="${width}" opacity="${opacity}" ${dash}></line>`;
+        }).join("");
+        trustLayer.innerHTML = baseEdges;
+      }
     }
 
     function renderSelectedLab(model, lab) {

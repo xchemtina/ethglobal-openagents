@@ -29,7 +29,11 @@ This is the near-term build order after the current scaffold.
 - ✅ Add a dependency-free static `demo/world-map.html` renderer for the abstraction.
 - ✅ Include MSSP genealogy and World Avatar RDF projection as explicit model layers.
 - ✅ Add a science service market layer for ENS-shaped DFT, retrosynthesis, and literature transaction flows.
-- 🟡 Build the actual frontend renderer against the static fixture before introducing live APIs.
+- ✅ Add a real `LAB.CHIMIA.04` Olympus DFT Worker node + Olympus↔Analysis-Dock and Virtual-Retro-Swarm→Olympus trust edges to the world-model. Six new `science_transactions` tagged `real-execution` reference the real signed `chem.dft.result` artifact IDs (water, methanol, benzene, propylene glycol, caprylic acid, capric acid).
+- ✅ Make `world-map.html` interactive: per-lab incoming-transaction count badges, click-to-filter transactions by target lab, animated dashed flow lines for operator→lab plus inbound dispatch and outbound result-return paths, highlighted trust edges that involve the selected lab, transactions grouped by `service_kind` with per-group real-exec counts and a green REAL EXECUTION pill.
+- ✅ Build a Next.js dashboard (`SciCrucible_v1/`) that loads the six signed `chem.dft.result` artifacts directly from `public/artifacts/`: typed loader at `lib/dft-artifacts.ts` (hex-decodes inline payloads, pairs each result with its three orbital-cube PNGs), `/dft` gallery, `/dft/[id]` detail page with cubes / orbitals / dipole / geometry / signed lineage panels.
+- ✅ Add a `chimiaclaw-crucible` workspace crate exposing `crucible.review.vote` so the dashboard's voting flow has a real signed-artifact target (closed VoteKind enum, layered ORCID/ENS/eth identity, content-hash binding, parent = target artifact, 8 unit tests).
+- 🟡 Wire dashboard vote actions through `chimiaclaw-crucible::vote_artifact` so each upvote / peer-review action becomes a real signed `crucible.review.vote` artifact.
 - 🟡 Replace symbolic lab nodes with operator-approved profile/config data when custody rules are ready.
 
 ## 1c. Make science transactions prize-track credible (in progress)
