@@ -256,6 +256,12 @@
     .lab-node.allied { border-color: var(--warning); }
     .lab-node.virtual { border-color: var(--purple); }
     .lab-node.quarantine { border-color: var(--danger); }
+    .lab-node.real-node {
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 0.6),
+        0 0 22px oklch(0.70 0.18 148 / 0.20),
+        0 14px 36px oklch(0 0 0 / 0.35);
+    }
 
     .lab-id {
       color: var(--faint);
@@ -276,6 +282,44 @@
       color: var(--muted);
       font-size: 10px;
     }
+
+    .lab-real-badge {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      padding: 3px 6px;
+      border: 1px solid var(--agent);
+      background: oklch(0.07 0 0);
+      color: var(--agent);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      box-shadow: 0 0 12px oklch(0.70 0.18 148 / 0.45);
+      pointer-events: none;
+    }
+
+    .lab-channel-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 8px;
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      color: var(--faint);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .channel-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .channel-dot.data { background: var(--agent); box-shadow: 0 0 10px var(--agent); }
+    .channel-dot.concept { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
 
     .lab-tx-count {
       position: absolute;
@@ -303,12 +347,69 @@
     .lab-node.allied .lab-tx-count { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 12px oklch(0.72 0.16 78 / 0.45); }
     .lab-node.virtual .lab-tx-count { border-color: var(--purple); color: var(--purple); box-shadow: 0 0 12px oklch(0.65 0.16 262 / 0.45); }
     .lab-node.quarantine .lab-tx-count { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 12px oklch(0.65 0.20 25 / 0.45); }
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .legend-line {
+      width: 22px;
+      height: 0;
+      border-top: 1px dashed var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    .legend-line.blocked {
+      border-top-color: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
 
     .tx-flow-line {
       stroke-width: 0.6;
       stroke-dasharray: 1.2 1.6;
       animation: tx-dash 18s linear infinite;
       filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    .interaction-flow-line {
+      stroke-width: 0.55;
+      stroke-dasharray: 1 1.8;
+      animation: tx-dash 24s linear infinite;
+      filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    .interaction-flow-line.base {
+      stroke-width: 0.32;
+      opacity: 0.38;
+    }
+
+    .interaction-flow-line.selected-flow {
+      stroke-width: 0.85;
+      opacity: 0.95;
+    }
+
+    .interaction-flow-line.blocked {
+      stroke-dasharray: 0.6 2.2;
+    }
+
+    .interaction-flow-line.concept-only {
+      stroke-dasharray: 2.2 1.2;
     }
 
     @keyframes tx-dash {
@@ -392,6 +493,22 @@
 
     .tx-handoff .pill.target { color: var(--primary); border-color: oklch(0.76 0.17 192 / 0.35); }
     .tx-handoff .arrow { color: var(--primary); }
+
+    .interaction-card {
+      border-left: 2px solid var(--primary);
+    }
+
+    .interaction-card.real-execution {
+      border-left-color: var(--agent);
+    }
+
+    .interaction-card.blocked {
+      border-left-color: var(--danger);
+    }
+
+    .interaction-card.review {
+      border-left-color: var(--warning);
+    }
 
     .grid-2 {
       display: grid;
@@ -558,16 +675,23 @@
         <div class="stack">
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>01</strong> / 08 — NETWORK</span>
+              <span class="stamp"><strong>01</strong> / 09 — NETWORK</span>
               <span class="stamp" id="selected-lab-label">NO LAB SELECTED</span>
             </div>
             <div id="metrics" class="metric-grid"></div>
             <div id="map" class="map" aria-label="Abstract lab network map"></div>
+            <div class="map-legend mono" aria-label="Map legend">
+              <span class="legend-pill"><span class="lab-real-badge" style="position: static; pointer-events: none;">REAL</span> ChimiaDAO-controlled node</span>
+              <span class="legend-pill"><span class="channel-dot data"></span> data payload flow</span>
+              <span class="legend-pill"><span class="channel-dot concept"></span> concept / MSSP flow</span>
+              <span class="legend-pill"><span class="legend-line"></span> active interaction</span>
+              <span class="legend-pill"><span class="legend-line blocked"></span> blocked / quarantined</span>
+            </div>
           </section>
 
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>07</strong> / 08 — MSSP</span>
+              <span class="stamp"><strong>07</strong> / 09 — MSSP</span>
               <span class="stamp">ARTIFACT GENEALOGY</span>
             </div>
             <div id="mssp"></div>
@@ -575,7 +699,7 @@
 
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>08</strong> / 08 — WORLD AVATAR</span>
+              <span class="stamp"><strong>08</strong> / 09 — WORLD AVATAR</span>
               <span class="stamp">RDF PROJECTION</span>
             </div>
             <div id="world-avatar"></div>
@@ -586,7 +710,14 @@
           <section class="panel" id="selected-lab"></section>
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>02</strong> / 08 — QUESTS</span>
+              <span class="stamp"><strong>06</strong> / 09 — INTERACTIONS</span>
+              <span class="stamp">DATA + CONCEPT</span>
+            </div>
+            <div id="lab-interactions" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>02</strong> / 09 — QUESTS</span>
               <span class="stamp">CLI BINDINGS</span>
             </div>
             <div id="quests" class="stack"></div>
@@ -607,21 +738,21 @@
           </section>
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>03</strong> / 08 — ARTIFACTS</span>
+              <span class="stamp"><strong>03</strong> / 09 — ARTIFACTS</span>
               <span class="stamp">SIGNED LINEAGE</span>
             </div>
             <div id="artifacts"></div>
           </section>
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>04</strong> / 08 — AGENTS</span>
+              <span class="stamp"><strong>04</strong> / 09 — AGENTS</span>
               <span class="stamp">SKILL SURFACE</span>
             </div>
             <div id="agents" class="stack"></div>
           </section>
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>00</strong> / 08 — PRINCIPLES</span>
+              <span class="stamp"><strong>00</strong> / 09 — PRINCIPLES</span>
               <span class="stamp">NON-NEGOTIABLES</span>
             </div>
             <div id="principles" class="stack"></div>
@@ -651,7 +782,7 @@
       const text = esc(status ?? "unknown");
       const klass = status === "real-execution" || status?.includes("real-pyscf")
         ? "real"
-        : status?.includes("implemented") || status?.includes("Released") || status === "online" || status === "active"
+        : status?.includes("implemented") || status?.includes("Released") || status?.includes("active") || status === "online"
           ? "good"
           : status?.includes("planned") || status?.includes("candidate") || status?.includes("review") || status?.includes("standby")
             ? "warn"
@@ -683,11 +814,12 @@
 
     function renderMetrics(model) {
       const implemented = model.artifact_cards.filter((a) => a.status.includes("implemented")).length;
-      const planned = model.artifact_cards.length - implemented;
+      const realLabs = model.labs.filter((lab) => lab.node_reality?.kind === "real").length;
       const transactions = model.science_transactions?.length ?? 0;
+      const interactions = model.lab_interactions?.length ?? 0;
       $("metrics").innerHTML = `
-        <div class="metric"><span class="metric-label">labs</span><strong>${model.labs.length}</strong></div>
-        <div class="metric"><span class="metric-label">edges</span><strong>${model.trust_edges.length}</strong></div>
+        <div class="metric"><span class="metric-label">real lab nodes</span><strong>${realLabs}/${model.labs.length}</strong></div>
+        <div class="metric"><span class="metric-label">active interactions</span><strong>${interactions}</strong></div>
         <div class="metric"><span class="metric-label">science tx</span><strong>${transactions}</strong></div>
         <div class="metric"><span class="metric-label">implemented artifacts</span><strong>${implemented}</strong></div>
       `;
@@ -699,6 +831,29 @@
         if (!tx.target_lab) continue;
         counts[tx.target_lab] = (counts[tx.target_lab] ?? 0) + 1;
       }
+      for (const vote of model.crucible_votes ?? []) {
+        if (!vote.target_lab) continue;
+        counts[vote.target_lab] = (counts[vote.target_lab] ?? 0) + 1;
+      }
+      for (const flow of model.lab_interactions ?? []) {
+        if (flow.source_lab) counts[flow.source_lab] = (counts[flow.source_lab] ?? 0) + 1;
+        if (flow.target_lab) counts[flow.target_lab] = (counts[flow.target_lab] ?? 0) + 1;
+      }
+      return counts;
+    }
+
+    function channelCountsByLab(model) {
+      const counts = {};
+      for (const lab of model.labs ?? []) {
+        counts[lab.id] = { data: 0, concept: 0 };
+      }
+      for (const flow of model.lab_interactions ?? []) {
+        for (const labId of [flow.source_lab, flow.target_lab]) {
+          if (!counts[labId]) counts[labId] = { data: 0, concept: 0 };
+          if ((flow.channels ?? []).includes("data")) counts[labId].data += 1;
+          if ((flow.channels ?? []).includes("concept")) counts[labId].concept += 1;
+        }
+      }
       return counts;
     }
 
@@ -708,6 +863,28 @@
       if (tx.service_kind === "retrosynthesis") return "oklch(0.72 0.16 78)"; // warning amber
       if (tx.service_kind === "literature") return "oklch(0.65 0.16 262)";  // purple
       return "var(--muted)";
+    }
+
+    function interactionColor(flow) {
+      if (flow.status === "blocked") return "oklch(0.65 0.20 25)";
+      if (flow.status === "review") return "oklch(0.72 0.16 78)";
+      if (flow.status === "real-execution") return "oklch(0.70 0.18 148)";
+      const channels = flow.channels ?? [];
+      if (channels.includes("data") && channels.includes("concept")) return "oklch(0.76 0.17 192)";
+      if (channels.includes("concept")) return "oklch(0.65 0.16 262)";
+      if (channels.includes("data")) return "oklch(0.70 0.18 148)";
+      return "var(--muted)";
+    }
+
+    function interactionLineClass(flow, extra = "") {
+      const channels = flow.channels ?? [];
+      const klass = [
+        "interaction-flow-line",
+        extra,
+        flow.status === "blocked" ? "blocked" : "",
+        channels.includes("concept") && !channels.includes("data") ? "concept-only" : "",
+      ].filter(Boolean).join(" ");
+      return klass;
     }
 
     // Position of the operator anchor on the map; transactions originate visually here.
@@ -724,24 +901,38 @@
         const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
         return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${color}" stroke-width="0.35" opacity="0.55" ${dash}></line>`;
       }).join("");
+      const interactionEdgeSvg = (model.lab_interactions ?? []).map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        if (!source || !target) return "";
+        return `<line class="${interactionLineClass(flow, "base")}" x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${interactionColor(flow)}"></line>`;
+      }).join("");
       const edgeSvg = `
         <svg class="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
           <g id="trust-edges">${trustEdgeSvg}</g>
+          <g id="interaction-edges">${interactionEdgeSvg}</g>
           <g id="tx-flow-edges"></g>
         </svg>
       `;
       const counts = txCountByLab(model);
+      const channelCounts = channelCountsByLab(model);
       map.innerHTML = edgeSvg + model.labs.map((lab) => {
         const count = counts[lab.id] ?? 0;
+        const channels = channelCounts[lab.id] ?? { data: 0, concept: 0 };
         const badge = count > 0
-          ? `<span class="lab-tx-count" title="${count} incoming transactions">${count}×</span>`
+          ? `<span class="lab-tx-count" title="${count} interaction, transaction, or vote events">${count}×</span>`
+          : "";
+        const realBadge = lab.node_reality?.kind === "real"
+          ? `<span class="lab-real-badge">REAL</span>`
           : "";
         return `
-          <button class="lab-node ${trustClass(lab)}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
+          <button class="lab-node ${trustClass(lab)} ${lab.node_reality?.kind === "real" ? "real-node" : ""}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
+            ${realBadge}
             ${badge}
             <div class="lab-id mono">${esc(lab.id)}</div>
             <div class="lab-name">${esc(lab.short_label)}</div>
             <div class="lab-meta mono"><span>${esc(lab.status)}</span><span>${Math.round((lab.telemetry.trust_score ?? 0) * 100)}%</span></div>
+            <div class="lab-channel-row"><span class="channel-dot data"></span>${channels.data}<span class="channel-dot concept"></span>${channels.concept}</div>
           </button>
         `;
       }).join("");
@@ -753,6 +944,7 @@
           const lab = labsById[node.dataset.lab];
           renderSelectedLab(model, lab);
           renderTxFlowEdges(model, lab);
+          renderLabInteractions(model, lab.id);
           renderScienceTransactions(model, lab.id);
           renderCrucibleDiscourse(model, lab.id);
         });
@@ -761,6 +953,7 @@
       renderSelectedLab(model, model.labs[0]);
       map.querySelector(".lab-node")?.classList.add("selected");
       renderTxFlowEdges(model, model.labs[0]);
+      renderLabInteractions(model, model.labs[0].id);
     }
 
     function renderTxFlowEdges(model, selectedLab) {
@@ -805,8 +998,17 @@
         if (!source) return "";
         return `<line class="tx-flow-line tx-flow-inbound" x1="${source.location.x}" y1="${source.location.y}" x2="${selectedLab.location.x}" y2="${selectedLab.location.y}" stroke="oklch(0.76 0.17 192)" opacity="0.55"></line>`;
       }).join("");
+      const selectedFlows = (model.lab_interactions ?? []).filter((flow) =>
+        flow.source_lab === selectedLab.id || flow.target_lab === selectedLab.id
+      );
+      const interactionLines = selectedFlows.map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        if (!source || !target) return "";
+        return `<line class="${interactionLineClass(flow, "selected-flow")}" x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${interactionColor(flow)}"></line>`;
+      }).join("");
 
-      layer.innerHTML = intoLines + returnLines + inboundLines;
+      layer.innerHTML = interactionLines + intoLines + returnLines + inboundLines;
 
       // 4. Highlight the underlying trust edges that involve this lab so
       //    the static lab graph itself responds to the selection.
@@ -835,7 +1037,10 @@
         </div>
         <h2>${esc(lab.label)}</h2>
         <p class="small" style="margin-top: 8px;">${esc(lab.kind)} · ${esc(lab.custody)} · ${esc(lab.location.display)}</p>
-        <div class="tag-row">${lab.sectors.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}</div>
+        <div class="tag-row">
+          ${lab.node_reality ? `<span class="tag ${lab.node_reality.kind === "real" ? "real" : "plan"}">${esc(lab.node_reality.label)}</span>` : ""}
+          ${lab.sectors.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}
+        </div>
         <div class="grid-2" style="margin-top: 12px;">
           <div class="card">
             <span class="metric-label">trust tier</span>
@@ -1014,6 +1219,99 @@
       }
     }
 
+    function renderLabInteractions(model, filterLabId) {
+      const root = $("lab-interactions");
+      if (!root) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.lab_interactions ?? [];
+      const flows = filterLabId
+        ? all.filter((flow) => flow.source_lab === filterLabId || flow.target_lab === filterLabId)
+        : all;
+
+      const banner = filterLabId
+        ? `<div class="tx-filter-banner">
+             <span>Filter · interactions involving ${esc(labsById[filterLabId]?.short_label ?? filterLabId)} (${flows.length} of ${all.length})</span>
+             <button id="interaction-clear-filter" type="button">Show all</button>
+           </div>`
+        : "";
+
+      const payloadTags = (items, klass = "") => (items ?? []).map((item) =>
+        `<span class="tag ${klass}">${esc(item)}</span>`
+      ).join("");
+
+      const cards = flows.map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        const direction = filterLabId
+          ? flow.source_lab === filterLabId
+            ? "OUTBOUND"
+            : flow.target_lab === filterLabId
+              ? "INBOUND"
+              : "LINKED"
+          : "FLOW";
+        const cardClass = [
+          "card",
+          "interaction-card",
+          flow.status === "real-execution" ? "real-execution" : "",
+          flow.status === "blocked" ? "blocked" : "",
+          flow.status === "review" ? "review" : "",
+        ].filter(Boolean).join(" ");
+        const channelTags = (flow.channels ?? []).map((channel) =>
+          `<span class="tag ${channel === "data" ? "good" : "plan"}">${esc(channel)}</span>`
+        ).join("");
+
+        return `
+          <article class="${cardClass}">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <span class="stamp">${esc(flow.id)}</span>
+              ${statusTag(flow.status)}
+            </div>
+            <h3>${esc(flow.interaction_kind)} · ${esc(direction)}</h3>
+            <div class="tx-handoff">
+              <span class="pill">${esc(source ? source.short_label : flow.source_lab)}</span>
+              <span class="arrow">▶</span>
+              <span class="pill target">${esc(target ? target.short_label : flow.target_lab)}</span>
+            </div>
+            <p>${esc(flow.summary)}</p>
+            <div class="tag-row">
+              ${channelTags}
+              <span class="tag">${esc(flow.evidence_level)}</span>
+            </div>
+            <div class="grid-2" style="margin-top: 10px;">
+              <div class="card">
+                <span class="metric-label">data payloads</span>
+                <div class="tag-row">${payloadTags(flow.data_payloads, "good")}</div>
+              </div>
+              <div class="card">
+                <span class="metric-label">concept payloads</span>
+                <div class="tag-row">${payloadTags(flow.conceptual_payloads, "plan")}</div>
+              </div>
+              <div class="card">
+                <span class="metric-label">MSSP role</span>
+                <h3>${esc(flow.mssp_role)}</h3>
+              </div>
+              <div class="card">
+                <span class="metric-label">World Avatar projection</span>
+                <div class="tag-row">${payloadTags(flow.world_avatar_projection)}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const empty = flows.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No lab-to-lab interactions involve this node.</p>`
+        : "";
+
+      root.innerHTML = banner + cards + empty;
+
+      const clearBtn = document.getElementById("interaction-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderLabInteractions(model);
+        });
+      }
+    }
     function renderAgents(model) {
       $("agents").innerHTML = model.agents.map((agent) => `
         <article class="card">

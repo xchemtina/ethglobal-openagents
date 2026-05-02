@@ -20,6 +20,7 @@ If the framework and one reference swarm are not demoable before submission free
 4. Run `dft-daemon` job -> worker result -> mint/settle placeholder.
 5. Show artifact DAG and parent lineage across agents.
 6. Show `science-market-demo` as the sponsor-aligned transaction spine for DFT, retrosynthesis, and literature services.
+7. Show `world-map.html` as the distributed `n*(AI+Scientist)` proof: four real ChimiaDAO nodes plus candidate, virtual, and quarantined endpoints sharing signed data and MSSP / World Avatar concepts.
 
 ## Current working proof points
 
@@ -27,7 +28,8 @@ If the framework and one reference swarm are not demoable before submission free
 - `cargo run -p chimiaclaw-cli -- demo-ord-adt` produces ORD-like reaction → ADT reaction child artifact, both payload-bound.
 - `cargo run -p chimiaclaw-cli -- science-market-demo` produces deterministic signed ENS-shaped service transactions for retrosynthesis, DFT, and literature. Each flow is profile → offer → request → quote → quote acceptance → simulated escrow authorization → settlement intent → result → result acknowledgement → simulated release, with sponsor attachment points kept honest as fixture/planned-live fields.
 - `cargo run -p chimiaclaw-cli -- world-model` prints the deterministic lab-swarm abstraction fixture.
-- `demo/world-map.html` renders the abstraction as a dependency-free static HUD: labs, trust edges, quests, science transactions, artifacts, agents, MSSP genealogy, and World Avatar RDF projection.
+- `cargo run -p chimiaclaw-cli -- world-model verify` verifies the DFT result and Crucible vote artifact references, and now also checks lab interaction invariants: four real nodes, all labs participating, valid source/target lab IDs, and both data/concept channels.
+- `demo/world-map.html` renders the abstraction as a dependency-free static HUD: four real ChimiaDAO nodes, all-node lab interactions, data/concept channel counters, trust edges, quests, science transactions, Crucible review votes, artifacts, agents, MSSP genealogy, and World Avatar RDF projection.
 - `crates/chimiaclaw-ord-adt` includes an official-ORD-style JSON parser fixture.
 - `contracts` has passing scaffold tests for proposal anchoring, capability tokens, and reputation. **Governance execution semantics (quorum, vote weighting, treasury authority) are not yet implemented.**
 

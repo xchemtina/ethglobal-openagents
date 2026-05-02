@@ -28,7 +28,9 @@
     "MSSP optimization and World Avatar RDF are represented as projection layers over artifacts, not as live schedulers or triple-store integrations yet.",
     "Physical lab custody, human approval, ORCID identity, KG projection, and DAO governance are modeled as gates or future bindings unless explicitly marked implemented.",
     "Science service market transactions are modeled as deterministic signed artifacts: ENS-shaped profile -> offer -> request -> quote -> settlement intent -> result.",
-    "Economic settlement is modeled as signed non-custodial lifecycle artifacts: quote acceptance -> escrow authorization -> settlement intent -> result acknowledgement -> release or refund."
+    "Economic settlement is modeled as signed non-custodial lifecycle artifacts: quote acceptance -> escrow authorization -> settlement intent -> result acknowledgement -> release or refund.",
+    "Four lab nodes are real ChimiaDAO-operated nodes in this projection: Sofia Wetlab, Iberia Materials Bench, Analysis Dock, and Olympus DFT Worker. The remaining nodes are candidate, virtual, or quarantined endpoints.",
+    "Lab-to-lab interaction flows carry two channels where appropriate: data-driven signed artifacts and conceptual MSSP / World Avatar projections."
   ],
   "layers": [
     {
@@ -146,6 +148,10 @@
       "label": "ChimiaDAO Sofia Wetlab",
       "short_label": "Sofia",
       "kind": "chimiadao-physical",
+      "node_reality": {
+        "kind": "real",
+        "label": "real ChimiaDAO lab node"
+      },
       "status": "online",
       "trust_tier": "custody-core",
       "custody": "dao-controlled-material-custody",
@@ -188,7 +194,11 @@
       "label": "ChimiaDAO Iberia Materials Bench",
       "short_label": "Iberia",
       "kind": "chimiadao-physical",
-      "status": "standby",
+      "node_reality": {
+        "kind": "real",
+        "label": "real ChimiaDAO lab node"
+      },
+      "status": "online",
       "trust_tier": "custody-core",
       "custody": "dao-controlled-material-custody",
       "location": {
@@ -227,6 +237,10 @@
       "label": "ChimiaDAO Analysis Dock",
       "short_label": "Analysis",
       "kind": "chimiadao-physical",
+      "node_reality": {
+        "kind": "real",
+        "label": "real ChimiaDAO lab node"
+      },
       "status": "online",
       "trust_tier": "custody-core",
       "custody": "dao-controlled-data-and-sample-custody",
@@ -266,6 +280,10 @@
       "label": "Olympus DFT Worker (olympus.local)",
       "short_label": "Olympus",
       "kind": "chimiadao-physical-compute",
+      "node_reality": {
+        "kind": "real",
+        "label": "real ChimiaDAO compute node"
+      },
       "status": "online",
       "trust_tier": "custody-core",
       "custody": "dao-controlled-compute-custody",
@@ -306,6 +324,10 @@
       "label": "Allied Flow Chemistry Lab",
       "short_label": "Flow Ally",
       "kind": "allied-physical",
+      "node_reality": {
+        "kind": "candidate",
+        "label": "candidate external lab endpoint"
+      },
       "status": "candidate",
       "trust_tier": "allied-verified",
       "custody": "external-human-controlled",
@@ -344,6 +366,10 @@
       "label": "Virtual Retrosynthesis Swarm",
       "short_label": "Retro Swarm",
       "kind": "virtual-agent-lab",
+      "node_reality": {
+        "kind": "virtual",
+        "label": "conceptual agent lab"
+      },
       "status": "online",
       "trust_tier": "virtual-sandbox",
       "custody": "no-physical-custody",
@@ -382,6 +408,10 @@
       "label": "Unknown External Lab",
       "short_label": "Unknown",
       "kind": "unknown-physical-or-virtual",
+      "node_reality": {
+        "kind": "quarantined",
+        "label": "unverified external endpoint"
+      },
       "status": "quarantined",
       "trust_tier": "quarantine",
       "custody": "untrusted-claims-only",
@@ -411,6 +441,268 @@
         "capacity_fill": 0.08,
         "trust_score": 0.12
       }
+    }
+  ],
+  "lab_interactions": [
+    {
+      "id": "FLOW.DATA.SOFIA.IBERIA.001",
+      "status": "active",
+      "channels": [
+        "data",
+        "concept"
+      ],
+      "source_lab": "LAB.CHIMIA.01",
+      "target_lab": "LAB.CHIMIA.02",
+      "interaction_kind": "custody-peer-sync",
+      "evidence_level": "real-node-projection",
+      "summary": "Sofia shares route-intake artifacts and custody SOP deltas with Iberia so either real node can review material movement before execution.",
+      "data_payloads": [
+        "chem.adt.reaction",
+        "chem.procurement.route_quote",
+        "sample-transfer-approval"
+      ],
+      "conceptual_payloads": [
+        "custody policy alignment",
+        "route execution boundary conditions"
+      ],
+      "mssp_role": "translator-to-selector handoff",
+      "world_avatar_projection": [
+        "prov:wasInformedBy",
+        "ontochemexp:hasCustodyGate"
+      ]
+    },
+    {
+      "id": "FLOW.DATA.IBERIA.ANALYSIS.001",
+      "status": "active",
+      "channels": [
+        "data",
+        "concept"
+      ],
+      "source_lab": "LAB.CHIMIA.02",
+      "target_lab": "LAB.CHIMIA.03",
+      "interaction_kind": "characterisation-return",
+      "evidence_level": "real-node-projection",
+      "summary": "Iberia pushes characterization intake and materials-bench observations into the Analysis Dock for signed lineage review.",
+      "data_payloads": [
+        "instrument-data-intake",
+        "chem.molecule.adt",
+        "audit.lineage.report"
+      ],
+      "conceptual_payloads": [
+        "OntoChemExp characterization classes",
+        "World Avatar provenance agent mapping"
+      ],
+      "mssp_role": "fitness evidence return",
+      "world_avatar_projection": [
+        "prov:wasGeneratedBy",
+        "ontochemexp:hasMeasurement"
+      ]
+    },
+    {
+      "id": "FLOW.DATA.ANALYSIS.OLYMPUS.001",
+      "status": "active",
+      "channels": [
+        "data",
+        "concept"
+      ],
+      "source_lab": "LAB.CHIMIA.03",
+      "target_lab": "LAB.CHIMIA.04",
+      "interaction_kind": "compute-request",
+      "evidence_level": "real-node-projection",
+      "summary": "Analysis Dock turns reviewed molecule artifacts into DFT requests for Olympus, with MSSP candidate scoring attached as conceptual context.",
+      "data_payloads": [
+        "chem.molecule.adt",
+        "chem.dft.request"
+      ],
+      "conceptual_payloads": [
+        "MSSP candidate fitness target",
+        "World Avatar species node hint"
+      ],
+      "mssp_role": "fitness-to-executor dispatch",
+      "world_avatar_projection": [
+        "ontochimia:hasSpecies",
+        "prov:used"
+      ]
+    },
+    {
+      "id": "FLOW.DATA.OLYMPUS.ANALYSIS.001",
+      "status": "real-execution",
+      "channels": [
+        "data"
+      ],
+      "source_lab": "LAB.CHIMIA.04",
+      "target_lab": "LAB.CHIMIA.03",
+      "interaction_kind": "signed-compute-result-return",
+      "evidence_level": "signed-artifact",
+      "summary": "Olympus returns real PBE/def2-tzvp DFT artifacts, payload hashes, orbital cubes, and convergence metadata to Analysis Dock.",
+      "data_payloads": [
+        "chem.dft.result:art_3d5c1283b1a8f79f",
+        "chem.dft.result:art_563825a02d8ea8a3",
+        "chem.dft.result:art_87a648cd3b5f6490",
+        "chem.dft.result:art_c1d9cf319fc537e2",
+        "chem.dft.result:art_b4002fedd3e69f20",
+        "chem.dft.result:art_5d1b8812735b2611"
+      ],
+      "conceptual_payloads": [
+        "none; this edge is data-first signed execution evidence"
+      ],
+      "mssp_role": "executor-to-fitness evidence return",
+      "world_avatar_projection": [
+        "prov:wasGeneratedBy",
+        "ontochimia:hasCalculationResult"
+      ]
+    },
+    {
+      "id": "FLOW.CONCEPT.ANALYSIS.RETRO.001",
+      "status": "active",
+      "channels": [
+        "concept",
+        "data"
+      ],
+      "source_lab": "LAB.CHIMIA.03",
+      "target_lab": "LAB.VIRTUAL.01",
+      "interaction_kind": "design-query",
+      "evidence_level": "projection-over-artifacts",
+      "summary": "Analysis Dock asks the virtual retrosynthesis swarm to propose route families and MSSP strategy variants from verified result context.",
+      "data_payloads": [
+        "chem.dft.result summaries",
+        "audit.lineage.report"
+      ],
+      "conceptual_payloads": [
+        "MSSP primitive generation",
+        "strategy-family ontology labels",
+        "World Avatar reaction class hints"
+      ],
+      "mssp_role": "primitive-and-crossover generation",
+      "world_avatar_projection": [
+        "ontochimia:hasReactionCandidate",
+        "prov:wasDerivedFrom"
+      ]
+    },
+    {
+      "id": "FLOW.CONCEPT.RETRO.SOFIA.001",
+      "status": "guarded-active",
+      "channels": [
+        "concept",
+        "data"
+      ],
+      "source_lab": "LAB.VIRTUAL.01",
+      "target_lab": "LAB.CHIMIA.01",
+      "interaction_kind": "route-to-wetlab-queue",
+      "evidence_level": "implemented-demo",
+      "summary": "The virtual swarm sends route proposals and quote simulations into Sofia's wetlab queue, but human safety and custody gates remain mandatory.",
+      "data_payloads": [
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote"
+      ],
+      "conceptual_payloads": [
+        "MSSP selected strategy",
+        "fail-closed safety gate rationale"
+      ],
+      "mssp_role": "selector-to-translator handoff",
+      "world_avatar_projection": [
+        "ontochemexp:hasPlannedExperiment",
+        "prov:wasAssociatedWith"
+      ]
+    },
+    {
+      "id": "FLOW.CONCEPT.SOFIA.ALLY.001",
+      "status": "review",
+      "channels": [
+        "concept",
+        "data"
+      ],
+      "source_lab": "LAB.CHIMIA.01",
+      "target_lab": "LAB.ALLY.01",
+      "interaction_kind": "collaboration-proposal",
+      "evidence_level": "candidate-alliance",
+      "summary": "Sofia can share a signed collaboration proposal and non-custodial method brief with the allied flow lab while material movement remains blocked.",
+      "data_payloads": [
+        "collaboration-proposal",
+        "non-custodial-method-brief"
+      ],
+      "conceptual_payloads": [
+        "flow chemistry validation concept",
+        "World Avatar service catalog hint"
+      ],
+      "mssp_role": "external-validator candidate",
+      "world_avatar_projection": [
+        "prov:actedOnBehalfOf",
+        "ontochimia:hasServiceEndpoint"
+      ]
+    },
+    {
+      "id": "FLOW.CONCEPT.ALLY.IBERIA.001",
+      "status": "review",
+      "channels": [
+        "concept",
+        "data"
+      ],
+      "source_lab": "LAB.ALLY.01",
+      "target_lab": "LAB.CHIMIA.02",
+      "interaction_kind": "method-validation-feedback",
+      "evidence_level": "candidate-alliance",
+      "summary": "Allied flow-lab feedback returns as candidate validation metadata for Iberia; it is not trusted as physical execution until identity and SOP gates clear.",
+      "data_payloads": [
+        "candidate-flow-screening-summary",
+        "method-validation-feedback"
+      ],
+      "conceptual_payloads": [
+        "MSSP external fitness signal",
+        "OntoChemExp method comparison"
+      ],
+      "mssp_role": "external fitness signal",
+      "world_avatar_projection": [
+        "prov:wasInfluencedBy",
+        "ontochemexp:hasMethodValidation"
+      ]
+    },
+    {
+      "id": "FLOW.QUARANTINE.UNKNOWN.ANALYSIS.001",
+      "status": "blocked",
+      "channels": [
+        "data"
+      ],
+      "source_lab": "LAB.UNKNOWN.01",
+      "target_lab": "LAB.CHIMIA.03",
+      "interaction_kind": "quarantine-claim-intake",
+      "evidence_level": "unverified-claim",
+      "summary": "Unknown lab submissions can enter only as read-only claim metadata for Analysis Dock quarantine review.",
+      "data_payloads": [
+        "claim-metadata-only"
+      ],
+      "conceptual_payloads": [
+        "none until identity and lineage verify"
+      ],
+      "mssp_role": "excluded from selector until verified",
+      "world_avatar_projection": [
+        "prov:Invalidation",
+        "chimiaclaw:QuarantinedClaim"
+      ]
+    },
+    {
+      "id": "FLOW.QUARANTINE.ANALYSIS.UNKNOWN.001",
+      "status": "active",
+      "channels": [
+        "concept"
+      ],
+      "source_lab": "LAB.CHIMIA.03",
+      "target_lab": "LAB.UNKNOWN.01",
+      "interaction_kind": "audit-challenge-return",
+      "evidence_level": "verification-request",
+      "summary": "Analysis Dock responds to the unknown lab with an audit challenge: provide identity, signature, payload hash, and parent lineage before the claim can influence the graph.",
+      "data_payloads": [
+        "audit.challenge"
+      ],
+      "conceptual_payloads": [
+        "provenance requirements",
+        "World Avatar identity boundary"
+      ],
+      "mssp_role": "fail-closed guardrail",
+      "world_avatar_projection": [
+        "prov:qualifiedInvalidation",
+        "chimiaclaw:requiresLineageProof"
+      ]
     }
   ],
   "trust_edges": [

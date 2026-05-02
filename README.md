@@ -21,7 +21,7 @@ This is an OpenAgents hackathon scaffold for what may eventually become the firs
 - A working payload-bound signed artifact DAG smoke demo: route proposal → quote → procured receipt, where each artifact commits to its canonical payload digest.
 - A working ORD→ADT bridge: ORD-like or official ORD JSON → minimal ADT experiment → signed child artifact.
 - A working local science transaction fixture: ENS-shaped provider profile → service offer → request → quote → quote acceptance → simulated escrow authorization → operator-confirmation-required settlement intent → result → result acknowledgement → simulated release, for DFT, retrosynthesis, and literature.
-- A static frontend world-model fixture for the lab-swarm / “agentic kingdom” map, grounded in current artifact flows rather than a live backend API.
+- A static frontend world-model fixture for the lab-swarm / “agentic kingdom” map, grounded in current artifact flows rather than a live backend API, with four real ChimiaDAO nodes visibly exchanging data and MSSP / World Avatar concepts.
 - Solidity **scaffolding** for capability tokens, proposal anchoring, reputation, and governance — anchoring shape only, no quorum/vote semantics enforced yet.
 
 ## Core idea
@@ -185,8 +185,11 @@ Serve the static lab-swarm map:
 ```sh
 python3 -m http.server 8787 --directory demo
 ```
-
-Then open `http://localhost:8787/world-map.html`.
+Then open `http://localhost:8787/world-map.html`. The map marks the four real
+ChimiaDAO nodes, shows active lab-to-lab interaction lines for every node in the
+fixture, separates data payload movement from conceptual MSSP / World Avatar
+sharing, and keeps candidate, virtual, and quarantined endpoints explicitly
+bounded.
 
 Run the file-backed node runtime end-to-end for ORD→ADT:
 

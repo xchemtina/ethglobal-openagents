@@ -705,7 +705,10 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
                 .to_string();
             if let Some(result_id) = tx.get("result_id").and_then(|v| v.as_str()) {
                 if result_id.starts_with("art_") {
-                    refs.push((format!("science_transactions[{tx_id}].result_id"), result_id.to_string()));
+                    refs.push((
+                        format!("science_transactions[{tx_id}].result_id"),
+                        result_id.to_string(),
+                    ));
                 }
             }
         }
@@ -725,6 +728,115 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
             }
         }
     }
+    let mut model_failures = Vec::new();
+    let mut lab_ids = BTreeSet::new();
+    let mut real_labs = Vec::new();
+    if let Some(labs) = model.get("labs").and_then(|v| v.as_array()) {
+        for lab in labs {
+            let Some(id) = lab.get("id").and_then(|v| v.as_str()) else {
+                model_failures.push(serde_json::json!({
+                    "check": "labs[].id",
+                    "error": "lab missing string id",
+                }));
+                continue;
+            };
+            lab_ids.insert(id.to_string());
+            if lab
+                .get("node_reality")
+                .and_then(|v| v.get("kind"))
+                .and_then(|v| v.as_str())
+                == Some("real")
+            {
+                real_labs.push(id.to_string());
+            }
+        }
+    } else {
+        model_failures.push(serde_json::json!({
+            "check": "labs",
+            "error": "missing labs array",
+        }));
+    }
+
+    let mut lab_interaction_count = 0usize;
+    let mut data_channel_flows = 0usize;
+    let mut concept_channel_flows = 0usize;
+    let mut participating_labs = BTreeSet::new();
+    if let Some(flows) = model.get("lab_interactions").and_then(|v| v.as_array()) {
+        lab_interaction_count = flows.len();
+        for flow in flows {
+            let flow_id = flow
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("<unknown-flow>");
+            for field in ["source_lab", "target_lab"] {
+                match flow.get(field).and_then(|v| v.as_str()) {
+                    Some(lab_id) if lab_ids.contains(lab_id) => {
+                        participating_labs.insert(lab_id.to_string());
+                    }
+                    Some(lab_id) => model_failures.push(serde_json::json!({
+                        "check": format!("lab_interactions[{flow_id}].{field}"),
+                        "error": "unknown lab id",
+                        "lab_id": lab_id,
+                    })),
+                    None => model_failures.push(serde_json::json!({
+                        "check": format!("lab_interactions[{flow_id}].{field}"),
+                        "error": "missing string lab id",
+                    })),
+                }
+            }
+            let channels: BTreeSet<&str> = flow
+                .get("channels")
+                .and_then(|v| v.as_array())
+                .map(|channels| channels.iter().filter_map(|v| v.as_str()).collect())
+                .unwrap_or_default();
+            if channels.contains("data") {
+                data_channel_flows += 1;
+            }
+            if channels.contains("concept") {
+                concept_channel_flows += 1;
+            }
+            if channels.is_empty() {
+                model_failures.push(serde_json::json!({
+                    "check": format!("lab_interactions[{flow_id}].channels"),
+                    "error": "missing data/concept channel labels",
+                }));
+            }
+        }
+    } else {
+        model_failures.push(serde_json::json!({
+            "check": "lab_interactions",
+            "error": "missing lab_interactions array",
+        }));
+    }
+    let labs_without_interactions: Vec<String> =
+        lab_ids.difference(&participating_labs).cloned().collect();
+    if !labs_without_interactions.is_empty() {
+        model_failures.push(serde_json::json!({
+            "check": "lab_interactions.coverage",
+            "error": "one or more labs do not participate in any lab interaction",
+            "lab_ids": labs_without_interactions,
+        }));
+    }
+    if real_labs.len() != 4 {
+        model_failures.push(serde_json::json!({
+            "check": "labs.node_reality",
+            "error": "expected exactly four real ChimiaDAO nodes in the demo fixture",
+            "actual": real_labs.len(),
+            "real_labs": real_labs.clone(),
+        }));
+    }
+    if data_channel_flows == 0 {
+        model_failures.push(serde_json::json!({
+            "check": "lab_interactions.channels",
+            "error": "no data-channel lab interactions found",
+        }));
+    }
+    if concept_channel_flows == 0 {
+        model_failures.push(serde_json::json!({
+            "check": "lab_interactions.channels",
+            "error": "no concept-channel lab interactions found",
+        }));
+    }
 
     let mut report = Vec::new();
     let mut failures = 0usize;
@@ -736,7 +848,10 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
             format!("chem_molecule_adt.{art_id}.json"),
             format!("crucible_review_vote.{art_id}.json"),
         ];
-        let path = candidates.iter().map(|f| artifact_dir.join(f)).find(|p| p.exists());
+        let path = candidates
+            .iter()
+            .map(|f| artifact_dir.join(f))
+            .find(|p| p.exists());
         let entry = match path {
             Some(p) => match std::fs::read_to_string(&p) {
                 Ok(body) => match serde_json::from_str::<Artifact>(&body) {
@@ -793,21 +908,34 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
         report.push(entry);
     }
 
+    let model_failed = model_failures.len();
     let summary = serde_json::json!({
         "world_model": world_model_path.display().to_string(),
         "artifact_dir": artifact_dir.display().to_string(),
         "total_refs": refs.len(),
         "verified": refs.len() - failures,
-        "failed": failures,
+        "failed": failures + model_failed,
+        "reference_failed": failures,
+        "model_failed": model_failed,
         "entries": report,
+        "model_checks": {
+            "labs": lab_ids.len(),
+            "real_labs": real_labs,
+            "lab_interactions": lab_interaction_count,
+            "data_channel_flows": data_channel_flows,
+            "concept_channel_flows": concept_channel_flows,
+            "failures": model_failures,
+        },
     });
     println!(
         "{}",
         serde_json::to_string_pretty(&summary)
             .map_err(|error| format!("serialize verify report: {error}"))?
     );
-    if failures > 0 {
-        Err(format!("{failures} reference(s) failed to verify"))
+    if failures + model_failed > 0 {
+        Err(format!(
+            "{failures} reference(s) failed to verify; {model_failed} model check(s) failed"
+        ))
     } else {
         Ok(())
     }
@@ -846,9 +974,7 @@ fn build_vote_from_args(args: &[&str], created_at: u64) -> Result<(ReviewVote, A
         identity.eth_address = Some(eth.to_string());
     }
     if identity.is_empty() {
-        return Err(
-            "at least one of --orcid, --ens, --eth-address must be provided".to_string()
-        );
+        return Err("at least one of --orcid, --ens, --eth-address must be provided".to_string());
     }
     let provenance = VoteProvenance {
         source_kind: parse_kv(args, "--source-kind")
