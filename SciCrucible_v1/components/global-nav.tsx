@@ -80,6 +80,7 @@ export function GlobalNav() {
         <NavItem href="/agents"     icon={<BotMessageSquare className="w-3.5 h-3.5" />} label="Research Agents" pathname={pathname} />
         <NavItem href="/literature" icon={<Newspaper className="w-3.5 h-3.5" />}       label="Literature Feed"  pathname={pathname} badge="Live" badgeColor="agent" />
         <NavItem href="/derivations"icon={<BookOpen className="w-3.5 h-3.5" />}        label="Derivations"      pathname={pathname} />
+        <NavItem href="/dft"        icon={<Atom className="w-3.5 h-3.5" />}            label="DFT Results"      pathname={pathname} badge="Real" badgeColor="agent" />
         <NavItem href="/docs"       icon={<Terminal className="w-3.5 h-3.5" />}         label="Agent API Docs"   pathname={pathname} badge="API"  badgeColor="primary" />
         <NavItem href="/profile"    icon={<CircleUser className="w-3.5 h-3.5" />}      label="My Profile"       pathname={pathname} />
       </nav>
