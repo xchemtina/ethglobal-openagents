@@ -1,10 +1,10 @@
 {
   "schema_version": "chimiaclaw.world-model.v1",
   "fixture_id": "WM.CHIMIACLAW.THREE_AGENT_PIPELINE.001",
-  "generated_at": "2026-05-03T05:28:00Z",
-  "maturity": "three-agent-pipeline-snapshot",
+  "generated_at": "2026-05-03T07:32:01Z",
+  "maturity": "three-agent-pipeline-live-refresh",
   "title": "ChimiaClaw Three-Agent Pipeline",
-  "subtitle": "A focused dashboard for the current submission: Literature extracts cited reaction candidates, Retrosynthesis turns curated molecules into signed route proposals, and DFT runs real PySCF calculations with signed result artifacts, HOMO/LUMO cube evidence, and an overnight five-molecule germanium scalar test. ENS and 0G are shown only where evidence exists or as the next operator-gated publication step.",
+  "subtitle": "Live auto-refresh projection of the Literature \u2192 Retrosynthesis \u2192 DFT dashboard. The static model remains the fallback; this live layer scans overnight DFT, Uniswap, 0G, and ENS artifacts emitted by demo/overnight-full-pipeline.sh.",
   "design_language": {
     "mode": "dark-terminal-hud",
     "source_reference": "Three agent lanes over the signed artifact DAG: literature extraction, retrosynthesis, and DFT.",
@@ -31,7 +31,8 @@
     "ENS Sepolia is live for the root chimiaclaw.eth identity: five text records were published, resolved, and verified with zero mismatches. Per-agent service subnames/capability records are still a publication step unless separately run.",
     "0G testnet storage evidence exists for one ferrocene MolADT source artifact. Per-literature, route, and cube uploads are the next operator-gated 0G step, not a completed claim.",
     "Broader sponsor and architecture narratives are intentionally outside the visible dashboard story so the final video stays focused on the three agent handoffs.",
-    "The central WebGPU orbital gallery renders six sampled HOMO/LUMO point clouds plus inferred bond skeletons from signed cube fields; the signed chem.dft.result artifacts and SHA-256 cube commitments remain the evidence source of truth, and the dashboard does not use WebGL for this panel."
+    "The central WebGPU orbital gallery renders six sampled HOMO/LUMO point clouds plus inferred bond skeletons from signed cube fields; the signed chem.dft.result artifacts and SHA-256 cube commitments remain the evidence source of truth, and the dashboard does not use WebGL for this panel.",
+    "Live mode reads demo/world-model.live.json, which is regenerated from local signed artifacts; the browser still does not contact wallets, sponsor APIs, or private services."
   ],
   "layers": [
     {
@@ -580,6 +581,32 @@
         "ART.DFT.CUBES"
       ],
       "status": "webgpu-gallery-rendered-from-signed-cubes"
+    },
+    {
+      "id": "ART.LIVE.OVERNIGHT_FULL.DFT",
+      "label": "Live overnight full-pipeline DFT results",
+      "schema_tag": "chem.dft.result",
+      "lineage": [
+        "art_dc304c0ee27ff5e5",
+        "art_8134f4cfe538f0a0",
+        "art_c186f3052b8156c6",
+        "art_4c9525e1e15d5173",
+        "art_db624b0bf1c084de",
+        "art_06259b13c154631b",
+        "art_83814605e6db0693"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.LIVE.UNISWAP.QUOTE_BATCH",
+      "label": "Live Uniswap quote-only settlement artifacts",
+      "schema_tag": "market.uniswap.quote",
+      "lineage": [
+        "art_f133c17ea02e86b2",
+        "art_fc49c5e9bd8dd55b",
+        "art_009c563d99981b87"
+      ],
+      "status": "live-quote-only"
     }
   ],
   "backend_bindings": {
@@ -595,6 +622,12 @@
     "overnight_dft_dir": "demo/overnight-science-out/dft"
   },
   "activity_ticker": [
+    {
+      "timestamp": "LIVE",
+      "agent": "Overnight full pipeline",
+      "action": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json",
+      "color": "oklch(0.70 0.18 148)"
+    },
     {
       "timestamp": "00s",
       "agent": "Literature",
@@ -818,13 +851,69 @@
       "refund_policy": {
         "refund_to_agent": "operator.chimiaclaw.eth"
       }
+    },
+    {
+      "id": "TX.LIVE.OVERNIGHT_FULL.DFT",
+      "status": "real-execution",
+      "service_kind": "dft",
+      "provider_ens": "dft.service.chimiaclaw.eth",
+      "provider_agent": "AGENT.DFT",
+      "requester_agent": "operator.chimiaclaw.eth",
+      "target_lab": "AGENT.DFT",
+      "offer_id": "OFFER.LIVE.OVERNIGHT_FULL.DFT",
+      "request_id": "LIVE.DFT.BATCH.7",
+      "quote_id": "art_009c563d99981b87",
+      "settlement_id": "SETTLE.LIVE.UNISWAP.QUOTE_ONLY",
+      "result_id": "art_83814605e6db0693",
+      "price_usdc_micros": 0,
+      "estimated_latency_seconds": 531,
+      "summary": "Live overnight full-pipeline scalar DFT batch has 7 signed result artifact(s) so far.",
+      "summary_chem": "methylgermane gap 7.942 eV; cyclopropylgermane gap 6.954 eV; propylene-glycol-dioctanoate gap 7.286 eV",
+      "artifact_flow": [
+        "chem.molecule.adt",
+        "chem.dft.request",
+        "chem.dft.result",
+        "market.uniswap.quote",
+        "storage.zerog.upload",
+        "identity.ens.publication"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "Uniswap",
+          "live_status": "live-quote-only",
+          "attachment": "3 quote artifact(s)"
+        },
+        {
+          "sponsor": "0G",
+          "live_status": "operator-gated-next",
+          "attachment": "0 anchor artifact(s)"
+        },
+        {
+          "sponsor": "ENS",
+          "live_status": "live-sepolia-agent-records",
+          "attachment": "9 ENS artifact(s)"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "dft.service.chimiaclaw.eth",
+      "asset": "USDC quote-only",
+      "settlement_method": "UniswapPreparedTransfer quote-only",
+      "acceptance_id": "ACCEPT.LIVE.OVERNIGHT_FULL.DFT",
+      "escrow_id": "ESCROW.LIVE.UNISWAP.QUOTE_ONLY",
+      "acknowledgement_id": "ACK.LIVE.OVERNIGHT_FULL.DFT",
+      "release_id": "art_83814605e6db0693",
+      "release_status": "verified-signed-result",
+      "transaction_ref": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth"
+      }
     }
   ],
   "crucible_votes": [],
   "submission_snapshot": {
     "headline": "Three agents: literature \u2192 retrosynthesis \u2192 DFT",
-    "status": "ready-for-focused-dashboard-footage",
-    "summary": "The final dashboard now explains the minimum working network: cite papers and extract reactions, generate route proposals from curated molecules, then compute missing DFT results with signed artifacts, cube hashes where requested, and a new overnight five-molecule germanium scalar DFT test.",
+    "status": "live-refreshing",
+    "summary": "The dashboard is watching the full overnight pipeline output directory and refreshes as signed DFT results, quote-only Uniswap artifacts, 0G upload anchors, and ENS publication/verification artifacts appear.",
     "metrics": [
       {
         "label": "Agent lanes",
@@ -875,6 +964,31 @@
         "label": "WebGPU orbital gallery",
         "value": "6 molecules",
         "status": "webgpu-gallery-rendered-from-signed-cubes"
+      },
+      {
+        "label": "Live model",
+        "value": "refreshed 2026-05-03T07:32:01Z",
+        "status": "active"
+      },
+      {
+        "label": "Live DFT batch",
+        "value": "7/6 latest results",
+        "status": "real-execution"
+      },
+      {
+        "label": "Live Uniswap quotes",
+        "value": "3/3 quote-only",
+        "status": "live-quote-only"
+      },
+      {
+        "label": "Live 0G anchors",
+        "value": "0",
+        "status": "operator-gated-next"
+      },
+      {
+        "label": "Live ENS artifacts",
+        "value": "9 artifacts",
+        "status": "live-sepolia-verified"
       }
     ],
     "capture_notes": [
@@ -889,39 +1003,82 @@
   "live_sponsor_evidence": [
     {
       "sponsor": "ENS",
-      "status": "live-sepolia-verified",
-      "summary": "Root chimiaclaw.eth identity is live and verified; per-agent Literature/Retro/DFT capability records are the next publication step.",
+      "status": "live-sepolia-agent-records",
+      "summary": "Full-pipeline ENS publication/resolution/verification artifacts are live for service capability records (3 publication(s), 3 verification(s)).",
       "network": "Sepolia chain 11155111",
-      "block_range": "10778688-10778692",
       "records": [
         {
-          "key": "records",
-          "value": "5/5 resolved"
+          "key": "resolution:dft.service.chimiaclaw.eth",
+          "value": "verified=None mismatches=None \u00b7 art_06a07b6133d57ae6"
         },
         {
-          "key": "mismatches",
-          "value": "0"
+          "key": "verification:dft.service.chimiaclaw.eth",
+          "value": "verified=True mismatches=0 \u00b7 art_9a806f75845f1597"
         },
         {
-          "key": "next",
-          "value": "publish per-agent capability text records/subnames if needed"
+          "key": "publication:retro.service.chimiaclaw.eth",
+          "value": "2 record(s) \u00b7 art_c1310e0e1498adaa"
+        },
+        {
+          "key": "resolution:retro.service.chimiaclaw.eth",
+          "value": "verified=None mismatches=None \u00b7 art_753ae1595cbbe9d1"
+        },
+        {
+          "key": "verification:retro.service.chimiaclaw.eth",
+          "value": "verified=True mismatches=0 \u00b7 art_0eed16fdb4cbf1bb"
+        },
+        {
+          "key": "publication:literature.service.chimiaclaw.eth",
+          "value": "2 record(s) \u00b7 art_3976ea2aa08e13ac"
+        },
+        {
+          "key": "resolution:literature.service.chimiaclaw.eth",
+          "value": "verified=None mismatches=None \u00b7 art_5775f5d4a882a452"
+        },
+        {
+          "key": "verification:literature.service.chimiaclaw.eth",
+          "value": "verified=True mismatches=0 \u00b7 art_ff80ca363cb9cad1"
         }
       ],
       "artifacts": [
         {
           "kind": "publication",
-          "id": "art_bcf73364c39fb152"
+          "id": "art_461de2a2b503dcb0"
         },
         {
           "kind": "resolution",
-          "id": "art_bc5f74fa853df294"
+          "id": "art_06a07b6133d57ae6"
         },
         {
           "kind": "verification",
-          "id": "art_1eb873d15595ba6e"
+          "id": "art_9a806f75845f1597"
+        },
+        {
+          "kind": "publication",
+          "id": "art_c1310e0e1498adaa"
+        },
+        {
+          "kind": "resolution",
+          "id": "art_753ae1595cbbe9d1"
+        },
+        {
+          "kind": "verification",
+          "id": "art_0eed16fdb4cbf1bb"
+        },
+        {
+          "kind": "publication",
+          "id": "art_3976ea2aa08e13ac"
+        },
+        {
+          "kind": "resolution",
+          "id": "art_5775f5d4a882a452"
+        },
+        {
+          "kind": "verification",
+          "id": "art_ff80ca363cb9cad1"
         }
       ],
-      "caveat": "The live claim is for the root identity; service subnames/capability records should be published separately before claiming them live."
+      "caveat": "Generated from local signed identity.ens.* artifacts; private key material remains outside dashboard files."
     },
     {
       "sponsor": "0G Storage",
@@ -1080,6 +1237,184 @@
         }
       ],
       "caveat": "No HOMO/LUMO cube files or orbital_densities[] commitments were emitted for this overnight run, so it is displayed as scalar DFT evidence rather than WebGPU orbital-gallery evidence."
+    },
+    {
+      "sponsor": "Overnight Full Pipeline",
+      "status": "real-execution",
+      "summary": "Auto-refreshing local projection of demo/overnight-full-pipeline.sh outputs.",
+      "records": [
+        {
+          "key": "output dir",
+          "value": "demo/overnight-full-out"
+        },
+        {
+          "key": "last scan",
+          "value": "2026-05-03T07:32:01Z"
+        },
+        {
+          "key": "DFT",
+          "value": "7/6 unique molecules complete; 13 result artifacts; 19 molecule dirs started"
+        },
+        {
+          "key": "Uniswap",
+          "value": "3/3 quote-only artifacts"
+        },
+        {
+          "key": "0G",
+          "value": "0 upload anchor artifacts"
+        },
+        {
+          "key": "ENS",
+          "value": "9 publication/resolution/verification artifacts"
+        },
+        {
+          "key": "latest log",
+          "value": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "artifact",
+          "id": "art_009c563d99981b87"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_461de2a2b503dcb0"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_06a07b6133d57ae6"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_9a806f75845f1597"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_c1310e0e1498adaa"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_753ae1595cbbe9d1"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_0eed16fdb4cbf1bb"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_3976ea2aa08e13ac"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_5775f5d4a882a452"
+        },
+        {
+          "kind": "artifact",
+          "id": "art_ff80ca363cb9cad1"
+        }
+      ],
+      "caveat": "This card is generated locally from files already written by the operator-run pipeline; it never invokes external services itself."
+    },
+    {
+      "sponsor": "Live Pipeline DFT",
+      "status": "real-execution",
+      "summary": "New overnight full-pipeline PySCF PBE/def2-svp scalar DFT results are appearing as signed chem.dft.result artifacts.",
+      "records": [
+        {
+          "key": "propylene-glycol-dibutyrate",
+          "value": "OK \u00b7 gap 5.034 eV \u00b7 |\u03bc| 2.665 D \u00b7 142.5s \u00b7 art_dc304c0ee27ff5e5"
+        },
+        {
+          "key": "propylene-glycol-dipentanoate",
+          "value": "OK \u00b7 gap 5.077 eV \u00b7 |\u03bc| 0.967 D \u00b7 246.0s \u00b7 art_8134f4cfe538f0a0"
+        },
+        {
+          "key": "propylene-glycol-dihexanoate",
+          "value": "OK \u00b7 gap 5.153 eV \u00b7 |\u03bc| 0.271 D \u00b7 331.8s \u00b7 art_c186f3052b8156c6"
+        },
+        {
+          "key": "germane",
+          "value": "OK \u00b7 gap 8.944 eV \u00b7 |\u03bc| 0.000 D \u00b7 0.4s \u00b7 art_4c9525e1e15d5173"
+        },
+        {
+          "key": "methylgermane",
+          "value": "OK \u00b7 gap 7.942 eV \u00b7 |\u03bc| 0.713 D \u00b7 0.9s \u00b7 art_db624b0bf1c084de"
+        },
+        {
+          "key": "cyclopropylgermane",
+          "value": "OK \u00b7 gap 6.954 eV \u00b7 |\u03bc| 0.793 D \u00b7 2.4s \u00b7 art_06259b13c154631b"
+        },
+        {
+          "key": "propylene-glycol-dioctanoate",
+          "value": "OK \u00b7 gap 7.286 eV \u00b7 |\u03bc| 2.928 D \u00b7 531.8s \u00b7 art_83814605e6db0693"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "dft-result",
+          "id": "art_dc304c0ee27ff5e5"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_8134f4cfe538f0a0"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_c186f3052b8156c6"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_4c9525e1e15d5173"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_db624b0bf1c084de"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_06259b13c154631b"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_83814605e6db0693"
+        }
+      ],
+      "caveat": "These full-pipeline DFT jobs request scalar energy/gap/dipole values unless cube generation is explicitly enabled; do not add them to the WebGPU orbital gallery without cube-backed reruns."
+    },
+    {
+      "sponsor": "Uniswap Settlement",
+      "status": "live-quote-only",
+      "summary": "Live Uniswap Trade API quote artifacts exist for service settlement pricing; no swap execution is claimed.",
+      "records": [
+        {
+          "key": "CLASSIC",
+          "value": "3.10 USDC \u2192 3.10 USDT \u00b7 gas $0.06077834556652045 \u00b7 quote-only \u00b7 art_f133c17ea02e86b2"
+        },
+        {
+          "key": "CLASSIC",
+          "value": "8.25 USDC \u2192 8.25 USDT \u00b7 gas $0.06077834556652045 \u00b7 quote-only \u00b7 art_fc49c5e9bd8dd55b"
+        },
+        {
+          "key": "CLASSIC",
+          "value": "49.50 USDC \u2192 49.50 USDT \u00b7 gas $0.06078813553670861 \u00b7 quote-only \u00b7 art_009c563d99981b87"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "quote",
+          "id": "art_f133c17ea02e86b2"
+        },
+        {
+          "kind": "quote",
+          "id": "art_fc49c5e9bd8dd55b"
+        },
+        {
+          "kind": "quote",
+          "id": "art_009c563d99981b87"
+        }
+      ],
+      "caveat": "Quote-only boundary: ChimiaClaw signs market.uniswap.quote artifacts and does not call /swap without explicit operator confirmation."
     }
   ],
   "overnight_dft_test": {
@@ -1293,5 +1628,566 @@
       }
     ],
     "caveat": "The gallery is a WebGPU-rendered sampled point-cloud plus inferred bond skeleton visualization of signed cube fields, not a replacement for the cube files or a full quantum chemistry viewer."
+  },
+  "overnight_full_pipeline": {
+    "schema_tag": "chimiaclaw.live_dashboard.scan.v1",
+    "source_dir": "demo/overnight-full-out",
+    "generated_at": "2026-05-03T07:32:01Z",
+    "log_path": "demo/overnight-full-out/overnight-full.log",
+    "latest_log_line": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json",
+    "artifact_ids": [
+      "art_dc304c0ee27ff5e5",
+      "art_8134f4cfe538f0a0",
+      "art_c186f3052b8156c6",
+      "art_4c9525e1e15d5173",
+      "art_db624b0bf1c084de",
+      "art_06259b13c154631b",
+      "art_83814605e6db0693",
+      "art_f133c17ea02e86b2",
+      "art_fc49c5e9bd8dd55b",
+      "art_009c563d99981b87",
+      "art_461de2a2b503dcb0",
+      "art_06a07b6133d57ae6",
+      "art_9a806f75845f1597",
+      "art_c1310e0e1498adaa",
+      "art_753ae1595cbbe9d1",
+      "art_0eed16fdb4cbf1bb",
+      "art_3976ea2aa08e13ac",
+      "art_5775f5d4a882a452",
+      "art_ff80ca363cb9cad1"
+    ],
+    "dft_result_artifact_ids": [
+      "art_dc304c0ee27ff5e5",
+      "art_8134f4cfe538f0a0",
+      "art_c186f3052b8156c6",
+      "art_4c9525e1e15d5173",
+      "art_db624b0bf1c084de",
+      "art_06259b13c154631b",
+      "art_83814605e6db0693"
+    ],
+    "dft_all_result_artifact_ids": [
+      "art_ede3ca5e8022eca0",
+      "art_c1f1893a99a993fd",
+      "art_f275fb5cdf3fc69f",
+      "art_b19083c6a599429a",
+      "art_2f4a17d98f12ee76",
+      "art_ec791c60c5eb86b8",
+      "art_dc304c0ee27ff5e5",
+      "art_8134f4cfe538f0a0",
+      "art_c186f3052b8156c6",
+      "art_4c9525e1e15d5173",
+      "art_db624b0bf1c084de",
+      "art_06259b13c154631b",
+      "art_83814605e6db0693"
+    ],
+    "uniswap_quote_artifact_ids": [
+      "art_f133c17ea02e86b2",
+      "art_fc49c5e9bd8dd55b",
+      "art_009c563d99981b87"
+    ],
+    "zerog_anchor_artifact_ids": [],
+    "ens_artifact_ids": [
+      "art_461de2a2b503dcb0",
+      "art_06a07b6133d57ae6",
+      "art_9a806f75845f1597",
+      "art_c1310e0e1498adaa",
+      "art_753ae1595cbbe9d1",
+      "art_0eed16fdb4cbf1bb",
+      "art_3976ea2aa08e13ac",
+      "art_5775f5d4a882a452",
+      "art_ff80ca363cb9cad1"
+    ],
+    "counts": {
+      "dft_results": 7,
+      "dft_result_artifacts": 13,
+      "dft_expected": 6,
+      "uniswap_quotes": 3,
+      "uniswap_expected": 3,
+      "zerog_anchors": 0,
+      "ens_artifacts": 9,
+      "ens_expected_agents": 3
+    },
+    "dft_results": [
+      {
+        "label": "propylene-glycol-dibutyrate",
+        "artifact_id": "art_dc304c0ee27ff5e5",
+        "request_artifact_id": "art_c530e2aa9a1c63a1",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_dc304c0ee27ff5e5.json",
+        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -730.7136386429252,
+        "gap_ev": 5.034439089702265,
+        "dipole_debye": 2.665080797949823,
+        "wall_seconds": 142.49481177330017,
+        "converged": true,
+        "created_at_unix": 1777789537
+      },
+      {
+        "label": "propylene-glycol-dipentanoate",
+        "artifact_id": "art_8134f4cfe538f0a0",
+        "request_artifact_id": "art_38675c5ceb55ac30",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_8134f4cfe538f0a0.json",
+        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -809.167704753964,
+        "gap_ev": 5.076909239030293,
+        "dipole_debye": 0.9666493156903162,
+        "wall_seconds": 245.95058178901672,
+        "converged": true,
+        "created_at_unix": 1777789548
+      },
+      {
+        "label": "propylene-glycol-dihexanoate",
+        "artifact_id": "art_c186f3052b8156c6",
+        "request_artifact_id": "art_ebd744602a93af10",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_c186f3052b8156c6.json",
+        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -887.6214280512183,
+        "gap_ev": 5.152751819289588,
+        "dipole_debye": 0.2712284430683576,
+        "wall_seconds": 331.79716300964355,
+        "converged": true,
+        "created_at_unix": 1777789558
+      },
+      {
+        "label": "germane",
+        "artifact_id": "art_4c9525e1e15d5173",
+        "request_artifact_id": "art_6bf4b629cd02ee39",
+        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_4c9525e1e15d5173.json",
+        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2078.7925731898563,
+        "gap_ev": 8.943968217554175,
+        "dipole_debye": 3.043160817471758e-05,
+        "wall_seconds": 0.3610150814056397,
+        "converged": true,
+        "created_at_unix": 1777789569
+      },
+      {
+        "label": "methylgermane",
+        "artifact_id": "art_db624b0bf1c084de",
+        "request_artifact_id": "art_6e535561617fb79a",
+        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_db624b0bf1c084de.json",
+        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2118.0287415083944,
+        "gap_ev": 7.941803510990133,
+        "dipole_debye": 0.71263378407231,
+        "wall_seconds": 0.911625862121582,
+        "converged": true,
+        "created_at_unix": 1777789579
+      },
+      {
+        "label": "cyclopropylgermane",
+        "artifact_id": "art_06259b13c154631b",
+        "request_artifact_id": "art_959a01b928c494eb",
+        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_06259b13c154631b.json",
+        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2195.2488714303418,
+        "gap_ev": 6.954072756568466,
+        "dipole_debye": 0.7927670188472256,
+        "wall_seconds": 2.368964910507202,
+        "converged": true,
+        "created_at_unix": 1777789589
+      },
+      {
+        "label": "propylene-glycol-dioctanoate",
+        "artifact_id": "art_83814605e6db0693",
+        "request_artifact_id": "art_febec4187b2a74c5",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
+        "molecule_id": "MOLADT.RDKIT.OVYMWJFNQQOJBU-QGZVFWFLSA-N",
+        "functional": "b3lyp",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -1045.8846781029804,
+        "gap_ev": 7.286498563391633,
+        "dipole_debye": 2.9276725062222853,
+        "wall_seconds": 531.7745687961578,
+        "converged": true,
+        "created_at_unix": 1777791262
+      }
+    ],
+    "dft_result_artifacts": [
+      {
+        "label": "propylene-glycol-dibutyrate",
+        "artifact_id": "art_ede3ca5e8022eca0",
+        "request_artifact_id": "art_c530e2aa9a1c63a1",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_ede3ca5e8022eca0.json",
+        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -730.7136386429252,
+        "gap_ev": 5.034439089702265,
+        "dipole_debye": 2.665080797949823,
+        "wall_seconds": 142.49481177330017,
+        "converged": true,
+        "created_at_unix": 1777787382
+      },
+      {
+        "label": "propylene-glycol-dipentanoate",
+        "artifact_id": "art_c1f1893a99a993fd",
+        "request_artifact_id": "art_38675c5ceb55ac30",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_c1f1893a99a993fd.json",
+        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -809.167704753964,
+        "gap_ev": 5.076909239030293,
+        "dipole_debye": 0.9666493156903162,
+        "wall_seconds": 245.95058178901672,
+        "converged": true,
+        "created_at_unix": 1777787535
+      },
+      {
+        "label": "propylene-glycol-dihexanoate",
+        "artifact_id": "art_f275fb5cdf3fc69f",
+        "request_artifact_id": "art_ebd744602a93af10",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_f275fb5cdf3fc69f.json",
+        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -887.6214280512183,
+        "gap_ev": 5.152751819289588,
+        "dipole_debye": 0.2712284430683576,
+        "wall_seconds": 331.79716300964355,
+        "converged": true,
+        "created_at_unix": 1777787792
+      },
+      {
+        "label": "germane",
+        "artifact_id": "art_b19083c6a599429a",
+        "request_artifact_id": "art_6bf4b629cd02ee39",
+        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_b19083c6a599429a.json",
+        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2078.7925731898563,
+        "gap_ev": 8.943968217554175,
+        "dipole_debye": 3.043160817471758e-05,
+        "wall_seconds": 0.3610150814056397,
+        "converged": true,
+        "created_at_unix": 1777788134
+      },
+      {
+        "label": "methylgermane",
+        "artifact_id": "art_2f4a17d98f12ee76",
+        "request_artifact_id": "art_6e535561617fb79a",
+        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_2f4a17d98f12ee76.json",
+        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2118.0287415083944,
+        "gap_ev": 7.941803510990133,
+        "dipole_debye": 0.71263378407231,
+        "wall_seconds": 0.911625862121582,
+        "converged": true,
+        "created_at_unix": 1777788144
+      },
+      {
+        "label": "cyclopropylgermane",
+        "artifact_id": "art_ec791c60c5eb86b8",
+        "request_artifact_id": "art_959a01b928c494eb",
+        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_ec791c60c5eb86b8.json",
+        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2195.2488714303418,
+        "gap_ev": 6.954072756568466,
+        "dipole_debye": 0.7927670188472256,
+        "wall_seconds": 2.368964910507202,
+        "converged": true,
+        "created_at_unix": 1777788155
+      },
+      {
+        "label": "propylene-glycol-dibutyrate",
+        "artifact_id": "art_dc304c0ee27ff5e5",
+        "request_artifact_id": "art_c530e2aa9a1c63a1",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_dc304c0ee27ff5e5.json",
+        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -730.7136386429252,
+        "gap_ev": 5.034439089702265,
+        "dipole_debye": 2.665080797949823,
+        "wall_seconds": 142.49481177330017,
+        "converged": true,
+        "created_at_unix": 1777789537
+      },
+      {
+        "label": "propylene-glycol-dipentanoate",
+        "artifact_id": "art_8134f4cfe538f0a0",
+        "request_artifact_id": "art_38675c5ceb55ac30",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_8134f4cfe538f0a0.json",
+        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -809.167704753964,
+        "gap_ev": 5.076909239030293,
+        "dipole_debye": 0.9666493156903162,
+        "wall_seconds": 245.95058178901672,
+        "converged": true,
+        "created_at_unix": 1777789548
+      },
+      {
+        "label": "propylene-glycol-dihexanoate",
+        "artifact_id": "art_c186f3052b8156c6",
+        "request_artifact_id": "art_ebd744602a93af10",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_c186f3052b8156c6.json",
+        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -887.6214280512183,
+        "gap_ev": 5.152751819289588,
+        "dipole_debye": 0.2712284430683576,
+        "wall_seconds": 331.79716300964355,
+        "converged": true,
+        "created_at_unix": 1777789558
+      },
+      {
+        "label": "germane",
+        "artifact_id": "art_4c9525e1e15d5173",
+        "request_artifact_id": "art_6bf4b629cd02ee39",
+        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_4c9525e1e15d5173.json",
+        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2078.7925731898563,
+        "gap_ev": 8.943968217554175,
+        "dipole_debye": 3.043160817471758e-05,
+        "wall_seconds": 0.3610150814056397,
+        "converged": true,
+        "created_at_unix": 1777789569
+      },
+      {
+        "label": "methylgermane",
+        "artifact_id": "art_db624b0bf1c084de",
+        "request_artifact_id": "art_6e535561617fb79a",
+        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_db624b0bf1c084de.json",
+        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2118.0287415083944,
+        "gap_ev": 7.941803510990133,
+        "dipole_debye": 0.71263378407231,
+        "wall_seconds": 0.911625862121582,
+        "converged": true,
+        "created_at_unix": 1777789579
+      },
+      {
+        "label": "cyclopropylgermane",
+        "artifact_id": "art_06259b13c154631b",
+        "request_artifact_id": "art_959a01b928c494eb",
+        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_06259b13c154631b.json",
+        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -2195.2488714303418,
+        "gap_ev": 6.954072756568466,
+        "dipole_debye": 0.7927670188472256,
+        "wall_seconds": 2.368964910507202,
+        "converged": true,
+        "created_at_unix": 1777789589
+      },
+      {
+        "label": "propylene-glycol-dioctanoate",
+        "artifact_id": "art_83814605e6db0693",
+        "request_artifact_id": "art_febec4187b2a74c5",
+        "path": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
+        "molecule_id": "MOLADT.RDKIT.OVYMWJFNQQOJBU-QGZVFWFLSA-N",
+        "functional": "b3lyp",
+        "basis_set": "def2-svp",
+        "backend": "PyScf",
+        "energy_hartree": -1045.8846781029804,
+        "gap_ev": 7.286498563391633,
+        "dipole_debye": 2.9276725062222853,
+        "wall_seconds": 531.7745687961578,
+        "converged": true,
+        "created_at_unix": 1777791262
+      }
+    ],
+    "uniswap_quotes": [
+      {
+        "artifact_id": "art_f133c17ea02e86b2",
+        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_f133c17ea02e86b2.json",
+        "amount_in": "3100000",
+        "amount_out": "3099992",
+        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        "routing_type": "CLASSIC",
+        "gas_fee_usd": "0.06077834556652045",
+        "quote_only": true,
+        "created_at_unix": 1777789600
+      },
+      {
+        "artifact_id": "art_fc49c5e9bd8dd55b",
+        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_fc49c5e9bd8dd55b.json",
+        "amount_in": "8250000",
+        "amount_out": "8249980",
+        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        "routing_type": "CLASSIC",
+        "gas_fee_usd": "0.06077834556652045",
+        "quote_only": true,
+        "created_at_unix": 1777789603
+      },
+      {
+        "artifact_id": "art_009c563d99981b87",
+        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_009c563d99981b87.json",
+        "amount_in": "49500000",
+        "amount_out": "49499887",
+        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        "routing_type": "CLASSIC",
+        "gas_fee_usd": "0.06078813553670861",
+        "quote_only": true,
+        "created_at_unix": 1777789606
+      }
+    ],
+    "zerog_anchors": [],
+    "ens_artifacts": [
+      {
+        "artifact_id": "art_461de2a2b503dcb0",
+        "kind": "publication",
+        "schema_tag": "identity.ens.publication",
+        "agent": "dft.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_461de2a2b503dcb0.json",
+        "chain_id": 11155111,
+        "verified": null,
+        "mismatches": null,
+        "records": 2,
+        "created_at_unix": 1777789796
+      },
+      {
+        "artifact_id": "art_06a07b6133d57ae6",
+        "kind": "resolution",
+        "schema_tag": "identity.ens.resolution",
+        "agent": "dft.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_06a07b6133d57ae6.json",
+        "chain_id": null,
+        "verified": null,
+        "mismatches": null,
+        "records": null,
+        "created_at_unix": 1777789798
+      },
+      {
+        "artifact_id": "art_9a806f75845f1597",
+        "kind": "verification",
+        "schema_tag": "identity.ens.verification",
+        "agent": "dft.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_9a806f75845f1597.json",
+        "chain_id": null,
+        "verified": true,
+        "mismatches": 0,
+        "records": null,
+        "created_at_unix": 1777789799
+      },
+      {
+        "artifact_id": "art_c1310e0e1498adaa",
+        "kind": "publication",
+        "schema_tag": "identity.ens.publication",
+        "agent": "retro.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_c1310e0e1498adaa.json",
+        "chain_id": 11155111,
+        "verified": null,
+        "mismatches": null,
+        "records": 2,
+        "created_at_unix": 1777789820
+      },
+      {
+        "artifact_id": "art_753ae1595cbbe9d1",
+        "kind": "resolution",
+        "schema_tag": "identity.ens.resolution",
+        "agent": "retro.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_753ae1595cbbe9d1.json",
+        "chain_id": null,
+        "verified": null,
+        "mismatches": null,
+        "records": null,
+        "created_at_unix": 1777789822
+      },
+      {
+        "artifact_id": "art_0eed16fdb4cbf1bb",
+        "kind": "verification",
+        "schema_tag": "identity.ens.verification",
+        "agent": "retro.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_0eed16fdb4cbf1bb.json",
+        "chain_id": null,
+        "verified": true,
+        "mismatches": 0,
+        "records": null,
+        "created_at_unix": 1777789823
+      },
+      {
+        "artifact_id": "art_3976ea2aa08e13ac",
+        "kind": "publication",
+        "schema_tag": "identity.ens.publication",
+        "agent": "literature.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_3976ea2aa08e13ac.json",
+        "chain_id": 11155111,
+        "verified": null,
+        "mismatches": null,
+        "records": 2,
+        "created_at_unix": 1777789843
+      },
+      {
+        "artifact_id": "art_5775f5d4a882a452",
+        "kind": "resolution",
+        "schema_tag": "identity.ens.resolution",
+        "agent": "literature.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_5775f5d4a882a452.json",
+        "chain_id": null,
+        "verified": null,
+        "mismatches": null,
+        "records": null,
+        "created_at_unix": 1777789845
+      },
+      {
+        "artifact_id": "art_ff80ca363cb9cad1",
+        "kind": "verification",
+        "schema_tag": "identity.ens.verification",
+        "agent": "literature.service.chimiaclaw.eth",
+        "ens_name": "chimiaclaw.eth",
+        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_ff80ca363cb9cad1.json",
+        "chain_id": null,
+        "verified": true,
+        "mismatches": 0,
+        "records": null,
+        "created_at_unix": 1777789846
+      }
+    ]
   }
 }

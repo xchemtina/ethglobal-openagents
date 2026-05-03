@@ -83,7 +83,6 @@ export function GlobalNav() {
         <NavItem href="/derivations"icon={<BookOpen className="w-3.5 h-3.5" />}        label="Derivations"      pathname={pathname} />
         <NavItem href="/dft"        icon={<Atom className="w-3.5 h-3.5" />}            label="DFT Results"      pathname={pathname} badge="Real" badgeColor="agent" />
         <NavItem href="/retrosynthesis" icon={<GitBranch className="w-3.5 h-3.5" />}   label="Retrosynthesis"   pathname={pathname} badge="CASP" badgeColor="primary" />
-        <NavItem href="/world-map.html" icon={<LayoutDashboard className="w-3.5 h-3.5" />} label="World Map"     pathname={pathname} badge="Live" badgeColor="agent" />
         <NavItem href="/docs"       icon={<Terminal className="w-3.5 h-3.5" />}         label="Agent API Docs"   pathname={pathname} badge="API"  badgeColor="primary" />
         <NavItem href="/profile"    icon={<CircleUser className="w-3.5 h-3.5" />}      label="My Profile"       pathname={pathname} />
       </nav>
