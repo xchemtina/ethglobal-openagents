@@ -1,43 +1,6 @@
-# ChimiaClaw
+# chimiaclaw
 
-**Rust-native agent framework for decentralized science.** Every action — DFT computation, retrosynthesis, literature search, procurement, governance — is a signed, content-addressed artifact in a payload-bound DAG.
-
-> Built for ETHGlobal OpenAgents · Apache-2.0 · [Architecture](docs/ARCHITECTURE.md) · [Live demo](demo/world-map.html)
-
-## What makes this real
-
-- **Signed artifact DAG** — Ed25519 signatures + Blake3 content hashing. Tamper with the payload, the signature breaks. Every artifact commits to its canonical bytes via `PayloadRef`.
-- **Six real DFT results** — Water, methanol, benzene, propylene glycol, caprylic acid, capric acid. SCF-converged PBE/def2-tzvp on PySCF. HOMO/LUMO/total-density orbital cubes content-addressed via SHA-256. [View in SciCrucible →](SciCrucible_v1/)
-- **Live ENS identity on Sepolia** — Agent text records published, resolved, and verified on-chain. Three signed artifacts: `identity.ens.publication` → `identity.ens.resolution` → `identity.ens.verification`. No hard-coded values.
-- **Science service market** — Retrosynthesis, DFT, and literature service flows with full economic settlement: quote → acceptance → escrow → settlement intent → result → acknowledgement → release. Non-custodial by default.
-- **Portable Molecular ADT** — 21-atom ferrocene with η5-haptic bonding systems down to water. Pure-Rust SVG renderer, XYZ/PySCF projections, RDKit worker boundary for arbitrary SMILES.
-- **0G Storage adapter** — Signed `storage.zerog.upload` anchor artifacts with content-addressed payloads. Private keys never touch process arguments.
-- **KeeperHub execution scheduling** — Rust REST client for workflow scheduling with signed `exec.keeperhub.*` artifacts.
-- **Local polling runtime** — File-backed artifact store, skill registry, deterministic polling loop with idempotent child production.
-
-## Quick start
-
-```sh
-cargo run -p chimiaclaw-cli -- demo-dag              # route → quote → receipt
-cargo run -p chimiaclaw-cli -- science-market-demo    # three signed service flows
-cargo run -p chimiaclaw-cli -- moladt-dft-demo        # ferrocene MolADT + DFT request
-cargo run -p chimiaclaw-cli -- world-model verify     # preflight integrity check
-python3 -m http.server 8787 --directory demo          # then open localhost:8787/world-map.html
-```
-
-## Validate
-
-```sh
-cargo fmt --all -- --check
-cargo check --workspace
-cargo test --workspace
-cargo check --workspace --all-features
-forge test --root contracts
-```
-
----
-
-## Detailed documentation
+Rust-native scaffold for autonomous scientific agents, signed payload-bound artifact DAGs, and a future ChimiaDAO governance runtime.
 
 `chimiaclaw` treats every scientific action, agent decision, optimization step, procurement move, and governance event as a signed artifact in a directed acyclic graph that commits to its scientific or procurement payload. Today, this repository ships the artifact substrate, deterministic local polling over a file-backed store, payload-bound demo flows, a science service transaction fixture with artifact-native economic settlement, and a contracts scaffold. Cross-machine autonomy and governance execution are planned, not yet present.
 
@@ -48,6 +11,20 @@ forge test --root contracts
 - **Design-only (described, not built):** direct `chimiaclaw-node` daemon binary, cross-machine consensus, governance execution, on-chain anchoring, MSSP/cybernetic Marchev stack, World Avatar RDF projection, real procurement APIs.
 
 When this README says "DAO substrate" or "reference swarm", read it as direction, not present capability.
+
+## Current hackathon snapshot (2026-05-03)
+
+The live demo story is now a single signed evidence chain, not separate sponsor stubs:
+
+- `demo/world-map.html` and `demo/world-model.json` project the current ChimiaClaw lab-swarm state: four real ChimiaDAO nodes, virtual/candidate/quarantined nodes, science transactions, artifact cards, trust edges, MSSP genealogy, World Avatar triples, and SciCrucible discourse.
+- AiZynthFinder 4.4.1 ran on `duck@olympus.local` against five hackathon targets using public USPTO policy/filter models and ZINC stock. Targets 3, 4, and 5 solved; targets 1 and 2 remained unsolved under the default search.
+- Three AiZynth-derived precursors were pushed through real B3LYP/def2-svp PySCF DFT on Olympus and signed as `chem.dft.result` artifacts: N-bromosuccinimide (`art_b2b2171ec8afc316`), methanesulfonic anhydride (`art_b879d21ada35b829`), and the acetylated diol precursor (`art_c1e68e07ecd1a323`). The silicon-containing TBS alcohol is deliberately represented as a MolADT support blocker, not as a failed quantum calculation.
+- ENS is live on Sepolia for `chimiaclaw.eth`: publication `art_bcf73364c39fb152`, resolution `art_bc5f74fa853df294`, and verification `art_1eb873d15595ba6e` prove five `chimiaclaw.*` text records on chain `11155111`.
+- 0G is live on Galileo Turbo: `storage.zerog.upload` artifact `art_06b4ba819c6222bc` anchors ferrocene MolADT source artifact `art_c6fb4314b4dc7ac7` at root `0x064c41c425f74b52218f8d9eaf8cc04388d93721262746185f52c23eac13e7c7`.
+- The world-model verifier now checks `science_transactions[].result_id`, `science_transactions[].artifact_flow[]`, and `crucible_votes[].target_artifact_id` references. Current smoke test: 35 signed references verified, 0 failures.
+- The dashboard bundle has been copied to `duck@olympus.local:/Users/duck/ChimiaDAO/OpenAgents/demo/` and byte-identical hashes were confirmed for `world-map.html`, `world-model.json`, the three ENS artifacts, and the five 0G files.
+
+Important boundary: ENS Sepolia and 0G Galileo are live sponsor proofs; token settlement, wetlab execution, and governance execution remain simulated or gated unless a later artifact proves otherwise.
 
 ## What this repository is
 
@@ -226,7 +203,14 @@ Then open `http://localhost:8787/world-map.html`. The map marks the four real
 ChimiaDAO nodes, shows active lab-to-lab interaction lines for every node in the
 fixture, separates data payload movement from conceptual MSSP / World Avatar
 sharing, and keeps candidate, virtual, and quarantined endpoints explicitly
-bounded.
+bounded. The current fixture also merges the real AiZynthFinder route-search
+run, B3LYP precursor DFT artifacts, live ENS Sepolia round-trip, and live 0G
+Galileo Turbo storage anchor into one static story. Verify the public projection
+before showing it:
+
+```sh
+cargo --offline run -p chimiaclaw-cli -- world-model verify --world-model demo/world-model.json --artifact-dir demo
+```
 
 Run the file-backed node runtime end-to-end for ORD→ADT:
 

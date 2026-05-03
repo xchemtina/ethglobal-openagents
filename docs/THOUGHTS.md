@@ -107,3 +107,43 @@ The MolADT → DftRequest → DftResult chain is now end-to-end real: water thro
 - the `pyscf-skala → pbe` fallback with explicit `provenance.notes`, so requesting Skala 1.1 today still produces an honest, auditable artifact while the real weights are being installed (D15);
 - keeping the worker scaffold uv-managed (no Docker, no Homebrew, no pip-only flows), so installing the duck stack was a single `uv sync` away from a working SCF.
 The next pressure point is benchmarking: ferrocene (21 atoms, transition metal) and a small drug-like molecule (e.g. aspirin) will tell us whether the artifact-graph cost of real DFT is dominated by the SCF wall time or by the SSH + JSON marshalling overhead. Both should run on duck CPU in seconds with PBE; GPU4PySCF is the next lever if we need bigger systems.
+
+## Why the current dashboard finally feels like a serious prize-track artifact
+
+The strongest part of the 2026-05-03 session is that the story stopped being a list of integrations and became a single chain:
+
+CASP route search → precursor selection → B3LYP DFT → ENS identity proof → 0G payload anchor → signed world-model verification.
+
+That sequence is important because every sponsor proof now answers the same five questions as the core artifact system:
+
+- What did it consume?
+- What did it produce?
+- Which schema tag says so?
+- Which artifact id can be verified?
+- Which claims remain outside the proof boundary?
+
+The answer is now concrete. ENS consumed operator-controlled text records and produced publication/resolution/verification artifacts for `chimiaclaw.eth` on Sepolia. 0G consumed the ferrocene MolADT/XYZ payload and produced `storage.zerog.upload` artifact `art_06b4ba819c6222bc` with a Galileo Turbo root hash. The dashboard consumes all of that plus CASP/DFT artifacts and produces a projection, not a new source of truth.
+
+## What still must not be overclaimed
+
+The demo is strong precisely because its limits are visible:
+
+- ENS is live on Sepolia, not a claim about mainnet production identity.
+- 0G upload is live on Galileo Turbo, not proof that every DFT cube or service catalog root has been stored.
+- Economic settlement is still `SimulatedArtifactLedger`; no live funds moved.
+- Wetlab custody remains human-gated.
+- Governance execution remains scaffolded.
+- The TBS alcohol gap is an ADT element-support blocker, not a failed PySCF result.
+
+This honesty is part of the product. A judge should be able to click the dashboard, see the green live evidence, and also see exactly where the system refuses to lie.
+
+## Next pressure after the evidence merge
+
+The highest-leverage next moves are:
+
+- fix the two unrelated SciCrucible TypeScript errors so the dashboard can be shown without caveats;
+- turn `crucible.review.vote` UI actions into actual signed vote artifacts;
+- run at least one cross-machine AXL message or service handoff;
+- anchor a larger payload on 0G, ideally a DFT cube bundle or service catalog root;
+- add Si support to MolADT or document the element-extension design before attempting the TBS alcohol DFT;
+- prepare the final README/submission prose around the chain above, not around isolated sponsor checkboxes.

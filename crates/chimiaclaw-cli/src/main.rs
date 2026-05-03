@@ -22,7 +22,7 @@ use retroquoter::{
     RetroQuoter, RouteQuoteSkill, PLANNER_AGENT, PROCUREMENT_AGENT, ROUTE_PROPOSAL_TAG,
 };
 use std::collections::BTreeSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -677,6 +677,101 @@ fn run_world_model() -> Result<(), String> {
 
 // ---------------- world-model verify ---------------- //
 
+fn find_artifact_candidate(
+    artifact_dir: &Path,
+    candidates: &[String],
+) -> Result<Option<PathBuf>, String> {
+    for filename in candidates {
+        let direct = artifact_dir.join(filename);
+        if direct.exists() {
+            return Ok(Some(direct));
+        }
+    }
+
+    let names: BTreeSet<&str> = candidates.iter().map(String::as_str).collect();
+    fn walk(dir: &Path, names: &BTreeSet<&str>) -> std::io::Result<Option<PathBuf>> {
+        let entries = match std::fs::read_dir(dir) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(error),
+        };
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+            let file_type = entry.file_type()?;
+            if file_type.is_dir() {
+                if let Some(found) = walk(&path, names)? {
+                    return Ok(Some(found));
+                }
+            } else if file_type.is_file()
+                && path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| names.contains(name))
+            {
+                return Ok(Some(path));
+            }
+        }
+        Ok(None)
+    }
+
+    walk(artifact_dir, &names)
+        .map_err(|error| format!("scan artifact-dir {}: {error}", artifact_dir.display()))
+}
+fn find_artifact_by_id(artifact_dir: &Path, artifact_id: &str) -> Result<Option<PathBuf>, String> {
+    fn walk(dir: &Path, artifact_id: &str) -> std::io::Result<Option<PathBuf>> {
+        let entries = match std::fs::read_dir(dir) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(error),
+        };
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+            let file_type = entry.file_type()?;
+            if file_type.is_dir() {
+                if let Some(found) = walk(&path, artifact_id)? {
+                    return Ok(Some(found));
+                }
+            } else if file_type.is_file()
+                && path.extension().and_then(|extension| extension.to_str()) == Some("json")
+            {
+                let Ok(body) = std::fs::read_to_string(&path) else {
+                    continue;
+                };
+                let Ok(value) = serde_json::from_str::<serde_json::Value>(&body) else {
+                    continue;
+                };
+                if value.get("id").and_then(|id| id.as_str()) == Some(artifact_id) {
+                    return Ok(Some(path));
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    walk(artifact_dir, artifact_id)
+        .map_err(|error| format!("scan artifact ids in {}: {error}", artifact_dir.display()))
+}
+
+fn artifact_ids_in_text(text: &str) -> Vec<String> {
+    let mut ids = Vec::new();
+    let mut offset = 0usize;
+    while let Some(relative_start) = text[offset..].find("art_") {
+        let start = offset + relative_start;
+        let mut end = start + 4;
+        let bytes = text.as_bytes();
+        while end < bytes.len() && bytes[end].is_ascii_hexdigit() {
+            end += 1;
+        }
+        if end > start + 4 {
+            ids.push(text[start..end].to_string());
+        }
+        offset = end;
+    }
+    ids
+}
+
 /// Resolve every `art_*` referenced from the world-model and verify it
 /// against an on-disk signed-artifact directory (default: `demo/dft/`).
 ///
@@ -696,6 +791,18 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
         .map_err(|error| format!("parse {}: {error}", world_model_path.display()))?;
 
     let mut refs: Vec<(String, String)> = Vec::new(); // (source, artifact_id)
+    let mut seen_refs = BTreeSet::new();
+    fn push_ref(
+        refs: &mut Vec<(String, String)>,
+        seen_refs: &mut BTreeSet<String>,
+        source: String,
+        artifact_id: String,
+    ) {
+        let key = format!("{source}\u{0}{artifact_id}");
+        if seen_refs.insert(key) {
+            refs.push((source, artifact_id));
+        }
+    }
     if let Some(txs) = model.get("science_transactions").and_then(|v| v.as_array()) {
         for tx in txs {
             let tx_id = tx
@@ -705,10 +812,27 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
                 .to_string();
             if let Some(result_id) = tx.get("result_id").and_then(|v| v.as_str()) {
                 if result_id.starts_with("art_") {
-                    refs.push((
+                    push_ref(
+                        &mut refs,
+                        &mut seen_refs,
                         format!("science_transactions[{tx_id}].result_id"),
                         result_id.to_string(),
-                    ));
+                    );
+                }
+            }
+            if let Some(flow) = tx.get("artifact_flow").and_then(|v| v.as_array()) {
+                for (index, step) in flow.iter().enumerate() {
+                    let Some(step) = step.as_str() else {
+                        continue;
+                    };
+                    for artifact_id in artifact_ids_in_text(step) {
+                        push_ref(
+                            &mut refs,
+                            &mut seen_refs,
+                            format!("science_transactions[{tx_id}].artifact_flow[{index}]"),
+                            artifact_id,
+                        );
+                    }
                 }
             }
         }
@@ -721,10 +845,12 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
                 .unwrap_or("<unknown-vote>")
                 .to_string();
             if let Some(target) = vote.get("target_artifact_id").and_then(|v| v.as_str()) {
-                refs.push((
+                push_ref(
+                    &mut refs,
+                    &mut seen_refs,
                     format!("crucible_votes[{vote_id}].target_artifact_id"),
                     target.to_string(),
-                ));
+                );
             }
         }
     }
@@ -847,11 +973,15 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
             format!("chem_dft_request.{art_id}.json"),
             format!("chem_molecule_adt.{art_id}.json"),
             format!("crucible_review_vote.{art_id}.json"),
+            format!("identity_ens_publication.{art_id}.json"),
+            format!("identity_ens_resolution.{art_id}.json"),
+            format!("identity_ens_verification.{art_id}.json"),
+            format!("storage_zerog_upload.{art_id}.json"),
         ];
-        let path = candidates
-            .iter()
-            .map(|f| artifact_dir.join(f))
-            .find(|p| p.exists());
+        let path = match find_artifact_candidate(&artifact_dir, &candidates)? {
+            Some(path) => Some(path),
+            None => find_artifact_by_id(&artifact_dir, art_id)?,
+        };
         let entry = match path {
             Some(p) => match std::fs::read_to_string(&p) {
                 Ok(body) => match serde_json::from_str::<Artifact>(&body) {

@@ -143,20 +143,38 @@ export default async function DftDetailPage({
 
           {/* Cubes */}
           <SectionHeader label="Orbital density cubes" />
-          <p className="text-[11px] text-muted-foreground font-mono mb-3">
-            Signed-max-amplitude projection along z. Each PNG is rendered from a
-            Gaussian cube file (50³ grid) embedded inline in the result payload.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-7">
-            {record.cubes.map((c) => (
-              <CubeCard
-                key={c.cubeSha256Prefix}
-                label={c.label}
-                src={c.pngPublicPath}
-                shaPrefix={c.cubeSha256Prefix}
-              />
-            ))}
-          </div>
+          {record.cubes.length > 0 ? (
+            <>
+              <p className="text-[11px] text-muted-foreground font-mono mb-3">
+                Signed-max-amplitude projection along z. Each PNG is rendered from a
+                Gaussian cube file (50³ grid) embedded inline in the result payload.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-7">
+                {record.cubes.map((c) => (
+                  <CubeCard
+                    key={c.cubeSha256Prefix}
+                    label={c.label}
+                    src={c.pngPublicPath}
+                    shaPrefix={c.cubeSha256Prefix}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div
+              className="rounded p-4 mb-7 font-mono text-[11px] leading-[1.55]"
+              style={{
+                background: "oklch(0.07 0 0)",
+                border: "1px solid oklch(0.18 0 0)",
+                color: "oklch(0.62 0.006 60)",
+              }}
+            >
+              No orbital cube PNGs were generated for this result. The signed
+              scalar payload still includes the SCF energy, convergence metadata,
+              frontier-orbital gap, dipole, method, parent request, and parent
+              MolADT geometry.
+            </div>
+          )}
 
           {/* Method */}
           <SectionHeader label="Method" />

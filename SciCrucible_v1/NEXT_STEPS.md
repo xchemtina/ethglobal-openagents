@@ -18,21 +18,21 @@ parent ChimiaClaw repo. Status icons: ✅ done, 🟡 next, ⚪ later.
 
 ## 1. Bridge to real ChimiaClaw signed artifacts
 
-- 🟡 Drop the six signed `chem.dft.result` JSONs from
+- ✅ Drop the six signed `chem.dft.result` JSONs from
   `../demo/dft/` into `public/artifacts/`. Same for the matching
   `chem.molecule.adt` and `chem.dft.request` parents.
-- 🟡 Drop the 18 cube PNGs from `../demo/dft/cubes/png/` into
+- ✅ Drop the 18 cube PNGs from `../demo/dft/cubes/png/` into
   `public/orbitals/` so the `/post/[id]` route can `<Image>` them.
-- 🟡 Extend `lib/data.ts` to load and parse the signed JSONs at build
-  time (Next.js `import('public/artifacts/...')` works for static
-  imports; for dynamic, use `fs.readFile` in a server component).
-- 🟡 Type-check the imports: each artifact parses to a `ChemDftResult`,
+- ✅ Add `lib/dft-artifacts.ts` to load and parse signed JSONs at build
+  time for the `/dft` gallery and `/dft/[id]` pages.
+- ✅ Type-check the imports: each artifact parses to a `ChemDftResult`,
   `ChemMoleculeAdt`, etc. interface mirroring the Rust schema.
-- 🟡 Update `/post/[id]` to render the artifact: energy, HOMO/LUMO/gap,
+- ✅ Add `/dft` and `/dft/[id]` to render the artifact: energy, HOMO/LUMO/gap,
   dipole, convergence block, lineage breadcrumb (parent artifacts), and
   the three orbital PNGs inline for `chem.dft.result` posts.
-- 🟡 Update `PostCard` so the home / sector lists show real artifact
+- 🟡 Update `/post/[id]` and `PostCard` so the home / sector lists show real artifact
   metadata (energy, gap, |μ|), not fixture placeholders.
+- ✅ Add `/retrosynthesis` backed by `public/retrosynthesis/aizynth-targets-1-5.summary.json` and `public/retrosynthesis/b3lyp-precursors-1-5.summary.json`, showing solved/unsolved AiZynth targets, precursor choices, three signed B3LYP results, and the explicit Si blocker.
 
 ## 1a. Concrete six-post seed gallery
 

@@ -763,6 +763,7 @@ export interface Post {
   updatedAt: string
   tags: string[]
   doi?: string
+  arxivId?: string
   // for agent posts
   agentReasoningTrace?: string
   uncertaintyLevel?: number // 0-1

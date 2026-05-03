@@ -108,3 +108,26 @@ The `chem.dft.request` artifact is intentionally lightweight: it carries only a 
 When the DFT worker is asked for a functional it doesn't have weights for (currently Skala 1.1), it falls back to a stock PySCF functional (PBE) and writes an explicit fallback notice into `provenance.notes`. The `provenance.source_kind` simultaneously flips from `pyscf-skala-1.1` to `pyscf-classical-functional`. This means: (1) the artifact is still real, signed, and auditable; (2) downstream consumers reading `provenance.source_kind` know exactly which path produced the energy; (3) when real Skala 1.1 weights land on duck, switching the operator command from `--backend pyscf-classical` to `--backend pyscf-skala` is the only change needed.
 ## D16. Big payloads (orbital cubes) live outside the artifact, content-addressed by SHA-256 inside it
 Orbital density cubes from `pyscf.tools.cubegen` are megabytes each. Inlining them into the signed `chem.dft.result` JSON would make the artifact graph unreadable and balloon the storage. Instead, the worker emits each cube on disk + base64-bytes-on-the-wire, the Rust adapter materializes them locally under `--cube-out-dir`, re-hashes with SHA-256, and embeds only `{label, sha256, bytes, grid_resolution, local_path}` into the signed artifact. The signature commits to the SHA-256, so any tampering with the cube file invalidates the lineage. This is the same external-CID pattern that `PayloadRef` already uses for ordinary artifact payloads (D3a), specialized for cubes. The pattern is general: any large scientific output (trajectories, mesh files, raw experimental data) should land in the artifact graph by hash, not by value.
+
+## D17. Live sponsor proof is not live settlement
+
+The world model may mark ENS Sepolia and 0G Galileo evidence as live only when a signed artifact proves the event. The current live proof set is:
+
+- `identity.ens.publication` `art_bcf73364c39fb152`
+- `identity.ens.resolution` `art_bc5f74fa853df294`
+- `identity.ens.verification` `art_1eb873d15595ba6e`
+- `storage.zerog.upload` `art_06b4ba819c6222bc`
+
+Those artifacts justify `VerifiedLiveSepolia` and `VerifiedLiveGalileoUpload` release statuses in the dashboard. They do not imply live USDC movement, wetlab execution, mainnet identity, or DAO governance execution. Economic settlement remains `SimulatedArtifactLedger` until an explicit payment adapter produces and verifies its own artifact trail.
+
+## D18. The dashboard is allowed to be a projection, but the verifier must be artifact-first
+
+`demo/world-map.html` is a static renderer and may group, color, filter, and narrate the world model. It must not invent state outside `demo/world-model.json` and the signed artifacts on disk. The verifier therefore follows every `art_*` reference in `science_transactions[].result_id`, `science_transactions[].artifact_flow[]`, and `crucible_votes[].target_artifact_id`, resolving by known filenames first and by signed artifact id second.
+
+The current smoke test verifies 35 signed references against `demo/` with zero failures. Adding a new live sponsor claim to the dashboard should be treated as incomplete until `world-model verify` can resolve and verify the corresponding signed artifact.
+
+## D19. Explicit blockers are better than silent gaps
+
+The AiZynthFinder/B3LYP merge surfaced a silicon-containing TBS alcohol precursor. Because `chimiaclaw-moladt::AtomicSymbol` does not yet support Si, the correct behavior is a signed/modelled blocker (`chimiaclaw.model.blocker` / `blocked:MolADT.AtomicSymbol.Si`), not a fake DFT attempt and not omission from the dashboard.
+
+This decision generalizes: unsupported elements, missing safety data, absent ENS ownership, failed storage uploads, and unconverged SCF runs should appear as explicit blockers with lineage. A blocked artifact is more valuable to ChimiaClaw than a polished but unverifiable success story.

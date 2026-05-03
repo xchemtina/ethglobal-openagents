@@ -107,3 +107,9 @@ sandbox loaders (`__v0_runtime_loader.js`, `__v0_devtools.tsx`,
 and removed from production builds. The dependency on the v0 generator
 is over; future iterations are hand-edited or delegated to AK on the
 ChimiaClaw repo, not back through the v0 sandbox.
+
+## D11. Real artifact pages may land before the backend
+
+The full backend remains the target, but SciCrucible is allowed to ship static-build artifact readers first. `/dft` and `/retrosynthesis` prove this pattern: they read signed JSON artifacts and summaries from `public/`, decode inline payloads, and render lineage without a database, auth layer, or API route.
+
+This is not a retreat from the backend spec. It is the fastest honest bridge between ChimiaClaw's Rust artifact DAG and a judge-visible UI. Any page built this way must keep the same rule as the future backend: render what the artifact says, do not invent hidden state.

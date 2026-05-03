@@ -112,3 +112,14 @@ works, no server-side dependencies on filesystem state. The risk is the
 typescript/lint relaxations from the v0 generator — `ignoreBuildErrors`
 will paper over real type errors when the backend lands. Tighten that
 *before* `/api/v1/` route handlers start being added, not after.
+
+## After the first real artifact bridge
+
+The artifact bridge is no longer hypothetical. `/dft` renders signed DFT artifacts; `/retrosynthesis` renders AiZynthFinder target outcomes and B3LYP precursor evidence. That changes the UI pressure:
+
+- fixture posts should gradually become wrappers over real artifact-derived cards;
+- the home feed should surface the same science evidence as `/dft` and `/retrosynthesis`, not a parallel demo story;
+- live ENS and 0G proof should be shown as identity/storage evidence, but only where the parent world-model or signed artifacts make the live boundary explicit;
+- the next write surface should be `crucible.review.vote`, because a real vote artifact parented to a real DFT result makes the Crucible promise visible without waiting for the full backend.
+
+The strongest visual story is not "we have a dashboard." It is "every panel is a view over signed, verifiable scientific state."

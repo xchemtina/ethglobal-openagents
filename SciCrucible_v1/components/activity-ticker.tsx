@@ -4,7 +4,6 @@ import {
   Activity,
   AlertTriangle,
   Database,
-  Zap,
   BotMessageSquare,
   FileText,
   GitBranch,
@@ -21,16 +20,16 @@ interface TickerEvent {
 }
 
 const TICKER_EVENTS: TickerEvent[] = [
-  { icon: <BotMessageSquare className="w-3 h-3" />, agent: "Curie-α",     action: "extracted 47 claims from Nature Chem. (DOI 10.1038/...)",   color: "oklch(0.72 0.18 192)", timestamp: "08s" },
-  { icon: <AlertTriangle    className="w-3 h-3" />, agent: "Werner-ζ",    action: "claim conflict detected — paper-008 vs KG node n_4271",     color: "oklch(0.65 0.20 25)",  timestamp: "23s" },
-  { icon: <Database         className="w-3 h-3" />, agent: "Babbage-θ",   action: "ingested 3 ChemRxiv preprints — organometallic catalysis",  color: "oklch(0.67 0.15 172)", timestamp: "47s" },
-  { icon: <Zap              className="w-3 h-3" />, agent: "Boltzmann-β", action: "computed 142 KG nodes — physical chemistry sector",         color: "oklch(0.68 0.15 155)", timestamp: "1m"  },
-  { icon: <Activity         className="w-3 h-3" />, agent: "Faraday-η",   action: "DFT benchmark complete — r2SCAN-3c MAD = 2.1 kcal·mol⁻¹",   color: "oklch(0.70 0.18 28)",  timestamp: "1m" },
-  { icon: <GitBranch        className="w-3 h-3" />, agent: "Pauling-γ",   action: "verified 12 derivations against PRL archive",               color: "oklch(0.65 0.16 262)", timestamp: "2m" },
-  { icon: <Layers           className="w-3 h-3" />, agent: "Leibniz-Σ",   action: "cross-sector synthesis — 8 KG nodes linked across sectors", color: "oklch(0.76 0.17 192)", timestamp: "2m" },
-  { icon: <FileText         className="w-3 h-3" />, agent: "Helmholtz-ε", action: "5 thermo. claims awaiting peer review",                     color: "oklch(0.72 0.16 78)",  timestamp: "3m" },
-  { icon: <BotMessageSquare className="w-3 h-3" />, agent: "Curie-α",     action: "Crossref dedup — 2 ChemRxiv preprints matched to journal",  color: "oklch(0.72 0.18 192)", timestamp: "4m" },
-  { icon: <Database         className="w-3 h-3" />, agent: "Werner-ζ",    action: "wrote 89 OWL triples to inorganic-chemistry KG namespace",  color: "oklch(0.70 0.18 28)",  timestamp: "5m" },
+  { icon: <GitBranch        className="w-3 h-3" />, agent: "AiZynth @ Olympus", action: "targets 3, 4, and 5 solved under USPTO/ZINC default search",                  color: "oklch(0.72 0.16 78)",  timestamp: "08s" },
+  { icon: <AlertTriangle    className="w-3 h-3" />, agent: "AiZynth @ Olympus", action: "targets 1 and 2 remain unsolved under default search; no wetlab claim made", color: "oklch(0.72 0.16 78)",  timestamp: "15s" },
+  { icon: <Activity         className="w-3 h-3" />, agent: "Gauss-DFT",         action: "B3LYP / def2-svp NBS precursor converged · result art_b2b2171ec8afc316",     color: "oklch(0.70 0.18 148)", timestamp: "23s" },
+  { icon: <Activity         className="w-3 h-3" />, agent: "Gauss-DFT",         action: "mesyl anhydride B3LYP gap 8.703 eV · result art_b879d21ada35b829",          color: "oklch(0.70 0.18 148)", timestamp: "31s" },
+  { icon: <Activity         className="w-3 h-3" />, agent: "Gauss-DFT",         action: "acetylated diol precursor B3LYP completed · result art_c1e68e07ecd1a323",   color: "oklch(0.70 0.18 148)", timestamp: "39s" },
+  { icon: <AlertTriangle    className="w-3 h-3" />, agent: "MolADT",            action: "TBS alcohol blocked: AtomicSymbol lacks silicon support",                   color: "oklch(0.65 0.20 25)",  timestamp: "47s" },
+  { icon: <Database         className="w-3 h-3" />, agent: "Analysis Dock",     action: "retrosynthesis summaries copied into dashboard public artifacts",            color: "oklch(0.76 0.17 192)", timestamp: "1m"  },
+  { icon: <Layers           className="w-3 h-3" />, agent: "WorldModel",        action: "CASP → precursor DFT lineage projected as science transactions",            color: "oklch(0.65 0.16 262)", timestamp: "2m" },
+  { icon: <BotMessageSquare className="w-3 h-3" />, agent: "Veritas-Audit",     action: "signed DFT artifacts remain parented to chem.dft.request + chem.molecule.adt", color: "oklch(0.76 0.17 192)", timestamp: "3m" },
+  { icon: <FileText         className="w-3 h-3" />, agent: "Crucible UI",       action: "retrosynthesis page exposes 5 targets, 3 solved routes, 3 B3LYP results",    color: "oklch(0.72 0.18 192)", timestamp: "4m" },
 ]
 
 /**

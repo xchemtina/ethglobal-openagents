@@ -1,5 +1,5 @@
 /**
- * Load + parse the six signed `chem.dft.result` artifacts from
+ * Load + parse the signed `chem.dft.result` artifacts from
  * `public/artifacts/` and surface them as typed records the dashboard
  * can render.
  *
@@ -191,11 +191,14 @@ function readArtifact(filename: string): SignedArtifact {
 /** Friendly molecule display name, derived from molecule_id. */
 function displayName(moleculeId: string): string {
   if (moleculeId.startsWith("MOLADT.RDKIT.")) {
-    // RDKit-resolved: InChIKey-derived id. Hand-map the three known.
+    // RDKit-resolved: InChIKey-derived id. Hand-map the known demo molecules.
     const inchi = moleculeId.replace("MOLADT.RDKIT.", "").split("_")[0]
     if (inchi.startsWith("DNIAPMSPPWPWGF")) return "propylene glycol"
     if (inchi.startsWith("WWZKQHOCKIZLMA")) return "caprylic acid (C8)"
     if (inchi.startsWith("GHVNFZFCNZKVNT")) return "capric acid (C10)"
+    if (inchi.startsWith("PCLIMKBDDGJMGD")) return "N-bromosuccinimide"
+    if (inchi.startsWith("IZDROVVXIHRYMH")) return "methanesulfonic anhydride"
+    if (inchi.startsWith("LWLUFJGAGLMMIR")) return "acetylated diol precursor"
     return inchi
   }
   // Curated library: MOLADT.<NAME>.001

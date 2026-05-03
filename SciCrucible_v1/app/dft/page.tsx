@@ -65,12 +65,12 @@ export default function DftIndexPage() {
             Density-Functional Theory results
           </h1>
           <p className="max-w-[640px] text-[13px] leading-[1.6]" style={{ color: "oklch(0.62 0.006 60)" }}>
-            PBE / def2-tzvp closed-shell SCF calculations on six small molecules,
-            executed against PySCF on the lab worker, signed by{" "}
-            <span className="font-mono">chimiaclaw-cli</span>, and parented to a{" "}
-            <span className="font-mono">chem.molecule.adt</span> canonical
-            geometry. Each result carries inline orbital-density cubes (HOMO,
-            LUMO, total density) hashed alongside the SCF payload.
+            Signed PySCF calculations from the lab worker: the original PBE /
+            def2-tzvp molecule set with orbital-density cubes, plus B3LYP /
+            def2-svp precursor follow-up from the AiZynthFinder route-search run.
+            Each result is signed by <span className="font-mono">chimiaclaw-cli</span>{" "}
+            and parented to a <span className="font-mono">chem.molecule.adt</span>{" "}
+            canonical geometry.
           </p>
         </section>
 

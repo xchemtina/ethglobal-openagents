@@ -2,6 +2,26 @@
 
 This is the near-term build order after the current scaffold.
 
+## 0. Current checkpoint from the 2026-05-03 evidence merge
+
+The demo is no longer just a scaffold plus mocked sponsor hooks. The current winning path is:
+
+1. Real AiZynthFinder CASP on Olympus searched five targets and produced solved/unsolved route evidence.
+2. Real B3LYP/def2-svp PySCF DFT on Olympus produced three signed precursor result artifacts.
+3. A MolADT silicon blocker explicitly records why the TBS alcohol precursor did not proceed to DFT.
+4. Live ENS Sepolia publication/resolution/verification proves `chimiaclaw.eth` and five `chimiaclaw.*` text records.
+5. Live 0G Galileo Turbo upload anchors a ferrocene MolADT XYZ payload and records the root hash in a signed `storage.zerog.upload` artifact.
+6. `demo/world-model.json` and `demo/world-map.html` project all of the above as one lab-swarm / science-market / artifact-DAG story.
+
+Validation state:
+
+- ✅ `python3 -m json.tool demo/world-model.json`
+- ✅ `cargo --offline check -p chimiaclaw-cli`
+- ✅ `cargo --offline run -p chimiaclaw-cli -- world-model verify --world-model demo/world-model.json --artifact-dir demo` verified 35 signed references with 0 failures.
+- ✅ The static dashboard bundle was copied to `duck@olympus.local:/Users/duck/ChimiaDAO/OpenAgents/demo/` and byte-identical hashes matched for world-map/model plus ENS/0G artifacts.
+
+Do not overclaim: ENS and 0G are live sponsor proofs; settlement, wetlab execution, and DAO governance execution are still artifact-ledger simulations or human-gated futures.
+
 ## 1. Harden the signed artifact demos
 
 - Keep `demo-dag` stable as the procurement lineage proof, with payload-bound artifacts.
@@ -63,9 +83,10 @@ This is the near-term build order after the current scaffold.
 - ✅ Live ENS write-side: uv worker `identity-ens` (web3.py + `ens.set_text`, idempotent, refuses mainnet + non-owner accounts, never accepts the key on argv) + `EnsPublisherCommandConfig` Rust adapter + `live ens-publish` CLI that chains publication → resolution → verification into three signed artifacts; operator runbook at `demo/ens-roundtrip.sh`.
 - ✅ 0G stub mode: uv worker `storage-0g` shells out to `${ZEROG_BINARY:-0g-storage-client}` for real uploads, or with `ZEROG_STUB=1` hashes the file with Blake2b-32 to produce a deterministic, explicitly-labelled stub receipt; end-to-end stub run produced signed `storage.zerog.upload` artifact `art_62a1177fa495209f` parented to a real ferrocene MolADT (saved at `demo/zerog/anchor-stub.json`); operator runbook at `demo/zerog-roundtrip.sh`.
 - ✅ KeeperHub workflow runbook: reference manual-trigger workflow at `demo/keeperhub/workflow.json` plus operator README chaining DFT request → KeeperHub schedule → 0G anchor through the existing `chimiaclaw-exec-keeperhub` Rust REST client (no new Python worker required).
-- 🟡 Replace ENS-shaped fixtures with live ENS text-record resolution end-to-end on a real testnet name (publisher + resolver are in place; awaits an operator-supplied testnet ENS name and funded controller key).
+- ✅ Replace ENS-shaped fixtures with a live ENS Sepolia round-trip for `chimiaclaw.eth`: publication artifact `art_bcf73364c39fb152`, resolution artifact `art_bc5f74fa853df294`, verification artifact `art_1eb873d15595ba6e`, chain id `11155111`, and five `chimiaclaw.*` text records.
+- ✅ Store a representative scientific payload through live 0G Galileo Turbo: `storage.zerog.upload` artifact `art_06b4ba819c6222bc` anchors ferrocene MolADT source artifact `art_c6fb4314b4dc7ac7` to root `0x064c41c425f74b52218f8d9eaf8cc04388d93721262746185f52c23eac13e7c7`.
 - 🟡 Send at least one service request/result across two real AXL nodes.
-- 🟡 Store a large request/result payload and service catalog root through 0G Storage.
+- 🟡 Store a large request/result payload, a cube bundle, and a service catalog root through 0G Storage.
 - 🟡 Replace settlement route hints with a real Uniswap API quote and live payment adapter, still requiring explicit operator confirmation before any transaction or fund movement.
 - 🟡 Schedule one DFT or literature job through KeeperHub CLI/MCP.
 
@@ -145,8 +166,11 @@ Target story:
 
 1. ChimiaClaw imports or creates chemistry.
 2. Agents transform it into signed artifacts.
-3. ENS-shaped service agents quote DFT, retrosynthesis, and literature work as signed transactions with visible acceptance, escrow, acknowledgement, release, and refund boundaries.
-4. Procurement/safety/DFT swarms consume the artifacts.
-5. The DAO can inspect provenance and authorize next actions.
+3. External CASP and real DFT workers add live scientific evidence without breaking the artifact DAG.
+4. ENS Sepolia proves the service identity and capability pointers.
+5. 0G Galileo proves at least one public scientific payload has a live storage anchor.
+6. ENS-shaped service agents quote DFT, retrosynthesis, identity, storage, and literature work as signed transactions with visible acceptance, escrow, acknowledgement, release, and refund boundaries.
+7. Procurement/safety/DFT swarms consume the artifacts.
+8. The DAO can inspect provenance and authorize next actions.
 
 Keep the demo deterministic. A reliable artifact DAG beats a flaky live model call.
