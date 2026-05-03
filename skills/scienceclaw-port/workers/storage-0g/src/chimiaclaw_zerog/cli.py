@@ -135,7 +135,9 @@ def _extract_hashes(stdout_text: str) -> tuple[List[str], List[str]]:
             roots.extend(candidates)
         elif lower.strip().startswith("root") or lower.strip().startswith("merkle"):
             roots.extend(candidates)
-        elif "tx" in lower or "transaction" in lower:
+        elif "root" in lower and ("=" in lower or "uploaded" in lower or "calculated" in lower):
+            roots.extend(candidates)
+        elif "tx" in lower or "transaction" in lower or "sequence" in lower:
             txs.extend(candidates)
     return roots, txs
 
@@ -174,6 +176,9 @@ def _real_upload(request: UploadRequest, private_key: str) -> dict:
         sys.stderr.write(error.stderr or str(error))
         raise SystemExit(2) from error
     roots, txs = _extract_hashes(proc.stdout + "\n" + (proc.stderr or ""))
+    # Deduplicate while preserving order.
+    roots = list(dict.fromkeys(roots))
+    txs = list(dict.fromkeys(txs))
     if not roots:
         sys.stderr.write(
             "could not extract a root hash from 0g-storage-client output; "
