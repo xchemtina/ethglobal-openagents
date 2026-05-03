@@ -1,0 +1,4 @@
+agent_id = "planner.retroquoter.eth"
+transport = "mock-axl"
+storage = "local"
+skills = ["chem.retrosynth.aizynth.v1"]

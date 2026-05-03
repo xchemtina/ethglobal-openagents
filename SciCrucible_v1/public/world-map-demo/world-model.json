@@ -1,0 +1,1297 @@
+{
+  "schema_version": "chimiaclaw.world-model.v1",
+  "fixture_id": "WM.CHIMIACLAW.THREE_AGENT_PIPELINE.001",
+  "generated_at": "2026-05-03T05:28:00Z",
+  "maturity": "three-agent-pipeline-snapshot",
+  "title": "ChimiaClaw Three-Agent Pipeline",
+  "subtitle": "A focused dashboard for the current submission: Literature extracts cited reaction candidates, Retrosynthesis turns curated molecules into signed route proposals, and DFT runs real PySCF calculations with signed result artifacts, HOMO/LUMO cube evidence, and an overnight five-molecule germanium scalar test. ENS and 0G are shown only where evidence exists or as the next operator-gated publication step.",
+  "design_language": {
+    "mode": "dark-terminal-hud",
+    "source_reference": "Three agent lanes over the signed artifact DAG: literature extraction, retrosynthesis, and DFT.",
+    "tone": "evidence-first and minimal; completed work is separated from next runs so the demo is easy to explain without implying unavailable infrastructure.",
+    "palette": {
+      "background": "oklch(0.07 0 0)",
+      "panel": "oklch(0.105 0 0)",
+      "border": "oklch(0.19 0 0)",
+      "primary": "oklch(0.76 0.17 192)",
+      "agent": "oklch(0.70 0.18 148)",
+      "warning": "oklch(0.72 0.16 78)",
+      "danger": "oklch(0.65 0.20 25)",
+      "muted": "oklch(0.46 0.006 60)"
+    }
+  },
+  "current_truth": [
+    "The canonical state remains the signed artifact DAG; this dashboard is a static projection of that state.",
+    "The dashboard now centers only three agent lanes: Literature, Retrosynthesis, and DFT.",
+    "The Literature lane is the upstream extraction bridge: Semantic Scholar/API-backed paper search should extract candidate chemical reaction equations with citations and confidence, then sign science.literature.synthesis artifacts. The available backends are operator-owned and local-network reachable, but the public dashboard does not expose host details.",
+    "The Retrosynthesis lane already has the Rust retroquoter skill and signed route/quote artifact shape; it should consume curated molecules/reactions from Literature rather than attempting to parse papers itself.",
+    "The DFT lane has real PySCF execution evidence: six PBE/def2-tzvp cube-backed molecule results, three B3LYP/def2-svp precursor results, and five overnight PBE/def2-svp germanium single-point results, all signed as chem.dft.result artifacts; HOMO/LUMO/total-density cube hashes exist only where cube generation was requested.",
+    "DFT should run only for curated molecules or retrosynthesis precursors that do not already have a result artifact; this avoids overloading the demo with duplicate calculations.",
+    "The overnight germanium test covers germane, methylgermane, cyclopropylgermane, adamantylgermane, and germatrane as scalar DFT evidence: total energy, HOMO/LUMO gap, dipole, convergence, timing, and signed request/result lineage. It does not add orbital gallery tabs because no orbital_densities[] or cube files were emitted.",
+    "ENS Sepolia is live for the root chimiaclaw.eth identity: five text records were published, resolved, and verified with zero mismatches. Per-agent service subnames/capability records are still a publication step unless separately run.",
+    "0G testnet storage evidence exists for one ferrocene MolADT source artifact. Per-literature, route, and cube uploads are the next operator-gated 0G step, not a completed claim.",
+    "Broader sponsor and architecture narratives are intentionally outside the visible dashboard story so the final video stays focused on the three agent handoffs.",
+    "The central WebGPU orbital gallery renders six sampled HOMO/LUMO point clouds plus inferred bond skeletons from signed cube fields; the signed chem.dft.result artifacts and SHA-256 cube commitments remain the evidence source of truth, and the dashboard does not use WebGL for this panel."
+  ],
+  "layers": [
+    {
+      "id": "pipeline",
+      "label": "Three-Agent Pipeline",
+      "stamp": "01 / 05 \u2014 PIPELINE",
+      "description": "Literature \u2192 Retrosynthesis \u2192 DFT artifact handoffs."
+    },
+    {
+      "id": "runs",
+      "label": "Agent Runs",
+      "stamp": "02 / 05 \u2014 RUNS",
+      "description": "Current and next agent executions represented as signed artifact flows."
+    },
+    {
+      "id": "artifacts",
+      "label": "Evidence Artifacts",
+      "stamp": "03 / 05 \u2014 ARTIFACTS",
+      "description": "Only signed or explicitly next-run artifacts needed to explain the submission."
+    },
+    {
+      "id": "identity-storage",
+      "label": "ENS + 0G",
+      "stamp": "04 / 05 \u2014 PUBLIC DISCOVERY",
+      "description": "Live root identity and current storage anchor, with future per-agent publication clearly marked."
+    },
+    {
+      "id": "agents",
+      "label": "Agent Capabilities",
+      "stamp": "05 / 05 \u2014 AGENTS",
+      "description": "The three agent lanes and their input/output schema tags."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "literature-extraction",
+      "label": "Literature Extraction",
+      "short_label": "Literature",
+      "color": "oklch(0.65 0.16 262)"
+    },
+    {
+      "id": "retrosynthesis",
+      "label": "Retrosynthesis",
+      "short_label": "Retro",
+      "color": "oklch(0.72 0.16 78)"
+    },
+    {
+      "id": "dft-compute",
+      "label": "DFT Compute",
+      "short_label": "DFT",
+      "color": "oklch(0.70 0.18 148)"
+    },
+    {
+      "id": "public-discovery",
+      "label": "ENS / 0G Publication",
+      "short_label": "Publish",
+      "color": "oklch(0.76 0.17 192)"
+    }
+  ],
+  "trust_tiers": [
+    {
+      "id": "operator-gated",
+      "label": "Operator Gated",
+      "description": "The lane exists but each external/API/storage publication run requires explicit operator approval."
+    },
+    {
+      "id": "implemented-local",
+      "label": "Implemented Local",
+      "description": "The Rust skill or local artifact flow exists and can produce signed artifacts."
+    },
+    {
+      "id": "real-compute",
+      "label": "Real Compute",
+      "description": "The lane has signed results produced by real PySCF/AiZynth execution rather than only fixtures."
+    }
+  ],
+  "labs": [
+    {
+      "id": "AGENT.LITERATURE",
+      "label": "Agent 1 \u2014 Literature",
+      "short_label": "Literature",
+      "kind": "semantic-scholar-reaction-extractor",
+      "node_reality": {
+        "kind": "real",
+        "label": "agent lane in current design"
+      },
+      "status": "operator-gated-next",
+      "trust_tier": "operator-gated",
+      "custody": "papers-to-cited-reaction-candidates",
+      "location": {
+        "display": "operator-owned literature backend",
+        "precision": "host-redacted",
+        "x": 18,
+        "y": 42
+      },
+      "sectors": [
+        "literature-extraction",
+        "public-discovery"
+      ],
+      "capabilities": [
+        "semantic-scholar-search",
+        "reaction-equation-extraction",
+        "citation-bound-synthesis",
+        "science.literature.synthesis"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "operator curates extracted equations before retro/DFT handoff",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.LITERATURE"
+      ],
+      "telemetry": {
+        "last_heartbeat": "next-run",
+        "artifact_backlog": 1,
+        "capacity_fill": 0.35,
+        "trust_score": 0.72
+      }
+    },
+    {
+      "id": "AGENT.RETROSYNTHESIS",
+      "label": "Agent 2 \u2014 Retrosynthesis",
+      "short_label": "Retro",
+      "kind": "retroquoter-and-route-planner",
+      "node_reality": {
+        "kind": "real",
+        "label": "implemented Rust skill lane"
+      },
+      "status": "implemented-local-skill",
+      "trust_tier": "implemented-local",
+      "custody": "curated-molecules-to-route-proposals",
+      "location": {
+        "display": "local artifact runtime",
+        "precision": "repo-local",
+        "x": 50,
+        "y": 42
+      },
+      "sectors": [
+        "retrosynthesis",
+        "public-discovery"
+      ],
+      "capabilities": [
+        "curated-library-intake",
+        "retroquoter",
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "operator reviews route proposal before wetlab or DFT expansion",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.RETROSYNTHESIS"
+      ],
+      "telemetry": {
+        "last_heartbeat": "implemented",
+        "artifact_backlog": 2,
+        "capacity_fill": 0.54,
+        "trust_score": 0.86
+      }
+    },
+    {
+      "id": "AGENT.DFT",
+      "label": "Agent 3 \u2014 DFT",
+      "short_label": "DFT",
+      "kind": "pyscf-dft-worker",
+      "node_reality": {
+        "kind": "real",
+        "label": "real PySCF execution evidence"
+      },
+      "status": "real-execution",
+      "trust_tier": "real-compute",
+      "custody": "curated-molecules-to-signed-dft-results",
+      "location": {
+        "display": "PySCF worker / local artifact store",
+        "precision": "compute-node-alias",
+        "x": 82,
+        "y": 42
+      },
+      "sectors": [
+        "dft-compute",
+        "public-discovery"
+      ],
+      "capabilities": [
+        "chem.dft.request",
+        "chem.dft.result",
+        "HOMO/LUMO cubes",
+        "WebGPU orbital gallery",
+        "0G-cube-upload-next",
+        "overnight-germanium-scalar-dft"
+      ],
+      "human_overseer": {
+        "required": true,
+        "label": "operator approves new molecule batch and 0G cube publication",
+        "orcid": null
+      },
+      "swarm_agents": [
+        "AGENT.DFT"
+      ],
+      "telemetry": {
+        "last_heartbeat": "overnight-germanium-test-complete",
+        "artifact_backlog": 0,
+        "capacity_fill": 0.64,
+        "trust_score": 0.94
+      }
+    }
+  ],
+  "lab_interactions": [
+    {
+      "id": "FLOW.LIT.RETRO.001",
+      "status": "operator-gated-next",
+      "channels": [
+        "data",
+        "concept"
+      ],
+      "source_lab": "AGENT.LITERATURE",
+      "target_lab": "AGENT.RETROSYNTHESIS",
+      "interaction_kind": "reaction-candidate-handoff",
+      "evidence_level": "next-signed-run",
+      "summary": "Literature extracts reaction equations and cited molecule candidates, then hands curated targets to Retro as signed science.literature.synthesis parents.",
+      "data_payloads": [
+        "science.literature.synthesis",
+        "reaction_equation",
+        "paper_citation",
+        "candidate_smiles"
+      ],
+      "conceptual_payloads": [
+        "citation confidence",
+        "operator curation",
+        "do-not-parse-papers-inside-retro"
+      ],
+      "mssp_role": "upstream evidence filter",
+      "world_avatar_projection": [
+        "paper -> reaction candidate",
+        "reaction candidate -> route request"
+      ]
+    },
+    {
+      "id": "FLOW.RETRO.DFT.001",
+      "status": "active",
+      "channels": [
+        "data",
+        "concept"
+      ],
+      "source_lab": "AGENT.RETROSYNTHESIS",
+      "target_lab": "AGENT.DFT",
+      "interaction_kind": "precursor-and-target-handoff",
+      "evidence_level": "implemented-plus-real-compute",
+      "summary": "Retro produces route proposals and solved-route precursors; DFT receives only curated molecules that lack existing result artifacts.",
+      "data_payloads": [
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote",
+        "chem.molecule.adt",
+        "chem.dft.request"
+      ],
+      "conceptual_payloads": [
+        "route feasibility",
+        "known result cache",
+        "unsupported element blocker"
+      ],
+      "mssp_role": "route-to-compute expansion",
+      "world_avatar_projection": [
+        "route proposal -> precursor",
+        "precursor -> DFT calculation"
+      ]
+    },
+    {
+      "id": "FLOW.DFT.LIT.001",
+      "status": "active",
+      "channels": [
+        "data"
+      ],
+      "source_lab": "AGENT.DFT",
+      "target_lab": "AGENT.LITERATURE",
+      "interaction_kind": "computed-evidence-feedback",
+      "evidence_level": "signed-results-exist",
+      "summary": "DFT result artifacts and cube hashes can be cited back into Literature syntheses so extracted reactions carry computed-evidence context.",
+      "data_payloads": [
+        "chem.dft.result",
+        "orbital_densities.sha256",
+        "method/basis/provenance"
+      ],
+      "conceptual_payloads": [
+        "computed evidence enrichment"
+      ],
+      "mssp_role": "evidence closes the loop",
+      "world_avatar_projection": [
+        "DFT result -> literature synthesis note"
+      ]
+    }
+  ],
+  "trust_edges": [
+    {
+      "source": "AGENT.LITERATURE",
+      "target": "AGENT.RETROSYNTHESIS",
+      "status": "review",
+      "allowed_flows": [
+        "science.literature.synthesis",
+        "reaction_equation",
+        "candidate_smiles"
+      ]
+    },
+    {
+      "source": "AGENT.RETROSYNTHESIS",
+      "target": "AGENT.DFT",
+      "status": "active",
+      "allowed_flows": [
+        "chem.retrosynth.route_proposal",
+        "chem.molecule.adt",
+        "chem.dft.request",
+        "lineage"
+      ]
+    },
+    {
+      "source": "AGENT.DFT",
+      "target": "AGENT.LITERATURE",
+      "status": "active",
+      "allowed_flows": [
+        "chem.dft.result",
+        "orbital_density_hash",
+        "computed-evidence-return"
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "id": "AGENT.LITERATURE",
+      "name": "Literature Extractor",
+      "type": "Semantic Scholar/API-backed reaction-equation extraction",
+      "status": "operator-gated-next",
+      "backing_skill": "remote literature extraction backend; sign output as science.literature.synthesis",
+      "consumes_tags": [
+        "paper.search.query",
+        "paper.metadata",
+        "fulltext/open-access-snippet"
+      ],
+      "produces_tags": [
+        "science.literature.synthesis",
+        "reaction_equation",
+        "candidate_smiles"
+      ],
+      "human_gate": "operator curates candidates before downstream handoff"
+    },
+    {
+      "id": "AGENT.RETROSYNTHESIS",
+      "name": "RetroQuoter",
+      "type": "curated-library retrosynthesis and quote skill",
+      "status": "implemented-local-skill",
+      "backing_skill": "apps/retroquoter + chimiaclaw-node route skill",
+      "consumes_tags": [
+        "science.literature.synthesis",
+        "candidate_smiles",
+        "curated_library_molecule"
+      ],
+      "produces_tags": [
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote"
+      ],
+      "human_gate": "operator reviews route before wetlab/custody claims"
+    },
+    {
+      "id": "AGENT.DFT",
+      "name": "PySCF DFT Worker",
+      "type": "real quantum-chemistry compute over curated molecules and route precursors",
+      "status": "real-execution",
+      "backing_skill": "live dft-execute adapter + PySCF worker; includes cube-backed gallery batch plus scalar overnight germanium batch",
+      "consumes_tags": [
+        "chem.molecule.adt",
+        "chem.dft.request",
+        "chem.retrosynth.route_proposal"
+      ],
+      "produces_tags": [
+        "chem.dft.result",
+        "orbital_density_cube",
+        "HOMO/LUMO/total-density hashes",
+        "scalar_energy_gap_dipole_metrics"
+      ],
+      "human_gate": "operator approves new batch and storage publication"
+    }
+  ],
+  "quests": [
+    {
+      "id": "QUEST.001.LITERATURE_REACTIONS",
+      "label": "Extract cited reaction equations",
+      "status": "operator-gated-next",
+      "operator_gate": "Run the selected literature backend, review extractions, and sign science.literature.synthesis artifacts.",
+      "artifact_flow": [
+        "paper.search.query",
+        "paper.candidate",
+        "science.literature.synthesis",
+        "0G upload next",
+        "ENS capability next"
+      ]
+    },
+    {
+      "id": "QUEST.002.RETRO_FROM_CURATED",
+      "label": "Generate route proposals from curated molecules",
+      "status": "implemented-local-skill",
+      "operator_gate": "Run RetroQuoter on curated molecules/reactions, then sign route and quote artifacts.",
+      "artifact_flow": [
+        "science.literature.synthesis",
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote"
+      ]
+    },
+    {
+      "id": "QUEST.003.DFT_MISSING_RESULTS",
+      "label": "Compute missing DFT results",
+      "status": "real-execution",
+      "operator_gate": "Run PySCF only for molecules/precursors without existing signed results; request cubes only when orbital visualization/storage evidence is needed.",
+      "artifact_flow": [
+        "chem.molecule.adt",
+        "chem.dft.request",
+        "chem.dft.result",
+        "orbital_density_cube",
+        "scalar_energy_gap_dipole_metrics"
+      ]
+    }
+  ],
+  "artifact_cards": [
+    {
+      "id": "ART.LIT.REACTION.EXTRACTION.NEXT",
+      "label": "Literature reaction-equation synthesis",
+      "schema_tag": "science.literature.synthesis",
+      "lineage": [],
+      "status": "operator-gated-next"
+    },
+    {
+      "id": "ART.RETRO.ROUTE.PROPOSAL",
+      "label": "RetroQuoter route proposal shape",
+      "schema_tag": "chem.retrosynth.route_proposal",
+      "lineage": [
+        "science.literature.synthesis or curated_library_molecule"
+      ],
+      "status": "implemented-local-skill"
+    },
+    {
+      "id": "ART.RETRO.ROUTE.QUOTE",
+      "label": "RetroQuoter route quote child artifact",
+      "schema_tag": "chem.procurement.route_quote",
+      "lineage": [
+        "ART.RETRO.ROUTE.PROPOSAL"
+      ],
+      "status": "implemented-local-skill"
+    },
+    {
+      "id": "ART.RETRO.AIZYNTH.TARGETS_1_5",
+      "label": "AiZynthFinder targets 1-5 route search",
+      "schema_tag": "chem.retrosynth.aizynthfinder.route_search.summary",
+      "lineage": [],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.DFT.PBE.CURATED_BATCH",
+      "label": "Six curated PBE/def2-tzvp DFT results",
+      "schema_tag": "chem.dft.result",
+      "lineage": [
+        "chem.molecule.adt",
+        "chem.dft.request"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.DFT.B3LYP.PRECURSOR_BATCH",
+      "label": "Three B3LYP precursor DFT results",
+      "schema_tag": "chem.dft.b3lyp_precursor_batch.summary",
+      "lineage": [
+        "ART.RETRO.AIZYNTH.TARGETS_1_5"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.DFT.PBE.GERMANIUM_OVERNIGHT_BATCH",
+      "label": "Five overnight germanium PBE/def2-svp DFT results",
+      "schema_tag": "chem.dft.result",
+      "lineage": [
+        "art_72799a3871d01929",
+        "art_691b9179ea649f38",
+        "art_69972a470fe7966c",
+        "art_bb3490ecb173f082",
+        "art_d1a3d12e5978be50"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.DFT.B3LYP.NBS",
+      "label": "B3LYP N-bromosuccinimide result",
+      "schema_tag": "chem.dft.result",
+      "lineage": [
+        "ART.DFT.B3LYP.PRECURSOR_BATCH"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.DFT.CUBES",
+      "label": "HOMO/LUMO/total-density cube files",
+      "schema_tag": "orbital_density_cube",
+      "lineage": [
+        "ART.DFT.PBE.CURATED_BATCH"
+      ],
+      "status": "real-execution"
+    },
+    {
+      "id": "ART.ENS.SEPOLIA.ROOT",
+      "label": "ENS Sepolia root identity verification",
+      "schema_tag": "identity.ens.verification",
+      "lineage": [
+        "identity.ens.publication",
+        "identity.ens.resolution"
+      ],
+      "status": "live-sepolia-verified"
+    },
+    {
+      "id": "ART.0G.FERROCENE.ANCHOR",
+      "label": "0G testnet ferrocene MolADT anchor",
+      "schema_tag": "storage.zerog.upload",
+      "lineage": [
+        "chem.molecule.adt:art_c6fb4314b4dc7ac7"
+      ],
+      "status": "testnet-anchor"
+    },
+    {
+      "id": "ART.0G.AGENT_OUTPUTS.NEXT",
+      "label": "0G uploads for literature, route, and cube outputs",
+      "schema_tag": "storage.zerog.upload",
+      "lineage": [
+        "science.literature.synthesis",
+        "chem.retrosynth.route_proposal",
+        "chem.dft.result"
+      ],
+      "status": "operator-gated-next"
+    },
+    {
+      "id": "ART.DFT.ORBITAL3D.GALLERY",
+      "label": "Six-molecule WebGPU HOMO/LUMO orbital gallery",
+      "schema_tag": "chem.dft.orbital_3d_gallery.v1",
+      "lineage": [
+        "art_87a648cd3b5f6490",
+        "art_3d5c1283b1a8f79f",
+        "art_563825a02d8ea8a3",
+        "art_c1d9cf319fc537e2",
+        "art_b4002fedd3e69f20",
+        "art_5d1b8812735b2611",
+        "ART.DFT.CUBES"
+      ],
+      "status": "webgpu-gallery-rendered-from-signed-cubes"
+    }
+  ],
+  "backend_bindings": {
+    "literature_backend_scope": "operator-owned local-network extraction backend; public demo should show the artifact contract, not host credentials/details",
+    "literature_output_schema": "science.literature.synthesis with cited reaction equations, molecule candidates, confidence, and source paper metadata",
+    "retrosynthesis_skill": "apps/retroquoter + cargo run -p chimiaclaw-cli -- node run-once --skills retroquoter",
+    "dft_result_dir": "demo/dft",
+    "dft_cube_dir": "demo/dft/cubes",
+    "aizynth_summary": "demo/retrosynthesis/aizynth-targets-1-5.summary.json",
+    "ens_artifacts": "demo/ens-out/*.json",
+    "zerog_anchor": "demo/zerog-out/anchor.json",
+    "verify_command": "cargo run -p chimiaclaw-cli -- world-model verify --world-model demo/world-model.json --artifact-dir demo",
+    "overnight_dft_dir": "demo/overnight-science-out/dft"
+  },
+  "activity_ticker": [
+    {
+      "timestamp": "00s",
+      "agent": "Literature",
+      "action": "search papers -> extract cited reaction equations -> sign science.literature.synthesis (next run)",
+      "color": "oklch(0.65 0.16 262)"
+    },
+    {
+      "timestamp": "06s",
+      "agent": "RetroQuoter",
+      "action": "consume curated molecules -> sign route proposal and quote artifacts",
+      "color": "oklch(0.72 0.16 78)"
+    },
+    {
+      "timestamp": "12s",
+      "agent": "DFT",
+      "action": "run PySCF for molecules without result artifacts -> sign chem.dft.result with cube hashes",
+      "color": "oklch(0.70 0.18 148)"
+    },
+    {
+      "timestamp": "18s",
+      "agent": "ENS",
+      "action": "root chimiaclaw.eth text records live on Sepolia; per-agent capability records are next publication",
+      "color": "oklch(0.76 0.17 192)"
+    },
+    {
+      "timestamp": "24s",
+      "agent": "0G",
+      "action": "one testnet anchor exists; literature/route/cube uploads are the next operator-gated batch",
+      "color": "oklch(0.70 0.18 148)"
+    }
+  ],
+  "abstraction_principles": [
+    {
+      "id": "PRINCIPLE.ARTIFACT_DAG_FIRST",
+      "label": "Artifact DAG first",
+      "description": "Every agent handoff is useful only when signed and parented to its evidence."
+    },
+    {
+      "id": "PRINCIPLE.CITATIONS_BEFORE_EXTRACTION",
+      "label": "Citations before extraction",
+      "description": "Literature output must preserve paper/source context and confidence for every reaction candidate."
+    },
+    {
+      "id": "PRINCIPLE.CURATE_BEFORE_RETRO_DFT",
+      "label": "Curate before Retro/DFT",
+      "description": "The downstream agents consume reviewed candidates, not raw untrusted extraction text."
+    },
+    {
+      "id": "PRINCIPLE.NO_DUPLICATE_DFT",
+      "label": "No duplicate DFT",
+      "description": "Run compute only for molecules or precursors that do not already have signed results."
+    }
+  ],
+  "mssp_projection": {
+    "status": "not-in-current-dashboard-story",
+    "canonical_boundary": "Removed from the focused demo narrative.",
+    "skill_families": [],
+    "description": "Not shown in this three-agent capture.",
+    "demo_generations": [],
+    "future_bindings": []
+  },
+  "world_avatar_projection": {
+    "status": "not-in-current-dashboard-story",
+    "canonical_boundary": "Removed from the focused demo narrative.",
+    "namespaces": [],
+    "current_triples": [],
+    "future_bindings": []
+  },
+  "science_transactions": [
+    {
+      "id": "TX.LIT.REACTION_EXTRACTION.001",
+      "status": "operator-gated-next",
+      "service_kind": "literature",
+      "provider_ens": "literature.service.chimiaclaw.eth",
+      "provider_agent": "AGENT.LITERATURE",
+      "requester_agent": "operator.chimiaclaw.eth",
+      "target_lab": "AGENT.LITERATURE",
+      "offer_id": "OFFER.LIT.REACTION_EXTRACTION.001",
+      "request_id": "REQ.LIT.REACTION_EXTRACTION.001",
+      "quote_id": "QUOTE.LIT.REACTION_EXTRACTION.001",
+      "settlement_id": "SETTLE.LIT.REACTION_EXTRACTION.001",
+      "result_id": "science.literature.synthesis:pending-reaction-equations",
+      "price_usdc_micros": 0,
+      "estimated_latency_seconds": 180,
+      "summary": "Search synthesis papers, extract reaction equations with citations/confidence, and sign the curated output as science.literature.synthesis before Retro sees it.",
+      "summary_chem": "Output target: reaction_equation + candidate_smiles + citation + extraction_confidence.",
+      "artifact_flow": [
+        "paper.search.query",
+        "paper.candidate",
+        "reaction_equation",
+        "science.literature.synthesis",
+        "0G upload next",
+        "ENS capability next"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "live_status": "live-sepolia-root",
+          "attachment": "root identity exists; literature service record/subname publication is next"
+        },
+        {
+          "sponsor": "0G",
+          "live_status": "operator-gated-next",
+          "attachment": "upload signed synthesis artifacts after extraction run"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "literature.service.chimiaclaw.eth",
+      "asset": "artifact-ledger",
+      "settlement_method": "operator-confirmed artifact release",
+      "acceptance_id": "ACCEPT.LIT.REACTION_EXTRACTION.001",
+      "escrow_id": "ESCROW.LIT.REACTION_EXTRACTION.001",
+      "acknowledgement_id": "ACK.LIT.REACTION_EXTRACTION.001",
+      "release_id": "RELEASE.LIT.REACTION_EXTRACTION.001",
+      "release_status": "operator-gated-next",
+      "transaction_ref": "literature-extraction-next-run",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth"
+      }
+    },
+    {
+      "id": "TX.RETRO.ROUTE_PROPOSAL.001",
+      "status": "implemented-local-skill",
+      "service_kind": "retrosynthesis",
+      "provider_ens": "retro.service.chimiaclaw.eth",
+      "provider_agent": "AGENT.RETROSYNTHESIS",
+      "requester_agent": "AGENT.LITERATURE",
+      "target_lab": "AGENT.RETROSYNTHESIS",
+      "offer_id": "OFFER.RETRO.CURATED.001",
+      "request_id": "REQ.RETRO.CURATED.001",
+      "quote_id": "QUOTE.RETRO.CURATED.001",
+      "settlement_id": "SETTLE.RETRO.CURATED.001",
+      "result_id": "chem.retrosynth.route_proposal:retroquoter-demo",
+      "price_usdc_micros": 0,
+      "estimated_latency_seconds": 45,
+      "summary": "Take curated molecules from the literature/canonical library, run the existing RetroQuoter lane, and sign route proposal plus quote artifacts.",
+      "summary_chem": "Current evidence: deterministic route proposal/quote artifact shape plus AiZynth route-search summaries for targets 1-5.",
+      "artifact_flow": [
+        "science.literature.synthesis",
+        "curated_library_molecule",
+        "chem.retrosynth.route_proposal",
+        "chem.procurement.route_quote",
+        "0G upload next",
+        "ENS capability next"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "live_status": "live-sepolia-root",
+          "attachment": "root identity exists; retro service record/subname publication is next"
+        },
+        {
+          "sponsor": "0G",
+          "live_status": "operator-gated-next",
+          "attachment": "upload signed route artifacts after run"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "retro.service.chimiaclaw.eth",
+      "asset": "artifact-ledger",
+      "settlement_method": "simulated artifact release",
+      "acceptance_id": "ACCEPT.RETRO.CURATED.001",
+      "escrow_id": "ESCROW.RETRO.CURATED.001",
+      "acknowledgement_id": "ACK.RETRO.CURATED.001",
+      "release_id": "RELEASE.RETRO.CURATED.001",
+      "release_status": "implemented-local-skill",
+      "transaction_ref": "apps/retroquoter",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth"
+      }
+    },
+    {
+      "id": "TX.DFT.MISSING_RESULTS.001",
+      "status": "real-execution",
+      "service_kind": "dft",
+      "provider_ens": "dft.service.chimiaclaw.eth",
+      "provider_agent": "AGENT.DFT",
+      "requester_agent": "AGENT.RETROSYNTHESIS",
+      "target_lab": "AGENT.DFT",
+      "offer_id": "OFFER.DFT.MISSING_RESULTS.001",
+      "request_id": "REQ.DFT.B3LYP.NBS.001",
+      "quote_id": "QUOTE.DFT.B3LYP.NBS.001",
+      "settlement_id": "SETTLE.DFT.B3LYP.NBS.001",
+      "result_id": "art_b2b2171ec8afc316",
+      "price_usdc_micros": 0,
+      "estimated_latency_seconds": 600,
+      "summary": "Run real PySCF calculations only for curated molecules or route precursors that do not already have signed result artifacts; sign chem.dft.result and commit cube hashes when orbital fields are requested.",
+      "summary_chem": "Current evidence: 14 signed DFT results total \u2014 6 cube-backed PBE/def2-tzvp gallery molecules, 3 B3LYP/def2-svp route precursors, and 5 overnight PBE/def2-svp germanium scalar results; the WebGPU gallery remains limited to the 6 molecules with signed cube pairs.",
+      "artifact_flow": [
+        "chem.molecule.adt",
+        "chem.dft.request",
+        "chem.dft.result",
+        "orbital_density_cube",
+        "WebGPU orbital gallery",
+        "0G cube upload next",
+        "ENS capability next",
+        "scalar_energy_gap_dipole_metrics"
+      ],
+      "sponsor_bindings": [
+        {
+          "sponsor": "ENS",
+          "live_status": "live-sepolia-root",
+          "attachment": "root identity exists; dft service record/subname publication is next"
+        },
+        {
+          "sponsor": "0G",
+          "live_status": "testnet-anchor",
+          "attachment": "one existing 0G anchor proves the path; cube/result batch upload remains next"
+        }
+      ],
+      "payer_agent": "operator.chimiaclaw.eth",
+      "payee_agent": "dft.service.chimiaclaw.eth",
+      "asset": "artifact-ledger",
+      "settlement_method": "simulated artifact release",
+      "acceptance_id": "ACCEPT.DFT.B3LYP.NBS.001",
+      "escrow_id": "ESCROW.DFT.B3LYP.NBS.001",
+      "acknowledgement_id": "ACK.DFT.B3LYP.NBS.001",
+      "release_id": "RELEASE.DFT.B3LYP.NBS.001",
+      "release_status": "verified-signed-result",
+      "transaction_ref": "demo/dft/b3lyp-precursors-1-5/nbs/chem_dft_result.art_b2b2171ec8afc316.json",
+      "refund_policy": {
+        "refund_to_agent": "operator.chimiaclaw.eth"
+      }
+    }
+  ],
+  "crucible_votes": [],
+  "submission_snapshot": {
+    "headline": "Three agents: literature \u2192 retrosynthesis \u2192 DFT",
+    "status": "ready-for-focused-dashboard-footage",
+    "summary": "The final dashboard now explains the minimum working network: cite papers and extract reactions, generate route proposals from curated molecules, then compute missing DFT results with signed artifacts, cube hashes where requested, and a new overnight five-molecule germanium scalar DFT test.",
+    "metrics": [
+      {
+        "label": "Agent lanes",
+        "value": "3",
+        "status": "active"
+      },
+      {
+        "label": "Literature extraction",
+        "value": "next signed run",
+        "status": "operator-gated-next"
+      },
+      {
+        "label": "RetroQuoter",
+        "value": "implemented",
+        "status": "implemented-local-skill"
+      },
+      {
+        "label": "DFT results",
+        "value": "14 signed",
+        "status": "real-execution"
+      },
+      {
+        "label": "Cube files",
+        "value": "18 cube-backed",
+        "status": "real-execution"
+      },
+      {
+        "label": "ENS root",
+        "value": "5/5 records",
+        "status": "live-sepolia-verified"
+      },
+      {
+        "label": "0G anchors",
+        "value": "1 proven path",
+        "status": "testnet-anchor"
+      },
+      {
+        "label": "Scope",
+        "value": "no extra agents",
+        "status": "focused"
+      },
+      {
+        "label": "Overnight DFT test",
+        "value": "5 scalar",
+        "status": "real-execution"
+      },
+      {
+        "label": "WebGPU orbital gallery",
+        "value": "6 molecules",
+        "status": "webgpu-gallery-rendered-from-signed-cubes"
+      }
+    ],
+    "capture_notes": [
+      "Open on the three-node pipeline map and show only Literature, Retro, and DFT.",
+      "Select Literature to explain cited reaction-equation extraction as the next signed artifact run.",
+      "Select Retro to show route proposal and quote artifacts from curated molecules.",
+      "Select DFT to show real PySCF results, cube evidence, and the central WebGPU HOMO/LUMO orbital gallery with bond skeletons, then mention 0G/ENS publication as the next batch step.",
+      "Use the molecule tabs to switch benzene, water, methanol, propylene glycol, caprylic acid, and capric acid without leaving the page.",
+      "When showing DFT, distinguish the six cube-backed orbital-gallery molecules from the five overnight germanium scalar results; the latter have signed energy/gap/dipole artifacts but no cube render tabs."
+    ]
+  },
+  "live_sponsor_evidence": [
+    {
+      "sponsor": "ENS",
+      "status": "live-sepolia-verified",
+      "summary": "Root chimiaclaw.eth identity is live and verified; per-agent Literature/Retro/DFT capability records are the next publication step.",
+      "network": "Sepolia chain 11155111",
+      "block_range": "10778688-10778692",
+      "records": [
+        {
+          "key": "records",
+          "value": "5/5 resolved"
+        },
+        {
+          "key": "mismatches",
+          "value": "0"
+        },
+        {
+          "key": "next",
+          "value": "publish per-agent capability text records/subnames if needed"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "publication",
+          "id": "art_bcf73364c39fb152"
+        },
+        {
+          "kind": "resolution",
+          "id": "art_bc5f74fa853df294"
+        },
+        {
+          "kind": "verification",
+          "id": "art_1eb873d15595ba6e"
+        }
+      ],
+      "caveat": "The live claim is for the root identity; service subnames/capability records should be published separately before claiming them live."
+    },
+    {
+      "sponsor": "0G Storage",
+      "status": "testnet-anchor",
+      "summary": "One real 0G testnet anchor exists; literature synthesis outputs, route artifacts, and DFT cubes are the next upload batch.",
+      "network": "0G Galileo Turbo",
+      "storage_uri": "zg://0x064c41c425f74b52218f8d9eaf8cc04388d93721262746185f52c23eac13e7c7",
+      "records": [
+        {
+          "key": "anchored",
+          "value": "ferrocene MolADT source artifact"
+        },
+        {
+          "key": "next",
+          "value": "upload selected literature/route/cube artifacts"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "source",
+          "id": "art_c6fb4314b4dc7ac7"
+        },
+        {
+          "kind": "anchor",
+          "id": "art_06b4ba819c6222bc"
+        }
+      ],
+      "caveat": "Do not imply every DFT cube or new literature artifact has already been uploaded."
+    },
+    {
+      "sponsor": "Literature Backend",
+      "status": "operator-gated-next",
+      "summary": "The intended extraction backend is operator-owned and should emit citation-bound reaction candidates before downstream agents run.",
+      "records": [
+        {
+          "key": "input",
+          "value": "Semantic Scholar/API paper search"
+        },
+        {
+          "key": "output",
+          "value": "science.literature.synthesis"
+        },
+        {
+          "key": "handoff",
+          "value": "curated reactions -> Retro -> DFT"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "next",
+          "id": "science.literature.synthesis"
+        }
+      ],
+      "caveat": "Public dashboard intentionally omits private host details and credentials."
+    },
+    {
+      "sponsor": "DFT Evidence",
+      "status": "real-execution",
+      "summary": "Real PySCF results exist now: six signed cube pairs feed the central WebGPU orbital gallery, and five new overnight germanium results add scalar DFT evidence.",
+      "records": [
+        {
+          "key": "signed results",
+          "value": "14"
+        },
+        {
+          "key": "cube files",
+          "value": "18 (unchanged; overnight scalar run emitted no cubes)"
+        },
+        {
+          "key": "verified ref",
+          "value": "art_b2b2171ec8afc316"
+        },
+        {
+          "key": "WebGPU gallery",
+          "value": "6 HOMO/LUMO renders + bond skeletons"
+        },
+        {
+          "key": "gallery asset",
+          "value": "homo_lumo_gallery_3d.json"
+        },
+        {
+          "key": "overnight scalar DFT",
+          "value": "5 germanium molecules"
+        },
+        {
+          "key": "scalar method",
+          "value": "PBE/def2-svp single-point"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "dft",
+          "id": "art_b2b2171ec8afc316"
+        },
+        {
+          "kind": "orbital3d",
+          "id": "art_87a648cd3b5f6490"
+        },
+        {
+          "kind": "orbital-gallery",
+          "id": "art_87a648cd3b5f6490"
+        }
+      ],
+      "caveat": "The WebGPU gallery is cube-backed; the overnight germanium run is scalar signed evidence only because no orbital_densities[] cube files were emitted."
+    },
+    {
+      "sponsor": "Overnight DFT Test",
+      "status": "real-execution",
+      "summary": "Five germanium-containing molecules completed real PySCF PBE/def2-svp single-point DFT overnight with signed result artifacts.",
+      "records": [
+        {
+          "key": "germane",
+          "value": "gap 8.944 eV \u00b7 |\u03bc| 0.000 D \u00b7 0.4s \u00b7 art_72799a3871d01929"
+        },
+        {
+          "key": "methylgermane",
+          "value": "gap 7.942 eV \u00b7 |\u03bc| 0.713 D \u00b7 0.9s \u00b7 art_691b9179ea649f38"
+        },
+        {
+          "key": "cyclopropylgermane",
+          "value": "gap 6.954 eV \u00b7 |\u03bc| 0.793 D \u00b7 2.4s \u00b7 art_69972a470fe7966c"
+        },
+        {
+          "key": "adamantylgermane",
+          "value": "gap 6.336 eV \u00b7 |\u03bc| 0.962 D \u00b7 141.0s \u00b7 art_bb3490ecb173f082"
+        },
+        {
+          "key": "germatrane",
+          "value": "gap 5.469 eV \u00b7 |\u03bc| 1.435 D \u00b7 394.6s \u00b7 art_d1a3d12e5978be50"
+        },
+        {
+          "key": "output dir",
+          "value": "demo/overnight-science-out/dft"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "dft-result",
+          "id": "art_72799a3871d01929"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_691b9179ea649f38"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_69972a470fe7966c"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_bb3490ecb173f082"
+        },
+        {
+          "kind": "dft-result",
+          "id": "art_d1a3d12e5978be50"
+        }
+      ],
+      "caveat": "No HOMO/LUMO cube files or orbital_densities[] commitments were emitted for this overnight run, so it is displayed as scalar DFT evidence rather than WebGPU orbital-gallery evidence."
+    }
+  ],
+  "overnight_dft_test": {
+    "schema_tag": "chem.dft.scalar_batch.v1",
+    "title": "Five-molecule overnight germanium DFT scalar test",
+    "status": "real-execution-scalar-no-cubes",
+    "source_dir": "demo/overnight-science-out/dft",
+    "method": "PBE/def2-svp PySCF single-point",
+    "caveat": "No orbital_densities[] or cube files were emitted; do not render these as orbital-gallery molecules until cube-backed reruns exist.",
+    "result_artifact_ids": [
+      "art_72799a3871d01929",
+      "art_691b9179ea649f38",
+      "art_69972a470fe7966c",
+      "art_bb3490ecb173f082",
+      "art_d1a3d12e5978be50"
+    ],
+    "molecules": [
+      {
+        "label": "germane",
+        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
+        "request_artifact_id": "art_6bf4b629cd02ee39",
+        "result_artifact_id": "art_72799a3871d01929",
+        "energy_hartree": -2078.7925731898563,
+        "gap_ev": 8.943968217554175,
+        "dipole_debye": 3.043160817471758e-05,
+        "wall_seconds": 0.3610150814056397
+      },
+      {
+        "label": "methylgermane",
+        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
+        "request_artifact_id": "art_6e535561617fb79a",
+        "result_artifact_id": "art_691b9179ea649f38",
+        "energy_hartree": -2118.0287415083944,
+        "gap_ev": 7.941803510990133,
+        "dipole_debye": 0.71263378407231,
+        "wall_seconds": 0.911625862121582
+      },
+      {
+        "label": "cyclopropylgermane",
+        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
+        "request_artifact_id": "art_959a01b928c494eb",
+        "result_artifact_id": "art_69972a470fe7966c",
+        "energy_hartree": -2195.2488714303418,
+        "gap_ev": 6.954072756568466,
+        "dipole_debye": 0.7927670188472256,
+        "wall_seconds": 2.368964910507202
+      },
+      {
+        "label": "adamantylgermane",
+        "molecule_id": "MOLADT.RDKIT.LGJUDKCQMZDPSA-BIPATUIKSA-N",
+        "request_artifact_id": "art_d3c1759fad235291",
+        "result_artifact_id": "art_bb3490ecb173f082",
+        "energy_hartree": -2467.519021505497,
+        "gap_ev": 6.3359616598452115,
+        "dipole_debye": 0.96167955982808,
+        "wall_seconds": 140.96089124679563
+      },
+      {
+        "label": "germatrane",
+        "molecule_id": "MOLADT.RDKIT.VBPYPVOSTIBNCN-FOPUMGAHSA-N",
+        "request_artifact_id": "art_f5e2a5f751381bbc",
+        "result_artifact_id": "art_d1a3d12e5978be50",
+        "energy_hartree": -2810.512862260049,
+        "gap_ev": 5.469309721316997,
+        "dipole_debye": 1.4351865960993977,
+        "wall_seconds": 394.5904619693756
+      }
+    ]
+  },
+  "orbital_viewer": {
+    "schema_tag": "chem.dft.orbital_3d_gallery.v1",
+    "title": "Six-molecule WebGPU HOMO/LUMO orbital gallery",
+    "status": "webgpu-gallery-rendered-from-signed-cubes",
+    "renderer": "WebGPU instanced point sprites plus WebGPU bond skeleton quads; no WebGL fallback",
+    "asset_path": "dft/orbitals/homo_lumo_gallery_3d.json",
+    "gallery_asset_path": "dft/orbitals/homo_lumo_gallery_3d.json",
+    "legacy_single_asset_path": "dft/orbitals/benzene_homo_lumo_3d.json",
+    "default_molecule_id": "MOLADT.BENZENE.001",
+    "molecule_count": 6,
+    "molecule_labels": [
+      "benzene",
+      "water",
+      "methanol",
+      "propylene glycol",
+      "caprylic acid (C8)",
+      "capric acid (C10)"
+    ],
+    "source": "Derived from signed chem.dft.result artifacts and SHA-256-committed Gaussian cube files under demo/dft/cubes",
+    "source_artifact": "demo/dft/chem_dft_result.art_87a648cd3b5f6490.json",
+    "result_artifact_id": "art_87a648cd3b5f6490",
+    "result_artifact_ids": [
+      "art_87a648cd3b5f6490",
+      "art_3d5c1283b1a8f79f",
+      "art_563825a02d8ea8a3",
+      "art_c1d9cf319fc537e2",
+      "art_b4002fedd3e69f20",
+      "art_5d1b8812735b2611"
+    ],
+    "method": "mixed PBE/def2-tzvp gallery metadata; each molecule card carries its own method",
+    "gap_ev": 5.128756517387317,
+    "point_counts": {
+      "MOLADT.BENZENE.001": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      },
+      "MOLADT.WATER.001": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      },
+      "MOLADT.METHANOL.001": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      },
+      "MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      },
+      "MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      },
+      "MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N": {
+        "HOMO": 5200,
+        "LUMO": 5200
+      }
+    },
+    "source_cubes": [
+      {
+        "molecule_id": "MOLADT.BENZENE.001",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.BENZENE.001_HOMO_73ea4178489f6896.cube",
+        "sha256": "73ea4178489f6896b9f8aa2ff8d4e476c8a43ecd00abc61f903d08dbcc5f98ba",
+        "png": "demo/dft/cubes/png/MOLADT.BENZENE.001_HOMO_73ea4178489f6896.png"
+      },
+      {
+        "molecule_id": "MOLADT.BENZENE.001",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.BENZENE.001_LUMO_8ddce853a3284ae4.cube",
+        "sha256": "8ddce853a3284ae431aa7bd984622247059f79045250f4234195b5053b00e6ce",
+        "png": "demo/dft/cubes/png/MOLADT.BENZENE.001_LUMO_8ddce853a3284ae4.png"
+      },
+      {
+        "molecule_id": "MOLADT.WATER.001",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.WATER.001_HOMO_40b493af2a1820e8.cube",
+        "sha256": "40b493af2a1820e8f2f1f220248667a505bf12db054650c54ab617fdd6ffc596",
+        "png": "demo/dft/cubes/png/MOLADT.WATER.001_HOMO_40b493af2a1820e8.png"
+      },
+      {
+        "molecule_id": "MOLADT.WATER.001",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.WATER.001_LUMO_bc014ca870302e27.cube",
+        "sha256": "bc014ca870302e27e8648e38b5af73ce55768e2d23c01f24cb117a498ff57ccf",
+        "png": "demo/dft/cubes/png/MOLADT.WATER.001_LUMO_bc014ca870302e27.png"
+      },
+      {
+        "molecule_id": "MOLADT.METHANOL.001",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.METHANOL.001_HOMO_00ce5f8213573769.cube",
+        "sha256": "00ce5f82135737695b797eebc2d462403b9804aa5ef0cca8b822a8d99f10ec01",
+        "png": "demo/dft/cubes/png/MOLADT.METHANOL.001_HOMO_00ce5f8213573769.png"
+      },
+      {
+        "molecule_id": "MOLADT.METHANOL.001",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.METHANOL.001_LUMO_126234398a758b00.cube",
+        "sha256": "126234398a758b009196cf90d4347fe74193820b8de846752782a372db673d88",
+        "png": "demo/dft/cubes/png/MOLADT.METHANOL.001_LUMO_126234398a758b00.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N_HOMO_51279329794c3163.cube",
+        "sha256": "51279329794c3163d41f31076fd8c715e4d99babfb7a1af6063cd18dea3499ae",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N_HOMO_51279329794c3163.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N_LUMO_7aac90b1266bc350.cube",
+        "sha256": "7aac90b1266bc3503c6c2683336adc4cc9adba1362140ff3865551ebbfbb2b18",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.DNIAPMSPPWPWGF-VKHMYHEASA-N_LUMO_7aac90b1266bc350.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N_HOMO_55bc91f4989be761.cube",
+        "sha256": "55bc91f4989be76180c9957ba6d311722546f8d79a318c633095d84a1cfee943",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N_HOMO_55bc91f4989be761.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N_LUMO_91f1bb698a1f419b.cube",
+        "sha256": "91f1bb698a1f419b9a90ea9c9851a00f2c1d3b5aed9beecdea609dae72d7db68",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.WWZKQHOCKIZLMA-UHFFFAOYSA-N_LUMO_91f1bb698a1f419b.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N",
+        "label": "HOMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N_HOMO_9887119766ae19fe.cube",
+        "sha256": "9887119766ae19fe2cb775dd64fb936c82a85b3f74687ae7108f5e5141efece1",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N_HOMO_9887119766ae19fe.png"
+      },
+      {
+        "molecule_id": "MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N",
+        "label": "LUMO",
+        "path": "demo/dft/cubes/MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N_LUMO_40d21252935daf67.cube",
+        "sha256": "40d21252935daf67438b11349b4d517850f863d470127d3a2155482e0094ced4",
+        "png": "demo/dft/cubes/png/MOLADT.RDKIT.GHVNFZFCNZKVNT-UHFFFAOYSA-N_LUMO_40d21252935daf67.png"
+      }
+    ],
+    "caveat": "The gallery is a WebGPU-rendered sampled point-cloud plus inferred bond skeleton visualization of signed cube fields, not a replacement for the cube files or a full quantum chemistry viewer."
+  }
+}

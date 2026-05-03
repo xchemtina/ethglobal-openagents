@@ -1,0 +1,4 @@
+agent_id = "worker-1.dft.eth"
+transport = "mock-axl"
+storage = "local"
+skills = ["chem.dft.pyscf.b3lyp.v1"]
