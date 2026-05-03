@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": null,
-  "outputDirectory": "demo",
+  "outputDirectory": "world-map-demo",
   "installCommand": null,
   "framework": null,
   "cleanUrls": false,

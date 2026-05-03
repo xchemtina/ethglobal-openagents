@@ -1,4 +1,4 @@
-// Minimal static file server that treats /demo as the project root.
+// Minimal static file server that treats /world-map-demo as the project root.
 // Serves world-map.html at "/" and exposes every relative asset
 // (world-model.json, dft/*, molecules/*, etc.) the page fetches.
 import http from "node:http";
@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, "demo");
+const ROOT = path.join(__dirname, "world-map-demo");
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const DEFAULT_FILE = "world-map.html";
