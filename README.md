@@ -1,7 +1,9 @@
-# chimiaclaw
+# ChimiaClaw
 
 **Rust-native signed artifact DAG for autonomous scientific agents**  
 *(built live for EthGlobal OpenAgents 2026)*
+
+https://ethglobal.com/showcase/sciclaw-x-dao-igcz8
 
 Every scientific action, agent decision, procurement, and governance event becomes an **immutable signed artifact** in a verifiable DAG.
 
