@@ -5,7 +5,7 @@
 
 Every scientific action, agent decision, procurement, and governance event becomes an **immutable signed artifact** in a verifiable DAG.
 
-**Dashboard live demo - https://world-map-demo.tiiny.site/ - v0 deployment keeps failing. Make sure to play around with the DFT orbital densities!**
+**Dashboard live demo - https://world-map-demo.tiiny.site/ - Make sure to play around with the DFT orbital densities!**
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': {
