@@ -1,0 +1,2499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChimiaClaw Three-Agent Pipeline</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: oklch(0.07 0 0);
+      --panel: oklch(0.105 0 0);
+      --panel-2: oklch(0.13 0 0);
+      --border: oklch(0.19 0 0);
+      --text: oklch(0.92 0.008 60);
+      --muted: oklch(0.56 0.006 60);
+      --faint: oklch(0.34 0.006 60);
+      --primary: oklch(0.76 0.17 192);
+      --agent: oklch(0.70 0.18 148);
+      --warning: oklch(0.72 0.16 78);
+      --danger: oklch(0.65 0.20 25);
+      --purple: oklch(0.65 0.16 262);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 10%, oklch(0.18 0.08 192 / 0.30), transparent 32rem),
+        radial-gradient(circle at 80% 18%, oklch(0.16 0.08 262 / 0.22), transparent 30rem),
+        linear-gradient(180deg, oklch(0.075 0 0), var(--bg));
+      color: var(--text);
+    }
+
+    main {
+      width: min(1680px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 20px;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+    }
+
+    .shell {
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 92%, black);
+      box-shadow: 0 24px 80px oklch(0 0 0 / 0.45);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(420px, 0.72fr);
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 3vw, 44px);
+      letter-spacing: -0.05em;
+      line-height: 0.96;
+    }
+
+    .eyebrow, .stamp, .tag, .metric-label {
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 9px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .status-stack {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .status-pill {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 8px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      font-size: 10px;
+    }
+
+    .status-pill strong {
+      color: var(--primary);
+      font-size: 11px;
+    }
+
+    .ticker {
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      background: oklch(0.055 0 0);
+      display: flex;
+      align-items: center;
+      height: 38px;
+    }
+
+    .ticker-anchor {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      height: 100%;
+      padding: 0 16px;
+      border-right: 1px solid var(--border);
+      background: oklch(0.07 0 0);
+    }
+
+    .ticker-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--agent);
+      box-shadow: 0 0 14px var(--agent);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 28px;
+      white-space: nowrap;
+      min-width: max-content;
+      animation: ticker 70s linear infinite;
+      padding-left: 18px;
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(390px, 0.74fr) minmax(640px, 1.26fr);
+      grid-template-areas:
+        "pipeline orbital"
+        "lower lower";
+      gap: 16px;
+      padding: 16px;
+      align-items: start;
+    }
+
+    .pipeline-column {
+      grid-area: pipeline;
+    }
+
+    .orbital-panel {
+      grid-area: orbital;
+      min-height: 0;
+    }
+
+    .dashboard-lower {
+      grid-area: lower;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .dashboard-lower .panel {
+      height: 100%;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 88%, black);
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .panel::before,
+    .panel::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--primary);
+      opacity: 0.4;
+    }
+
+    .panel::before {
+      top: -1px;
+      left: -1px;
+      border-top: 1px solid;
+      border-left: 1px solid;
+    }
+
+    .panel::after {
+      right: -1px;
+      bottom: -1px;
+      border-right: 1px solid;
+      border-bottom: 1px solid;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .stamp {
+      color: var(--faint);
+    }
+
+    .stamp strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .map {
+      position: relative;
+      height: min(420px, 43vh);
+      min-height: 340px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, oklch(0.18 0 0 / 0.35) 1px, transparent 1px),
+        linear-gradient(180deg, oklch(0.18 0 0 / 0.35) 1px, transparent 1px),
+        radial-gradient(circle at 50% 45%, oklch(0.15 0.06 192 / 0.35), transparent 30rem),
+        oklch(0.075 0 0);
+      background-size: 48px 48px, 48px 48px, auto, auto;
+      border: 1px solid var(--border);
+    }
+
+    .edge-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .lab-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 142px;
+      border: 1px solid var(--primary);
+      background: oklch(0.09 0 0 / 0.92);
+      padding: 10px;
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 0 0 1px oklch(0 0 0 / 0.6), 0 14px 36px oklch(0 0 0 / 0.35);
+    }
+
+    .lab-node:hover,
+    .lab-node:focus {
+      outline: 1px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    .lab-node.core { border-color: var(--agent); }
+    .lab-node.allied { border-color: var(--warning); }
+    .lab-node.virtual { border-color: var(--purple); }
+    .lab-node.quarantine { border-color: var(--danger); }
+    .lab-node.real-node {
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 0.6),
+        0 0 22px oklch(0.70 0.18 148 / 0.20),
+        0 14px 36px oklch(0 0 0 / 0.35);
+    }
+
+    .lab-id {
+      color: var(--faint);
+      font-size: 9px;
+      margin-bottom: 6px;
+    }
+
+    .lab-name {
+      font-size: 13px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .lab-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .lab-real-badge {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      padding: 3px 6px;
+      border: 1px solid var(--agent);
+      background: oklch(0.07 0 0);
+      color: var(--agent);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      box-shadow: 0 0 12px oklch(0.70 0.18 148 / 0.45);
+      pointer-events: none;
+    }
+
+    .lab-channel-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 8px;
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      color: var(--faint);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .channel-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .channel-dot.data { background: var(--agent); box-shadow: 0 0 10px var(--agent); }
+    .channel-dot.concept { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
+
+    .lab-tx-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 11px;
+      border: 1px solid var(--primary);
+      background: oklch(0.07 0 0);
+      color: var(--primary);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px oklch(0.76 0.17 192 / 0.45);
+      pointer-events: none;
+    }
+
+    .lab-node.core .lab-tx-count { border-color: var(--agent); color: var(--agent); box-shadow: 0 0 12px oklch(0.70 0.18 148 / 0.45); }
+    .lab-node.allied .lab-tx-count { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 12px oklch(0.72 0.16 78 / 0.45); }
+    .lab-node.virtual .lab-tx-count { border-color: var(--purple); color: var(--purple); box-shadow: 0 0 12px oklch(0.65 0.16 262 / 0.45); }
+    .lab-node.quarantine .lab-tx-count { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 12px oklch(0.65 0.20 25 / 0.45); }
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .legend-line {
+      width: 22px;
+      height: 0;
+      border-top: 1px dashed var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    .legend-line.blocked {
+      border-top-color: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .tx-flow-line {
+      stroke-width: 0.6;
+      stroke-dasharray: 1.2 1.6;
+      animation: tx-dash 18s linear infinite;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    .interaction-flow-line {
+      stroke-width: 0.55;
+      stroke-dasharray: 1 1.8;
+      animation: tx-dash 24s linear infinite;
+      filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    .interaction-flow-line.base {
+      stroke-width: 0.32;
+      opacity: 0.38;
+    }
+
+    .interaction-flow-line.selected-flow {
+      stroke-width: 0.85;
+      opacity: 0.95;
+    }
+
+    .interaction-flow-line.blocked {
+      stroke-dasharray: 0.6 2.2;
+    }
+
+    .interaction-flow-line.concept-only {
+      stroke-dasharray: 2.2 1.2;
+    }
+
+    @keyframes tx-dash {
+      to { stroke-dashoffset: -120; }
+    }
+
+    .tx-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 14px 0 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .tx-section-header strong {
+      color: var(--primary);
+      font-size: 10px;
+    }
+
+    .tx-section-header.first { margin-top: 0; }
+
+    .tx-filter-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border: 1px solid oklch(0.76 0.17 192 / 0.35);
+      background: oklch(0.76 0.17 192 / 0.05);
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--primary);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .tx-filter-banner button {
+      border: 1px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+    }
+
+    .tx-filter-banner button:hover { background: oklch(0.76 0.17 192 / 0.12); }
+
+    .tag.real {
+      color: var(--agent);
+      border-color: oklch(0.70 0.18 148 / 0.55);
+      background: oklch(0.70 0.18 148 / 0.10);
+      font-weight: 700;
+    }
+
+    .tx-handoff {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 8px 0 4px;
+      font-family: "SFMono-Regular", "Roboto Mono", "Geist Mono", ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .tx-handoff .pill {
+      padding: 3px 6px;
+      border: 1px solid var(--border);
+      background: oklch(0.085 0 0);
+      color: var(--text);
+    }
+
+    .tx-handoff .pill.target { color: var(--primary); border-color: oklch(0.76 0.17 192 / 0.35); }
+    .tx-handoff .arrow { color: var(--primary); }
+
+    .interaction-card {
+      border-left: 2px solid var(--primary);
+    }
+
+    .interaction-card.real-execution {
+      border-left-color: var(--agent);
+    }
+
+    .interaction-card.blocked {
+      border-left-color: var(--danger);
+    }
+
+    .interaction-card.review {
+      border-left-color: var(--warning);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      padding: 12px;
+    }
+
+    .card h3 {
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .transaction-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .flow-step {
+      border: 1px solid oklch(0.76 0.17 192 / 0.3);
+      color: var(--primary);
+      background: oklch(0.075 0 0);
+      padding: 5px 7px;
+      font-size: 10px;
+    }
+
+    .card p,
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 6px;
+      background: oklch(0.085 0 0);
+      letter-spacing: 0.11em;
+    }
+
+    .tag.good { color: var(--agent); border-color: oklch(0.70 0.18 148 / 0.35); }
+    .tag.warn { color: var(--warning); border-color: oklch(0.72 0.16 78 / 0.35); }
+    .tag.bad { color: var(--danger); border-color: oklch(0.65 0.20 25 / 0.35); }
+    .tag.plan { color: var(--purple); border-color: oklch(0.65 0.16 262 / 0.35); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      padding: 10px;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--primary);
+      font-size: 18px;
+      margin-top: 6px;
+    }
+
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .snapshot-metric {
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      padding: 10px;
+    }
+
+    .snapshot-metric strong {
+      display: block;
+      color: var(--primary);
+      font-size: 16px;
+      margin: 6px 0;
+    }
+
+    .evidence-card {
+      border-left: 2px solid var(--primary);
+    }
+
+    .evidence-card.live {
+      border-left-color: var(--agent);
+    }
+
+    .evidence-card.warn {
+      border-left-color: var(--warning);
+    }
+
+    .evidence-line {
+      display: grid;
+      grid-template-columns: minmax(96px, 0.35fr) minmax(0, 1fr);
+      gap: 8px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .evidence-line span:first-child {
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .orbital-shell {
+      display: grid;
+      gap: 10px;
+    }
+
+    .orbital-panel .panel-header {
+      margin-bottom: 10px;
+    }
+
+    .orbital-title-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .orbital-title-line h2 {
+      font-size: clamp(24px, 3.4vw, 48px);
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+      max-width: 760px;
+    }
+
+    .orbital-title-line p {
+      max-width: 420px;
+      text-align: right;
+    }
+
+    .orbital-stage {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid oklch(0.76 0.17 192 / 0.28);
+      background:
+        radial-gradient(circle at 50% 42%, oklch(0.18 0.08 192 / 0.26), transparent 44%),
+        radial-gradient(circle at 50% 56%, oklch(0.14 0.08 78 / 0.18), transparent 48%),
+        oklch(0.045 0 0);
+      min-height: min(560px, 58vh);
+    }
+
+    .orbital-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(oklch(0.76 0.17 192 / 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, oklch(0.76 0.17 192 / 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(circle at center, black 0, transparent 72%);
+      pointer-events: none;
+    }
+
+    .orbital-canvas {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      height: min(560px, 58vh);
+      min-height: 430px;
+      cursor: grab;
+    }
+
+    .orbital-canvas:active {
+      cursor: grabbing;
+    }
+
+    .orbital-overlay {
+      position: absolute;
+      z-index: 2;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: end;
+      pointer-events: none;
+    }
+    .orbital-hud {
+      position: absolute;
+      z-index: 2;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+
+    .orbital-stage-message {
+      position: relative;
+      z-index: 2;
+      padding: 16px;
+    }
+
+    .orbital-legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .phase-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      margin-right: 5px;
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    .phase-dot.positive {
+      color: var(--primary);
+      background: var(--primary);
+    }
+
+    .phase-dot.negative {
+      color: var(--warning);
+      background: var(--warning);
+    }
+
+    .orbital-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .orbital-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .orbital-controls button,
+    .orbital-tabs button {
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      color: var(--muted);
+      padding: 6px 8px;
+      font: inherit;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+    }
+
+    .orbital-controls button.active,
+    .orbital-tabs button.active {
+      color: var(--primary);
+      border-color: oklch(0.76 0.17 192 / 0.48);
+      background: oklch(0.76 0.17 192 / 0.10);
+    }
+
+    .orbital-control-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .orbital-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .orbital-meta-grid .evidence-line {
+      grid-template-columns: 1fr;
+      gap: 4px;
+      margin-top: 0;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .artifact-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-left: 2px solid var(--primary);
+      padding: 8px 10px;
+      background: oklch(0.08 0 0);
+      margin-bottom: 8px;
+    }
+
+    .generation {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .selected {
+      border-color: var(--primary);
+      box-shadow: inset 0 0 0 1px oklch(0.76 0.17 192 / 0.35);
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--faint);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1080px) {
+      .topbar, .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .layout {
+        grid-template-areas:
+          "orbital"
+          "pipeline"
+          "lower";
+      }
+
+      .dashboard-lower {
+        grid-template-columns: 1fr;
+      }
+
+      .orbital-title-line {
+        display: grid;
+      }
+
+      .orbital-title-line p {
+        text-align: left;
+      }
+
+      .grid-2, .metric-grid, .snapshot-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-stack,
+      .orbital-meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow mono">CHIMIACLAW / LITERATURE → RETROSYNTHESIS → DFT / LIVE DEMO</p>
+          <h1 id="title">Loading ChimiaClaw pipeline…</h1>
+          <p id="subtitle" class="subtitle"></p>
+        </div>
+        <aside class="status-stack mono">
+          <div class="status-pill"><span>schema</span><strong id="schema">—</strong></div>
+          <div class="status-pill"><span>maturity</span><strong id="maturity">—</strong></div>
+          <div class="status-pill"><span>Literature</span><strong id="literature-status">—</strong></div>
+          <div class="status-pill"><span>Retro</span><strong id="retro-status">—</strong></div>
+          <div class="status-pill"><span>DFT</span><strong id="dft-status">—</strong></div>
+          <div class="status-pill"><span>ENS</span><strong id="ens-status">—</strong></div>
+          <div class="status-pill"><span>0G</span><strong id="zerog-status">—</strong></div>
+          <div class="status-pill"><span>source</span><strong id="model-source">world-model.json</strong></div>
+        </aside>
+      </header>
+
+      <section class="ticker">
+        <div class="ticker-anchor mono">
+          <span class="ticker-dot"></span>
+          <strong style="color: var(--agent); font-size: 10px;">EVIDENCE</strong>
+          <span style="color: var(--faint); font-size: 10px;">/ NEXT RUNS</span>
+        </div>
+        <div id="ticker-track" class="ticker-track mono"></div>
+      </section>
+
+      <section class="layout">
+        <div class="stack pipeline-column">
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>01</strong> / 05 — THREE-AGENT PIPELINE</span>
+              <span class="stamp" id="selected-lab-label">NO AGENT SELECTED</span>
+            </div>
+            <div id="metrics" class="metric-grid"></div>
+            <div id="map" class="map" aria-label="Three-agent pipeline map"></div>
+            <div class="map-legend mono" aria-label="Map legend">
+              <span class="legend-pill"><span class="lab-real-badge" style="position: static; pointer-events: none;">REAL</span> current agent lane</span>
+              <span class="legend-pill"><span class="channel-dot data"></span> signed data handoff</span>
+              <span class="legend-pill"><span class="channel-dot concept"></span> curation / decision flow</span>
+              <span class="legend-pill"><span class="legend-line"></span> active or next interaction</span>
+              <span class="legend-pill"><span class="legend-line blocked"></span> gated / not claimed live</span>
+            </div>
+          </section>
+          <section class="panel" id="selected-lab"></section>
+        </div>
+
+        <section class="panel orbital-panel">
+          <div class="panel-header">
+            <span class="stamp"><strong>WOW</strong> / WEBGPU ORBITAL GALLERY</span>
+            <span class="stamp">SIGNED CUBE FIELDS + BOND SKELETONS</span>
+          </div>
+          <div id="orbital-viewer" class="orbital-shell"></div>
+        </section>
+
+        <section class="dashboard-lower">
+          <section class="panel" id="submission-snapshot"></section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>02</strong> / 05 — EVIDENCE</span>
+              <span class="stamp">STATUS + NEXT PUBLICATION</span>
+            </div>
+            <div id="live-sponsor-evidence" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>03</strong> / 05 — HANDOFFS</span>
+              <span class="stamp">AGENT ARTIFACT FLOW</span>
+            </div>
+            <div id="lab-interactions" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>04</strong> / 05 — AGENT RUNS</span>
+              <span class="stamp">THREE LANES</span>
+            </div>
+            <div id="science-transactions" class="stack"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>05</strong> / 05 — ARTIFACTS</span>
+              <span class="stamp">SIGNED EVIDENCE</span>
+            </div>
+            <div id="artifacts"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <span class="stamp"><strong>AGENTS</strong></span>
+              <span class="stamp">CAPABILITY SURFACE</span>
+            </div>
+            <div id="agents" class="stack"></div>
+          </section>
+        </section>
+      </section>
+    </section>
+    <p class="footer-note mono">
+      Live three-agent demo. It prefers <code>world-model.live.json</code>, falls back to <code>world-model.json</code>, and polls the selected model without contacting wallets or sponsor APIs.
+      Serve with <code>python3 -m http.server 8787 --directory demo</code>, then open <code>http://localhost:8787/world-map.html</code>.
+    </p>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const MODEL_SOURCES = ["world-model.live.json", "world-model.json"];
+    const MODEL_REFRESH_MS = 5000;
+    let currentOrbitalAssetPath = null;
+    let refreshInFlight = false;
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function statusTag(status) {
+      const text = esc(status ?? "unknown");
+      const klass = status === "real-execution" || status?.includes("real-pyscf")
+        ? "real"
+        : status?.includes("planned") || status?.includes("candidate") || status?.includes("review") || status?.includes("standby")
+          ? "warn"
+          : status?.includes("implemented") || status?.includes("Released") || status?.includes("active") || status === "online" || status?.includes("live") || status?.includes("verified") || status?.includes("anchor") || status?.includes("ready") || status?.includes("rendered")
+          ? "good"
+          : status?.includes("quarantine") || status?.includes("blocked")
+              ? "bad"
+              : "plan";
+      const labelOverride = klass === "real" ? "REAL EXECUTION" : text;
+      return `<span class="tag ${klass}">${esc(labelOverride)}</span>`;
+    }
+
+    function tagClassForStatus(status) {
+      const text = String(status ?? "");
+      if (text === "real-execution" || text.includes("real-pyscf")) return "real";
+      if (text.includes("quarantine") || text.includes("blocked")) return "bad";
+      if (text.includes("planned") || text.includes("candidate") || text.includes("review") || text.includes("standby")) return "warn";
+      if (text.includes("implemented") || text.includes("Released") || text.includes("active") || text === "online" || text.includes("live") || text.includes("verified") || text.includes("anchor") || text.includes("ready") || text.includes("rendered") || text === "fixture") return "good";
+      return "plan";
+    }
+
+    function trustClass(lab) {
+      if (lab.trust_tier === "custody-core") return "core";
+      if (lab.trust_tier === "allied-verified") return "allied";
+      if (lab.trust_tier === "virtual-sandbox") return "virtual";
+      if (lab.trust_tier === "real-compute") return "core";
+      if (lab.trust_tier === "implemented-local") return "allied";
+      if (lab.trust_tier === "operator-gated") return "virtual";
+      return "quarantine";
+    }
+
+    function renderTicker(model) {
+      const items = [...model.activity_ticker, ...model.activity_ticker];
+      $("ticker-track").innerHTML = items.map((evt) => `
+        <span>
+          <span style="color: var(--faint);">${esc(evt.timestamp)}</span>
+          <span style="color: ${esc(evt.color)}; margin-left: 8px;">${esc(evt.agent)}</span>
+          <span style="color: var(--faint);"> · </span>
+          <span style="color: var(--muted);">${esc(evt.action)}</span>
+        </span>
+      `).join("");
+    }
+
+    function renderMetrics(model) {
+      const evidenceArtifacts = model.artifact_cards.filter((a) => ["good", "real"].includes(tagClassForStatus(a.status))).length;
+      const realLabs = model.labs.filter((lab) => lab.node_reality?.kind === "real").length;
+      const transactions = model.science_transactions?.length ?? 0;
+      const interactions = model.lab_interactions?.length ?? 0;
+      $("metrics").innerHTML = `
+        <div class="metric"><span class="metric-label">agent lanes</span><strong>${realLabs}/${model.labs.length}</strong></div>
+        <div class="metric"><span class="metric-label">handoffs</span><strong>${interactions}</strong></div>
+        <div class="metric"><span class="metric-label">agent runs</span><strong>${transactions}</strong></div>
+        <div class="metric"><span class="metric-label">evidence artifacts</span><strong>${evidenceArtifacts}</strong></div>
+      `;
+    }
+
+    function compactStatus(status) {
+      return String(status ?? "—").replaceAll("-", " ");
+    }
+
+    function renderTopbarEvidence(model) {
+      const evidence = model.live_sponsor_evidence ?? [];
+      const bySponsor = Object.fromEntries(evidence.map((item) => [item.sponsor, item]));
+      const byAgent = Object.fromEntries((model.agents ?? []).map((agent) => [agent.id, agent]));
+      $("literature-status").textContent = compactStatus(byAgent["AGENT.LITERATURE"]?.status);
+      $("retro-status").textContent = compactStatus(byAgent["AGENT.RETROSYNTHESIS"]?.status);
+      $("dft-status").textContent = compactStatus(byAgent["AGENT.DFT"]?.status);
+      $("ens-status").textContent = compactStatus(bySponsor.ENS?.status);
+      $("zerog-status").textContent = compactStatus(bySponsor["0G Storage"]?.status);
+    }
+
+    function renderSubmissionSnapshot(model) {
+      const root = $("submission-snapshot");
+      if (!root) return;
+      const snapshot = model.submission_snapshot;
+      if (!snapshot) {
+        root.innerHTML = `
+          <div class="panel-header">
+            <span class="stamp"><strong>SUBMISSION</strong> / SNAPSHOT</span>
+            ${statusTag(model.maturity)}
+          </div>
+          <h2>${esc(model.title)}</h2>
+          <p class="small" style="margin-top: 8px;">${esc(model.subtitle)}</p>
+        `;
+        return;
+      }
+
+      const metrics = (snapshot.metrics ?? []).map((metric) => `
+        <div class="snapshot-metric">
+          <span class="metric-label">${esc(metric.label)}</span>
+          <strong>${esc(metric.value)}</strong>
+          ${statusTag(metric.status)}
+        </div>
+      `).join("");
+      const notes = (snapshot.capture_notes ?? []).map((note) => `<p class="small">• ${esc(note)}</p>`).join("");
+
+      root.innerHTML = `
+        <div class="panel-header">
+          <span class="stamp"><strong>SUBMISSION</strong> / SNAPSHOT</span>
+          ${statusTag(snapshot.status)}
+        </div>
+        <h2>${esc(snapshot.headline)}</h2>
+        <p class="small" style="margin-top: 8px;">${esc(snapshot.summary)}</p>
+        <div class="snapshot-grid">${metrics}</div>
+        <div class="card" style="margin-top: 12px;">
+          <span class="metric-label">capture cues</span>
+          <div style="margin-top: 6px;">${notes}</div>
+        </div>
+      `;
+    }
+
+    function renderLiveSponsorEvidence(model) {
+      const root = $("live-sponsor-evidence");
+      if (!root) return;
+      const evidence = model.live_sponsor_evidence ?? [];
+      if (!evidence.length) {
+        root.innerHTML = `<p class="small">No live sponsor evidence attached to this dashboard fixture yet.</p>`;
+        return;
+      }
+
+      root.innerHTML = evidence.map((item) => {
+        const status = item.status ?? "unknown";
+        const evidenceClass = status === "real-execution" || status.includes("live") || status.includes("anchor") || status.includes("rendered") ? "live" : status.includes("ready") ? "warn" : "";
+        const records = (item.records ?? []).map((record) => `
+          <div class="evidence-line mono"><span>${esc(record.key)}</span><strong>${esc(record.value)}</strong></div>
+        `).join("");
+        const artifacts = (item.artifacts ?? []).map((artifact) => `
+          <span class="tag ${tagClassForStatus(status)}">${esc(artifact.kind)}:${esc(artifact.id)}</span>
+        `).join("");
+        const extraLines = [
+          item.network ? ["network", item.network] : null,
+          item.block_range ? ["blocks", item.block_range] : null,
+          item.storage_uri ? ["storage", item.storage_uri] : null,
+          item.workflow_path ? ["workflow", item.workflow_path] : null,
+          item.video_path ? ["video", `${item.video_path} · ${item.resolution ?? ""} · ${item.frame_rate ?? ""}`] : null,
+        ].filter(Boolean).map(([label, value]) => `
+          <div class="evidence-line mono"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>
+        `).join("");
+
+        return `
+          <article class="card evidence-card ${evidenceClass}">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <span class="stamp">${esc(item.sponsor)}</span>
+              ${statusTag(status)}
+            </div>
+            <h3>${esc(item.summary)}</h3>
+            ${extraLines}
+            ${records}
+            <div class="tag-row">${artifacts}</div>
+            ${item.caveat ? `<p class="small" style="margin-top: 8px;">${esc(item.caveat)}</p>` : ""}
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function renderOrbitalViewer(model) {
+      const root = $("orbital-viewer");
+      if (!root) return;
+      const viewer = model.orbital_viewer;
+      if (!viewer) {
+        root.innerHTML = `<p class="small">No WebGPU orbital gallery asset attached.</p>`;
+        return;
+      }
+
+      root.innerHTML = `
+        <div class="orbital-title-line">
+          <h2 id="orbital-active-title">WebGPU orbital gallery</h2>
+          <p class="small">Signed cube fields become rotatable HOMO/LUMO clouds with a visible bond skeleton. The render is derived evidence; cube hashes remain source truth.</p>
+        </div>
+        <div id="orbital-tabs" class="orbital-tabs mono"></div>
+        <div class="orbital-stage">
+          <canvas id="orbital-canvas" class="orbital-canvas" data-renderer="webgpu" aria-label="Interactive WebGPU HOMO/LUMO orbital gallery with bond skeletons"></canvas>
+          <div class="orbital-hud mono">
+            <span id="orbital-renderer" class="tag real">WebGPU renderer</span>
+            <span id="orbital-status" class="tag">loading signed cube gallery</span>
+          </div>
+          <div class="orbital-overlay mono">
+            <div class="orbital-legend">
+              <span class="tag"><span class="phase-dot positive"></span>positive phase</span>
+              <span class="tag"><span class="phase-dot negative"></span>negative phase</span>
+              <span class="tag">bond skeleton</span>
+            </div>
+            <span class="tag real">drag to rotate</span>
+          </div>
+        </div>
+        <div class="orbital-control-row">
+          <div class="orbital-controls mono">
+            <button type="button" data-orbital-mode="both" class="active">Both</button>
+            <button type="button" data-orbital-mode="HOMO">HOMO</button>
+            <button type="button" data-orbital-mode="LUMO">LUMO</button>
+            <button type="button" data-orbital-pause="toggle">Pause</button>
+          </div>
+          <div id="orbital-active-facts" class="tag-row mono"></div>
+        </div>
+        <article id="orbital-meta" class="card evidence-card live"></article>
+      `;
+
+      let orbitalData;
+      const assetPath = viewer.gallery_asset_path ?? viewer.asset_path;
+      try {
+        const response = await fetch(`./${assetPath}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        orbitalData = await response.json();
+      } catch (error) {
+        root.querySelector(".orbital-stage").innerHTML = `<p class="small orbital-stage-message">Could not load WebGPU orbital gallery asset: ${esc(error.message)}</p>`;
+        return;
+      }
+
+      const molecules = (orbitalData.molecules?.length ? orbitalData.molecules : [orbitalData]).filter((molecule) => molecule?.orbitals?.length);
+      if (!molecules.length) {
+        root.querySelector(".orbital-stage").innerHTML = `<p class="small orbital-stage-message">The orbital gallery asset contains no molecule orbitals.</p>`;
+        return;
+      }
+
+      const canvas = $("orbital-canvas");
+      const stage = root.querySelector(".orbital-stage");
+      const statusNode = $("orbital-status");
+      const rendererNode = $("orbital-renderer");
+      const tabsNode = $("orbital-tabs");
+      const titleNode = $("orbital-active-title");
+      const factsNode = $("orbital-active-facts");
+      const metaNode = $("orbital-meta");
+      const setStatus = (message) => {
+        if (statusNode) statusNode.textContent = message;
+      };
+      const failWebGpu = (message) => {
+        if (stage) {
+          stage.innerHTML = `
+            <p class="small orbital-stage-message">
+              ${esc(message)} This dashboard intentionally does not fall back to WebGL; open it in a WebGPU-capable browser on localhost.
+            </p>
+          `;
+        }
+      };
+
+      if (!navigator.gpu) {
+        failWebGpu("WebGPU is unavailable in this browser.");
+        return;
+      }
+
+      const context = canvas.getContext("webgpu");
+      if (!context) {
+        failWebGpu("The browser could not create a WebGPU canvas context.");
+        return;
+      }
+
+      let adapter;
+      let device;
+      try {
+        adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+        if (!adapter) throw new Error("No WebGPU adapter returned");
+        device = await adapter.requestDevice();
+      } catch (error) {
+        failWebGpu(`WebGPU initialization failed: ${error.message}`);
+        return;
+      }
+
+      if (rendererNode) rendererNode.textContent = "WebGPU gallery renderer";
+      device.lost.then((info) => {
+        setStatus(`WebGPU device lost: ${info.reason || "unknown"}`);
+      });
+
+      let activeIndex = Math.max(0, molecules.findIndex((molecule) => molecule.molecule_id === viewer.default_molecule_id));
+      let mode = "both";
+      let paused = false;
+      let yaw = 0.72;
+      let pitch = -0.36;
+      let dragging = false;
+      let lastX = 0;
+      let lastY = 0;
+      let pointBuffer;
+      let pointCount = 0;
+      let bondBuffer;
+      let bondCount = 0;
+
+      const format = navigator.gpu.getPreferredCanvasFormat();
+      context.configure({
+        device,
+        format,
+        alphaMode: "premultiplied",
+      });
+
+      const pointShaderSource = `
+struct Uniforms {
+  yaw : f32,
+  pitch : f32,
+  aspect : f32,
+  scale : f32,
+  viewport : vec2<f32>,
+  pointScale : f32,
+  _pad : f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms : Uniforms;
+
+struct VertexOut {
+  @builtin(position) position : vec4<f32>,
+  @location(0) corner : vec2<f32>,
+  @location(1) phase : f32,
+  @location(2) magnitude : f32,
+  @location(3) depthAlpha : f32,
+  @location(4) boost : f32,
+}
+
+@vertex
+fn vsMain(
+  @builtin(vertex_index) vertexIndex : u32,
+  @location(0) pointPosition : vec3<f32>,
+  @location(1) phase : f32,
+  @location(2) magnitude : f32,
+  @location(3) boost : f32
+) -> VertexOut {
+  let corners = array<vec2<f32>, 6>(
+    vec2<f32>(-1.0, -1.0),
+    vec2<f32>( 1.0, -1.0),
+    vec2<f32>(-1.0,  1.0),
+    vec2<f32>(-1.0,  1.0),
+    vec2<f32>( 1.0, -1.0),
+    vec2<f32>( 1.0,  1.0)
+  );
+  let corner = corners[vertexIndex % 6u];
+  let cy = cos(uniforms.yaw);
+  let sy = sin(uniforms.yaw);
+  let cp = cos(uniforms.pitch);
+  let sp = sin(uniforms.pitch);
+  let x1 = pointPosition.x * cy - pointPosition.z * sy;
+  let z1 = pointPosition.x * sy + pointPosition.z * cy;
+  let y1 = pointPosition.y * cp - z1 * sp;
+  let z2 = pointPosition.y * sp + z1 * cp;
+  let depth = max(0.75, 3.1 - z2);
+  let center = vec2<f32>(
+    (x1 / depth) * uniforms.scale / max(uniforms.aspect, 0.001),
+    (y1 / depth) * uniforms.scale
+  );
+  let radiusPx = uniforms.pointScale * (1.15 + magnitude * 4.8 + max(z2, 0.0) * 0.65);
+  let offset = corner * radiusPx * vec2<f32>(
+    2.0 / max(uniforms.viewport.x, 1.0),
+    2.0 / max(uniforms.viewport.y, 1.0)
+  );
+  var out : VertexOut;
+  out.position = vec4<f32>(center + offset, 0.0, 1.0);
+  out.corner = corner;
+  out.phase = phase;
+  out.magnitude = magnitude;
+  out.depthAlpha = clamp((z2 + 1.8) / 3.6, 0.15, 1.0);
+  out.boost = boost;
+  return out;
+}
+
+@fragment
+fn fsMain(in : VertexOut) -> @location(0) vec4<f32> {
+  let dist = length(in.corner);
+  if (dist > 1.0) {
+    discard;
+  }
+  let glow = pow(max(0.0, 1.0 - dist), 1.7);
+  let alpha = clamp(in.depthAlpha * in.magnitude * in.boost, 0.16, 0.88) * glow;
+  let positive = vec3<f32>(0.20, 0.87, 1.0);
+  let negative = vec3<f32>(1.0, 0.58, 0.18);
+  let color = select(negative, positive, in.phase >= 0.0);
+  return vec4<f32>(color, alpha);
+}
+`;
+
+      const bondShaderSource = `
+struct Uniforms {
+  yaw : f32,
+  pitch : f32,
+  aspect : f32,
+  scale : f32,
+  viewport : vec2<f32>,
+  pointScale : f32,
+  _pad : f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms : Uniforms;
+
+struct BondOut {
+  @builtin(position) position : vec4<f32>,
+  @location(0) depthAlpha : f32,
+}
+
+fn project(pointPosition : vec3<f32>) -> vec3<f32> {
+  let cy = cos(uniforms.yaw);
+  let sy = sin(uniforms.yaw);
+  let cp = cos(uniforms.pitch);
+  let sp = sin(uniforms.pitch);
+  let x1 = pointPosition.x * cy - pointPosition.z * sy;
+  let z1 = pointPosition.x * sy + pointPosition.z * cy;
+  let y1 = pointPosition.y * cp - z1 * sp;
+  let z2 = pointPosition.y * sp + z1 * cp;
+  let depth = max(0.75, 3.1 - z2);
+  let center = vec2<f32>(
+    (x1 / depth) * uniforms.scale / max(uniforms.aspect, 0.001),
+    (y1 / depth) * uniforms.scale
+  );
+  return vec3<f32>(center, z2);
+}
+
+@vertex
+fn vsMain(
+  @builtin(vertex_index) vertexIndex : u32,
+  @location(0) startPosition : vec3<f32>,
+  @location(1) endPosition : vec3<f32>,
+  @location(2) strength : f32
+) -> BondOut {
+  let corners = array<vec2<f32>, 6>(
+    vec2<f32>(0.0, -1.0),
+    vec2<f32>(1.0, -1.0),
+    vec2<f32>(0.0,  1.0),
+    vec2<f32>(0.0,  1.0),
+    vec2<f32>(1.0, -1.0),
+    vec2<f32>(1.0,  1.0)
+  );
+  let corner = corners[vertexIndex % 6u];
+  let a = project(startPosition);
+  let b = project(endPosition);
+  let line = b.xy - a.xy;
+  let lineLength = max(length(line), 0.0001);
+  let perp = vec2<f32>(-line.y / lineLength, line.x / lineLength);
+  let thickness = uniforms.pointScale * (1.45 + 0.35 * strength);
+  let offset = perp * corner.y * thickness * vec2<f32>(
+    2.0 / max(uniforms.viewport.x, 1.0),
+    2.0 / max(uniforms.viewport.y, 1.0)
+  );
+  let z = mix(a.z, b.z, corner.x);
+  var out : BondOut;
+  out.position = vec4<f32>(mix(a.xy, b.xy, corner.x) + offset, 0.03, 1.0);
+  out.depthAlpha = clamp((z + 1.8) / 3.6, 0.28, 0.9);
+  return out;
+}
+
+@fragment
+fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
+  return vec4<f32>(0.78, 0.94, 1.0, 0.48 * in.depthAlpha);
+}
+`;
+
+      let pointPipeline;
+      let bondPipeline;
+      let uniformBuffer;
+      let pointBindGroup;
+      let bondBindGroup;
+      try {
+        device.pushErrorScope("validation");
+        uniformBuffer = device.createBuffer({
+          label: "orbital gallery camera uniforms",
+          size: 32,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        const pointModule = device.createShaderModule({
+          label: "orbital gallery point shader",
+          code: pointShaderSource,
+        });
+        const bondModule = device.createShaderModule({
+          label: "orbital gallery bond shader",
+          code: bondShaderSource,
+        });
+        pointPipeline = device.createRenderPipeline({
+          label: "orbital gallery point pipeline",
+          layout: "auto",
+          vertex: {
+            module: pointModule,
+            entryPoint: "vsMain",
+            buffers: [{
+              arrayStride: 24,
+              stepMode: "instance",
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x3" },
+                { shaderLocation: 1, offset: 12, format: "float32" },
+                { shaderLocation: 2, offset: 16, format: "float32" },
+                { shaderLocation: 3, offset: 20, format: "float32" },
+              ],
+            }],
+          },
+          fragment: {
+            module: pointModule,
+            entryPoint: "fsMain",
+            targets: [{
+              format,
+              blend: {
+                color: { srcFactor: "src-alpha", dstFactor: "one", operation: "add" },
+                alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+              },
+            }],
+          },
+          primitive: { topology: "triangle-list" },
+        });
+        bondPipeline = device.createRenderPipeline({
+          label: "orbital gallery bond pipeline",
+          layout: "auto",
+          vertex: {
+            module: bondModule,
+            entryPoint: "vsMain",
+            buffers: [{
+              arrayStride: 32,
+              stepMode: "instance",
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x3" },
+                { shaderLocation: 1, offset: 12, format: "float32x3" },
+                { shaderLocation: 2, offset: 24, format: "float32" },
+              ],
+            }],
+          },
+          fragment: {
+            module: bondModule,
+            entryPoint: "fsMain",
+            targets: [{
+              format,
+              blend: {
+                color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+                alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+              },
+            }],
+          },
+          primitive: { topology: "triangle-list" },
+        });
+        pointBindGroup = device.createBindGroup({
+          label: "orbital point bind group",
+          layout: pointPipeline.getBindGroupLayout(0),
+          entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+        });
+        bondBindGroup = device.createBindGroup({
+          label: "orbital bond bind group",
+          layout: bondPipeline.getBindGroupLayout(0),
+          entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+        });
+        const validationError = await device.popErrorScope();
+        if (validationError) throw new Error(validationError.message);
+      } catch (error) {
+        failWebGpu(`WebGPU pipeline creation failed: ${error.message}`);
+        return;
+      }
+
+      function activeMolecule() {
+        return molecules[activeIndex] ?? molecules[0];
+      }
+
+      function activeOrbitalsByLabel() {
+        return Object.fromEntries((activeMolecule().orbitals ?? []).map((orbital) => [orbital.label, orbital]));
+      }
+
+      function selectedOrbitals() {
+        const orbitals = activeOrbitalsByLabel();
+        if (mode === "HOMO") return [orbitals.HOMO].filter(Boolean);
+        if (mode === "LUMO") return [orbitals.LUMO].filter(Boolean);
+        return [orbitals.HOMO, orbitals.LUMO].filter(Boolean);
+      }
+
+      function renderMoleculeTabs() {
+        tabsNode.innerHTML = molecules.map((molecule, index) => `
+          <button type="button" data-orbital-molecule="${index}" class="${index === activeIndex ? "active" : ""}">${esc(molecule.molecule_label ?? molecule.molecule_id)}</button>
+        `).join("");
+        tabsNode.querySelectorAll("[data-orbital-molecule]").forEach((button) => {
+          button.addEventListener("click", () => {
+            activeIndex = Number(button.dataset.orbitalMolecule ?? 0);
+            tabsNode.querySelectorAll("[data-orbital-molecule]").forEach((b) => b.classList.toggle("active", b === button));
+            refreshActiveMolecule();
+          });
+        });
+      }
+
+      function renderActiveMeta() {
+        const molecule = activeMolecule();
+        titleNode.textContent = `${molecule.molecule_label ?? molecule.molecule_id} HOMO/LUMO`;
+        const gap = Number(molecule.gap_ev ?? 0);
+        factsNode.innerHTML = `
+          <span class="tag real">${molecule.atoms?.length ?? 0} atoms</span>
+          <span class="tag good">${molecule.bonds?.length ?? 0} bonds</span>
+          <span class="tag">${pointCount.toLocaleString()} points</span>
+        `;
+        metaNode.innerHTML = `
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(molecule.molecule_id)}</span>
+            ${statusTag(viewer.status)}
+          </div>
+          <h3>${esc(molecule.molecule_label ?? molecule.molecule_id)} · signed cube-derived orbital render</h3>
+          <div class="orbital-meta-grid mono" style="margin-top: 10px;">
+            <div class="evidence-line"><span>artifact</span><strong>${esc(molecule.result_artifact_id)}</strong></div>
+            <div class="evidence-line"><span>method</span><strong>${esc(molecule.method)} · gap ${Number.isFinite(gap) ? gap.toFixed(3) : "—"} eV</strong></div>
+            <div class="evidence-line"><span>renderer</span><strong>${esc(viewer.renderer ?? orbitalData.preferred_renderer ?? "WebGPU instanced point sprites + bond skeletons")}</strong></div>
+            <div class="evidence-line"><span>asset</span><strong>${esc(assetPath)}</strong></div>
+          </div>
+          <p class="small" style="margin-top: 8px;">${esc(viewer.caveat ?? orbitalData.caveat)}</p>
+        `;
+      }
+
+      function uploadPointBuffer() {
+        const selected = selectedOrbitals();
+        const total = selected.reduce((sum, orbital) => sum + (orbital.points?.length ?? 0), 0);
+        const floats = new Float32Array(Math.max(6, total * 6));
+        let offset = 0;
+        for (const orbital of selected) {
+          const lumoBoost = orbital.label === "LUMO" && mode === "both" ? 0.78 : 1;
+          for (const point of orbital.points ?? []) {
+            floats[offset++] = point[0];
+            floats[offset++] = point[1];
+            floats[offset++] = point[2];
+            floats[offset++] = point[3];
+            floats[offset++] = point[4];
+            floats[offset++] = lumoBoost;
+          }
+        }
+        if (pointBuffer) pointBuffer.destroy();
+        pointBuffer = device.createBuffer({
+          label: `orbital gallery ${mode} point instances`,
+          size: floats.byteLength,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(pointBuffer, 0, floats);
+        pointCount = total;
+      }
+
+      function uploadBondBuffer() {
+        const molecule = activeMolecule();
+        const atoms = molecule.atoms ?? [];
+        const bonds = molecule.bonds ?? [];
+        const floats = new Float32Array(Math.max(8, bonds.length * 8));
+        let offset = 0;
+        for (const bond of bonds) {
+          const start = bond.start ?? atoms[bond.from]?.position ?? [0, 0, 0];
+          const end = bond.end ?? atoms[bond.to]?.position ?? [0, 0, 0];
+          floats[offset++] = start[0];
+          floats[offset++] = start[1];
+          floats[offset++] = start[2];
+          floats[offset++] = end[0];
+          floats[offset++] = end[1];
+          floats[offset++] = end[2];
+          floats[offset++] = 1;
+          floats[offset++] = 0;
+        }
+        if (bondBuffer) bondBuffer.destroy();
+        bondBuffer = device.createBuffer({
+          label: "orbital gallery bond instances",
+          size: floats.byteLength,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(bondBuffer, 0, floats);
+        bondCount = bonds.length;
+      }
+
+      function refreshActiveMolecule() {
+        uploadPointBuffer();
+        uploadBondBuffer();
+        renderActiveMeta();
+        const molecule = activeMolecule();
+        setStatus(`${molecule.molecule_label ?? molecule.molecule_id} · ${mode} · ${pointCount.toLocaleString()} WebGPU points · ${bondCount} bonds`);
+      }
+
+      function sizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const maxDimension = device.limits.maxTextureDimension2D;
+        const width = Math.min(maxDimension, Math.max(1, Math.floor(rect.width * ratio)));
+        const height = Math.min(maxDimension, Math.max(1, Math.floor(rect.height * ratio)));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        return { width, height, ratio };
+      }
+
+      function draw() {
+        const { width, height, ratio } = sizeCanvas();
+        if (!paused && !dragging) yaw += 0.0045;
+        device.queue.writeBuffer(
+          uniformBuffer,
+          0,
+          new Float32Array([
+            yaw,
+            pitch,
+            width / Math.max(height, 1),
+            0.82,
+            width,
+            height,
+            ratio,
+            0,
+          ]),
+        );
+
+        try {
+          const encoder = device.createCommandEncoder({ label: "orbital gallery frame encoder" });
+          const pass = encoder.beginRenderPass({
+            label: "orbital gallery frame pass",
+            colorAttachments: [{
+              view: context.getCurrentTexture().createView(),
+              clearValue: { r: 0, g: 0, b: 0, a: 0 },
+              loadOp: "clear",
+              storeOp: "store",
+            }],
+          });
+          if (bondBuffer && bondCount > 0) {
+            pass.setPipeline(bondPipeline);
+            pass.setBindGroup(0, bondBindGroup);
+            pass.setVertexBuffer(0, bondBuffer);
+            pass.draw(6, bondCount);
+          }
+          if (pointBuffer && pointCount > 0) {
+            pass.setPipeline(pointPipeline);
+            pass.setBindGroup(0, pointBindGroup);
+            pass.setVertexBuffer(0, pointBuffer);
+            pass.draw(6, pointCount);
+          }
+          pass.end();
+          device.queue.submit([encoder.finish()]);
+        } catch (error) {
+          setStatus(`WebGPU draw failed: ${error.message}`);
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        yaw += (event.clientX - lastX) * 0.012;
+        pitch += (event.clientY - lastY) * 0.012;
+        pitch = Math.max(-1.35, Math.min(1.35, pitch));
+        lastX = event.clientX;
+        lastY = event.clientY;
+      });
+      canvas.addEventListener("pointerup", () => { dragging = false; });
+      canvas.addEventListener("pointercancel", () => { dragging = false; });
+
+      root.querySelectorAll("[data-orbital-mode]").forEach((button) => {
+        button.addEventListener("click", () => {
+          mode = button.dataset.orbitalMode;
+          root.querySelectorAll("[data-orbital-mode]").forEach((b) => b.classList.toggle("active", b === button));
+          refreshActiveMolecule();
+        });
+      });
+      root.querySelector("[data-orbital-pause]")?.addEventListener("click", (event) => {
+        paused = !paused;
+        event.currentTarget.classList.toggle("active", paused);
+        event.currentTarget.textContent = paused ? "Resume" : "Pause";
+      });
+
+      renderMoleculeTabs();
+      refreshActiveMolecule();
+      draw();
+    }
+
+    function txCountByLab(model) {
+      const counts = {};
+      for (const tx of model.science_transactions ?? []) {
+        if (!tx.target_lab) continue;
+        counts[tx.target_lab] = (counts[tx.target_lab] ?? 0) + 1;
+      }
+      for (const vote of model.crucible_votes ?? []) {
+        if (!vote.target_lab) continue;
+        counts[vote.target_lab] = (counts[vote.target_lab] ?? 0) + 1;
+      }
+      for (const flow of model.lab_interactions ?? []) {
+        if (flow.source_lab) counts[flow.source_lab] = (counts[flow.source_lab] ?? 0) + 1;
+        if (flow.target_lab) counts[flow.target_lab] = (counts[flow.target_lab] ?? 0) + 1;
+      }
+      return counts;
+    }
+
+    function channelCountsByLab(model) {
+      const counts = {};
+      for (const lab of model.labs ?? []) {
+        counts[lab.id] = { data: 0, concept: 0 };
+      }
+      for (const flow of model.lab_interactions ?? []) {
+        for (const labId of [flow.source_lab, flow.target_lab]) {
+          if (!counts[labId]) counts[labId] = { data: 0, concept: 0 };
+          if ((flow.channels ?? []).includes("data")) counts[labId].data += 1;
+          if ((flow.channels ?? []).includes("concept")) counts[labId].concept += 1;
+        }
+      }
+      return counts;
+    }
+
+    function txColor(tx) {
+      if (tx.status === "blocked") return "oklch(0.65 0.20 25)";
+      if (tx.status === "real-execution") return "oklch(0.70 0.18 148)"; // agent green
+      if (tx.service_kind === "dft") return "oklch(0.76 0.17 192)";       // primary cyan
+      if (tx.service_kind === "retrosynthesis") return "oklch(0.72 0.16 78)"; // warning amber
+      if (tx.service_kind === "literature") return "oklch(0.65 0.16 262)";  // purple
+      return "var(--muted)";
+    }
+
+    function interactionColor(flow) {
+      if (flow.status === "blocked") return "oklch(0.65 0.20 25)";
+      if (flow.status === "review") return "oklch(0.72 0.16 78)";
+      if (flow.status === "real-execution") return "oklch(0.70 0.18 148)";
+      const channels = flow.channels ?? [];
+      if (channels.includes("data") && channels.includes("concept")) return "oklch(0.76 0.17 192)";
+      if (channels.includes("concept")) return "oklch(0.65 0.16 262)";
+      if (channels.includes("data")) return "oklch(0.70 0.18 148)";
+      return "var(--muted)";
+    }
+
+    function interactionLineClass(flow, extra = "") {
+      const channels = flow.channels ?? [];
+      const klass = [
+        "interaction-flow-line",
+        extra,
+        flow.status === "blocked" ? "blocked" : "",
+        channels.includes("concept") && !channels.includes("data") ? "concept-only" : "",
+      ].filter(Boolean).join(" ");
+      return klass;
+    }
+
+    // Position of the operator anchor on the map; transactions originate visually here.
+    const OPERATOR_ANCHOR = { x: 6, y: 8 };
+
+    function renderMap(model) {
+      const map = $("map");
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const trustEdgeSvg = model.trust_edges.map((edge) => {
+        const source = labsById[edge.source];
+        const target = labsById[edge.target];
+        if (!source || !target) return "";
+        const color = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
+        const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
+        return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${color}" stroke-width="0.35" opacity="0.55" ${dash}></line>`;
+      }).join("");
+      const interactionEdgeSvg = (model.lab_interactions ?? []).map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        if (!source || !target) return "";
+        return `<line class="${interactionLineClass(flow, "base")}" x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${interactionColor(flow)}"></line>`;
+      }).join("");
+      const edgeSvg = `
+        <svg class="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <g id="trust-edges">${trustEdgeSvg}</g>
+          <g id="interaction-edges">${interactionEdgeSvg}</g>
+          <g id="tx-flow-edges"></g>
+        </svg>
+      `;
+      const counts = txCountByLab(model);
+      const channelCounts = channelCountsByLab(model);
+      map.innerHTML = edgeSvg + model.labs.map((lab) => {
+        const count = counts[lab.id] ?? 0;
+        const channels = channelCounts[lab.id] ?? { data: 0, concept: 0 };
+        const badge = count > 0
+          ? `<span class="lab-tx-count" title="${count} interaction, transaction, or vote events">${count}×</span>`
+          : "";
+        const realBadge = lab.node_reality?.kind === "real"
+          ? `<span class="lab-real-badge">REAL</span>`
+          : "";
+        return `
+          <button class="lab-node ${trustClass(lab)} ${lab.node_reality?.kind === "real" ? "real-node" : ""}" data-lab="${esc(lab.id)}" style="left: ${lab.location.x}%; top: ${lab.location.y}%;">
+            ${realBadge}
+            ${badge}
+            <div class="lab-id mono">${esc(lab.id)}</div>
+            <div class="lab-name">${esc(lab.short_label)}</div>
+            <div class="lab-meta mono"><span>${esc(lab.status)}</span><span>${Math.round((lab.telemetry.trust_score ?? 0) * 100)}%</span></div>
+            <div class="lab-channel-row"><span class="channel-dot data"></span>${channels.data}<span class="channel-dot concept"></span>${channels.concept}</div>
+          </button>
+        `;
+      }).join("");
+
+      map.querySelectorAll(".lab-node").forEach((node) => {
+        node.addEventListener("click", () => {
+          map.querySelectorAll(".lab-node").forEach((n) => n.classList.remove("selected"));
+          node.classList.add("selected");
+          const lab = labsById[node.dataset.lab];
+          renderSelectedLab(model, lab);
+          renderTxFlowEdges(model, lab);
+          renderLabInteractions(model, lab.id);
+          renderScienceTransactions(model, lab.id);
+          renderCrucibleDiscourse(model, lab.id);
+        });
+      });
+
+      renderSelectedLab(model, model.labs[0]);
+      map.querySelector(".lab-node")?.classList.add("selected");
+      renderTxFlowEdges(model, model.labs[0]);
+      renderLabInteractions(model, model.labs[0].id);
+    }
+
+    function renderTxFlowEdges(model, selectedLab) {
+      const layer = document.getElementById("tx-flow-edges");
+      const trustLayer = document.getElementById("trust-edges");
+      if (!layer) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const txs = (model.science_transactions ?? []).filter((tx) => tx.target_lab === selectedLab.id);
+
+      // 1. Operator -> selected lab: each transaction targeting this lab gets
+      //    its own animated dashed line, colored by service kind.
+      const intoLines = txs.map((tx) => {
+        const color = txColor(tx);
+        return `<line class="tx-flow-line" x1="${OPERATOR_ANCHOR.x}" y1="${OPERATOR_ANCHOR.y}" x2="${selectedLab.location.x}" y2="${selectedLab.location.y}" stroke="${color}" opacity="0.85"></line>`;
+      }).join("");
+
+      // 2. Selected lab -> any lab it returns results to (i.e. any active
+      //    trust_edge with a result-return / lineage flow whose source is the
+      //    selected lab). This makes the lab-to-lab handoff visible: e.g.
+      //    olympus -> analysis dock for chem.dft.result return.
+      const returnEdges = (model.trust_edges ?? []).filter((edge) =>
+        edge.source === selectedLab.id
+        && edge.status === "active"
+        && (edge.allowed_flows ?? []).some((flow) =>
+          /result|lineage|chem\.dft|return|chem\.molecule|chem\.adt/i.test(flow)
+        )
+      );
+      const returnLines = returnEdges.map((edge) => {
+        const target = labsById[edge.target];
+        if (!target) return "";
+        return `<line class="tx-flow-line tx-flow-return" x1="${selectedLab.location.x}" y1="${selectedLab.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="oklch(0.70 0.18 148)" opacity="0.9"></line>`;
+      }).join("");
+
+      // 3. Inbound dispatch edges: any active trust_edge whose target is the
+      //    selected lab (e.g. virtual retro swarm dispatching jobs into
+      //    olympus). Drawn dim-cyan.
+      const inboundEdges = (model.trust_edges ?? []).filter((edge) =>
+        edge.target === selectedLab.id && edge.status === "active"
+      );
+      const inboundLines = inboundEdges.map((edge) => {
+        const source = labsById[edge.source];
+        if (!source) return "";
+        return `<line class="tx-flow-line tx-flow-inbound" x1="${source.location.x}" y1="${source.location.y}" x2="${selectedLab.location.x}" y2="${selectedLab.location.y}" stroke="oklch(0.76 0.17 192)" opacity="0.55"></line>`;
+      }).join("");
+      const selectedFlows = (model.lab_interactions ?? []).filter((flow) =>
+        flow.source_lab === selectedLab.id || flow.target_lab === selectedLab.id
+      );
+      const interactionLines = selectedFlows.map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        if (!source || !target) return "";
+        return `<line class="${interactionLineClass(flow, "selected-flow")}" x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${interactionColor(flow)}"></line>`;
+      }).join("");
+
+      layer.innerHTML = interactionLines + intoLines + returnLines + inboundLines;
+
+      // 4. Highlight the underlying trust edges that involve this lab so
+      //    the static lab graph itself responds to the selection.
+      if (trustLayer) {
+        const baseEdges = (model.trust_edges ?? []).map((edge) => {
+          const source = labsById[edge.source];
+          const target = labsById[edge.target];
+          if (!source || !target) return "";
+          const involves = edge.source === selectedLab.id || edge.target === selectedLab.id;
+          const baseColor = edge.status === "blocked" ? "var(--danger)" : edge.status === "review" ? "var(--warning)" : "var(--primary)";
+          const dash = edge.status === "blocked" || edge.status === "review" ? 'stroke-dasharray="2 2"' : "";
+          const opacity = involves ? 0.95 : 0.30;
+          const width = involves ? 0.55 : 0.30;
+          return `<line x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${baseColor}" stroke-width="${width}" opacity="${opacity}" ${dash}></line>`;
+        }).join("");
+        trustLayer.innerHTML = baseEdges;
+      }
+    }
+
+    function renderSelectedLab(model, lab) {
+      $("selected-lab-label").textContent = lab.id;
+      $("selected-lab").innerHTML = `
+        <div class="panel-header">
+          <span class="stamp"><strong>SELECTED</strong> / AGENT</span>
+          ${statusTag(lab.status)}
+        </div>
+        <h2>${esc(lab.label)}</h2>
+        <p class="small" style="margin-top: 8px;">${esc(lab.kind)} · ${esc(lab.custody)} · ${esc(lab.location.display)}</p>
+        <div class="tag-row">
+          ${lab.node_reality ? `<span class="tag ${lab.node_reality.kind === "real" ? "real" : "plan"}">${esc(lab.node_reality.label)}</span>` : ""}
+          ${lab.sectors.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="card">
+            <span class="metric-label">trust tier</span>
+            <h3>${esc(lab.trust_tier)}</h3>
+            <p>${esc(model.trust_tiers.find((tier) => tier.id === lab.trust_tier)?.description ?? "")}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">operator gate</span>
+            <h3>${lab.human_overseer.required ? "required" : "not required"}</h3>
+            <p>${esc(lab.human_overseer.label)}</p>
+          </div>
+        </div>
+        <div class="tag-row">${lab.capabilities.map((cap) => `<span class="tag good">${esc(cap)}</span>`).join("")}</div>
+      `;
+    }
+
+    function renderQuests(model) {
+      $("quests").innerHTML = model.quests.map((quest) => `
+        <article class="card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(quest.id)}</span>
+            ${statusTag(quest.status)}
+          </div>
+          <h3>${esc(quest.label)}</h3>
+          <p>${esc(quest.operator_gate)}</p>
+          <div class="tag-row">${quest.artifact_flow.map((ref) => `<span class="tag">${esc(ref)}</span>`).join("")}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderArtifacts(model) {
+      $("artifacts").innerHTML = model.artifact_cards.map((artifact) => `
+        <div class="artifact-line">
+          <div>
+            <strong>${esc(artifact.label)}</strong>
+            <p class="small mono">${esc(artifact.schema_tag)} · parents: ${artifact.lineage.length ? artifact.lineage.map(esc).join(", ") : "root"}</p>
+          </div>
+          ${statusTag(artifact.status)}
+        </div>
+      `).join("");
+    }
+
+    function usdMicros(value) {
+      return `$${((value ?? 0) / 1_000_000).toFixed(2)}`;
+    }
+
+    const TX_KIND_LABEL = {
+      dft: "DFT compute",
+      retrosynthesis: "Retrosynthesis",
+      literature: "Literature",
+    };
+
+    function renderScienceTransactions(model, filterLabId) {
+      const root = $("science-transactions");
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.science_transactions ?? [];
+      const transactions = filterLabId
+        ? all.filter((tx) => tx.target_lab === filterLabId)
+        : all;
+
+      // Banner that tells the user what's filtering the list.
+      let banner = "";
+      if (filterLabId) {
+        const lab = labsById[filterLabId];
+        const labelText = lab ? lab.short_label : filterLabId;
+        banner = `
+          <div class="tx-filter-banner">
+            <span>Filter · agent runs for ${esc(labelText)} (${transactions.length} of ${all.length})</span>
+            <button id="tx-clear-filter" type="button">Show all</button>
+          </div>
+        `;
+      }
+
+      // Group by service_kind so DFT, retro, lit each get their own header.
+      const groups = {};
+      for (const tx of transactions) {
+        const k = tx.service_kind ?? "other";
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(tx);
+      }
+      const groupOrder = ["dft", "retrosynthesis", "literature"];
+      const orderedKeys = [
+        ...groupOrder.filter((k) => groups[k]),
+        ...Object.keys(groups).filter((k) => !groupOrder.includes(k)),
+      ];
+
+      const renderTxCard = (tx) => {
+        const requesterLabel = esc(tx.requester_agent ?? tx.payer_agent ?? "");
+        const targetLab = labsById[tx.target_lab];
+        const targetLabel = esc(targetLab ? targetLab.short_label : (tx.target_lab ?? ""));
+        const handoff = `
+          <div class="tx-handoff">
+            <span class="pill">${requesterLabel}</span>
+            <span class="arrow">▶</span>
+            <span class="pill target">${targetLabel}</span>
+          </div>
+        `;
+        const chemSummary = tx.summary_chem
+          ? `<p class="small mono" style="color: var(--primary); margin-top: 6px;">${esc(tx.summary_chem)}</p>`
+          : "";
+        return `
+          <article class="card">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <span class="stamp">${esc(tx.id)}</span>
+              ${statusTag(tx.status)}
+            </div>
+            <h3>${esc(tx.service_kind)} · ${esc(tx.provider_ens)}</h3>
+            ${handoff}
+            <p>${esc(tx.summary)}</p>
+            ${chemSummary}
+            <div class="transaction-flow mono">
+              ${tx.artifact_flow.map((step) => `<span class="flow-step">${esc(step)}</span>`).join("")}
+            </div>
+            <div class="grid-2">
+              <div class="card">
+                <span class="metric-label">quote</span>
+                <h3>${usdMicros(tx.price_usdc_micros)} · ${esc(tx.quote_id)}</h3>
+                <p>${esc(tx.asset ?? "USDC")} · ${esc(tx.estimated_latency_seconds)}s estimated latency</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">payer → payee</span>
+                <h3>${esc(tx.payer_agent ?? tx.requester_ens)}</h3>
+                <p>→ ${esc(tx.payee_agent ?? tx.provider_ens)}</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">escrow</span>
+                <h3>${esc(tx.escrow_id ?? tx.settlement_id)}</h3>
+                <p>${esc(tx.settlement_method ?? "simulated")} · no live funds moved</p>
+              </div>
+              <div class="card">
+                <span class="metric-label">release</span>
+                <h3>${esc(tx.release_id ?? tx.result_id)}</h3>
+                <p>${esc(tx.transaction_ref ?? tx.settlement_id)}</p>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag ${tagClassForStatus(tx.release_status ?? "pending-release")}">${esc(tx.release_status ?? "pending-release")}</span>
+              <span class="tag">ack:${esc(tx.acknowledgement_id ?? "pending")}</span>
+              <span class="tag">refund-to:${esc(tx.refund_policy?.refund_to_agent ?? tx.payer_agent ?? tx.requester_ens)}</span>
+            </div>
+            <div class="tag-row">
+              ${tx.sponsor_bindings.map((binding) => `<span class="tag ${tagClassForStatus(binding.live_status)}">${esc(binding.sponsor)}:${esc(binding.live_status)}</span>`).join("")}
+            </div>
+          </article>
+        `;
+      };
+
+      const groupHtml = orderedKeys.map((k, i) => {
+        const realCount = groups[k].filter((t) => t.status === "real-execution").length;
+        const realBadge = realCount > 0
+          ? ` <strong style="color: var(--agent);">· ${realCount} real‑exec</strong>`
+          : "";
+        return `
+          <div class="tx-section-header${i === 0 ? " first" : ""}">
+            <span><strong>${esc(TX_KIND_LABEL[k] ?? k)}</strong>${realBadge}</span>
+            <span>${groups[k].length}</span>
+          </div>
+          ${groups[k].map(renderTxCard).join("")}
+        `;
+      }).join("");
+
+      const empty = transactions.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No agent runs target this lane.</p>`
+        : "";
+
+      root.innerHTML = banner + groupHtml + empty;
+
+      const clearBtn = document.getElementById("tx-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderScienceTransactions(model);
+          // also clear the map highlight overlay
+          const layer = document.getElementById("tx-flow-edges");
+          if (layer) layer.innerHTML = "";
+        });
+      }
+    }
+
+    function renderLabInteractions(model, filterLabId) {
+      const root = $("lab-interactions");
+      if (!root) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.lab_interactions ?? [];
+      const flows = filterLabId
+        ? all.filter((flow) => flow.source_lab === filterLabId || flow.target_lab === filterLabId)
+        : all;
+
+      const banner = filterLabId
+        ? `<div class="tx-filter-banner">
+             <span>Filter · handoffs involving ${esc(labsById[filterLabId]?.short_label ?? filterLabId)} (${flows.length} of ${all.length})</span>
+             <button id="interaction-clear-filter" type="button">Show all</button>
+           </div>`
+        : "";
+
+      const payloadTags = (items, klass = "") => (items ?? []).map((item) =>
+        `<span class="tag ${klass}">${esc(item)}</span>`
+      ).join("");
+
+      const cards = flows.map((flow) => {
+        const source = labsById[flow.source_lab];
+        const target = labsById[flow.target_lab];
+        const direction = filterLabId
+          ? flow.source_lab === filterLabId
+            ? "OUTBOUND"
+            : flow.target_lab === filterLabId
+              ? "INBOUND"
+              : "LINKED"
+          : "FLOW";
+        const cardClass = [
+          "card",
+          "interaction-card",
+          flow.status === "real-execution" ? "real-execution" : "",
+          flow.status === "blocked" ? "blocked" : "",
+          flow.status === "review" ? "review" : "",
+        ].filter(Boolean).join(" ");
+        const channelTags = (flow.channels ?? []).map((channel) =>
+          `<span class="tag ${channel === "data" ? "good" : "plan"}">${esc(channel)}</span>`
+        ).join("");
+
+        return `
+          <article class="${cardClass}">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <span class="stamp">${esc(flow.id)}</span>
+              ${statusTag(flow.status)}
+            </div>
+            <h3>${esc(flow.interaction_kind)} · ${esc(direction)}</h3>
+            <div class="tx-handoff">
+              <span class="pill">${esc(source ? source.short_label : flow.source_lab)}</span>
+              <span class="arrow">▶</span>
+              <span class="pill target">${esc(target ? target.short_label : flow.target_lab)}</span>
+            </div>
+            <p>${esc(flow.summary)}</p>
+            <div class="tag-row">
+              ${channelTags}
+              <span class="tag">${esc(flow.evidence_level)}</span>
+            </div>
+            <div class="grid-2" style="margin-top: 10px;">
+              <div class="card">
+                <span class="metric-label">data payloads</span>
+                <div class="tag-row">${payloadTags(flow.data_payloads, "good")}</div>
+              </div>
+              <div class="card">
+                <span class="metric-label">concept payloads</span>
+                <div class="tag-row">${payloadTags(flow.conceptual_payloads, "plan")}</div>
+              </div>
+              <div class="card">
+                <span class="metric-label">pipeline role</span>
+                <h3>${esc(flow.mssp_role)}</h3>
+              </div>
+              <div class="card">
+                <span class="metric-label">public projection</span>
+                <div class="tag-row">${payloadTags(flow.world_avatar_projection)}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const empty = flows.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No agent handoffs involve this lane.</p>`
+        : "";
+
+      root.innerHTML = banner + cards + empty;
+
+      const clearBtn = document.getElementById("interaction-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderLabInteractions(model);
+        });
+      }
+    }
+    function renderAgents(model) {
+      $("agents").innerHTML = model.agents.map((agent) => `
+        <article class="card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(agent.id)}</span>
+            ${statusTag(agent.status)}
+          </div>
+          <h3>${esc(agent.name)}</h3>
+          <p>${esc(agent.type)} · ${esc(agent.human_gate)}</p>
+          <div class="tag-row">${agent.produces_tags.map((tag) => `<span class="tag good">${esc(tag)}</span>`).join("")}</div>
+        </article>
+      `).join("");
+    }
+
+    const VOTE_KIND_LABEL = {
+      Approve: { label: "APPROVE", color: "oklch(0.70 0.18 148)" },
+      Reject: { label: "REJECT", color: "oklch(0.65 0.20 25)" },
+      Abstain: { label: "ABSTAIN", color: "oklch(0.46 0.006 60)" },
+      RequestRevision: { label: "REQUEST REVISION", color: "oklch(0.72 0.16 78)" },
+    };
+
+    function renderCrucibleDiscourse(model, filterLabId) {
+      const root = $("crucible-discourse");
+      if (!root) return;
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const all = model.crucible_votes ?? [];
+      const votes = filterLabId
+        ? all.filter((v) => v.target_lab === filterLabId)
+        : all;
+
+      const banner = filterLabId
+        ? `<div class="tx-filter-banner">
+             <span>Filter · votes targeting ${esc(labsById[filterLabId]?.short_label ?? filterLabId)} (${votes.length} of ${all.length})</span>
+             <button id="discourse-clear-filter" type="button">Show all</button>
+           </div>`
+        : "";
+
+      const intro = `
+        <p class="small" style="margin-bottom: 10px;">
+          Each vote is a <span class="mono" style="color: var(--primary);">crucible.review.vote</span>
+          signed artifact whose <span class="mono">target_content_hash</span> is bound to the
+          target's payload bytes. Tampering with the target invalidates every vote against it.
+          Reproduce both votes locally with
+          <span class="mono" style="color: var(--primary);">cargo run -p chimiaclaw-cli -- crucible-demo</span>.
+        </p>
+      `;
+
+      const cards = votes.map((vote) => {
+        const kindMeta = VOTE_KIND_LABEL[vote.kind] ?? { label: vote.kind, color: "var(--muted)" };
+        const targetLab = labsById[vote.target_lab];
+        const idents = [];
+        if (vote.voter_identity?.orcid) idents.push(`ORCID ${esc(vote.voter_identity.orcid)}`);
+        if (vote.voter_identity?.ens_name) idents.push(`ENS ${esc(vote.voter_identity.ens_name)}`);
+        if (vote.voter_identity?.eth_address) idents.push(`ETH ${esc(vote.voter_identity.eth_address)}`);
+        return `
+          <article class="card">
+            <div class="panel-header" style="margin-bottom: 6px;">
+              <span class="stamp">${esc(vote.vote_id)}</span>
+              <span class="tag" style="color: ${kindMeta.color}; border-color: ${kindMeta.color}55; background: ${kindMeta.color}11; font-weight: 700;">${esc(kindMeta.label)}</span>
+            </div>
+            <h3>${esc(vote.target_label ?? vote.target_artifact_id)}</h3>
+            <div class="tx-handoff">
+              <span class="pill">${esc(idents[0] ?? "identity")}</span>
+              <span class="arrow">▶</span>
+              <span class="pill target">${esc(targetLab ? targetLab.short_label : (vote.target_lab ?? ""))}</span>
+            </div>
+            <p class="small" style="margin-top: 6px;"><em>${esc(vote.rationale ?? "")}</em></p>
+            <div class="tag-row">
+              <span class="tag" style="color: var(--primary); border-color: oklch(0.76 0.17 192 / 0.35);">target ${esc(vote.target_artifact_id)}</span>
+              <span class="tag">${esc(vote.target_schema_tag)}</span>
+            </div>
+            <div class="tag-row">
+              ${idents.slice(1).map((s) => `<span class="tag good">${s}</span>`).join("")}
+              ${vote.provenance?.source_kind ? `<span class="tag">src:${esc(vote.provenance.source_kind)}</span>` : ""}
+              ${vote.provenance?.source_ref ? `<span class="tag">ref:${esc(vote.provenance.source_ref)}</span>` : ""}
+              <span class="tag plan">${esc(vote.status ?? "projection")}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const empty = votes.length === 0
+        ? `<p class="small" style="opacity: 0.7;">No discourse votes target this lab. Project new votes via <span class="mono">crucible vote</span>.</p>`
+        : "";
+      root.innerHTML = banner + intro + cards + empty;
+
+      const clearBtn = document.getElementById("discourse-clear-filter");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          renderCrucibleDiscourse(model);
+        });
+      }
+    }
+
+    function renderPrinciples(model) {
+      $("principles").innerHTML = model.abstraction_principles.map((principle) => `
+        <article class="card">
+          <span class="stamp">${esc(principle.id)}</span>
+          <h3>${esc(principle.label)}</h3>
+          <p>${esc(principle.description)}</p>
+        </article>
+      `).join("");
+    }
+
+    function renderMssp(model) {
+      const projection = model.mssp_projection;
+      $("mssp").innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <span class="metric-label">status</span>
+            <h3>${esc(projection.status)}</h3>
+            <p>${esc(projection.canonical_boundary)}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">families</span>
+            <h3>${projection.skill_families.length} skill families</h3>
+            <p>${esc(projection.description)}</p>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          ${projection.demo_generations.map((gen) => `
+            <div class="generation">
+              <span class="tag plan">${esc(gen.id)}</span>
+              <div>
+                <h3>${esc(gen.label)}</h3>
+                <p class="small">${esc(gen.status)}</p>
+                <div class="tag-row">${gen.artifact_refs.map((ref) => `<span class="tag">${esc(ref)}</span>`).join("")}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderWorldAvatar(model) {
+      const projection = model.world_avatar_projection;
+      $("world-avatar").innerHTML = `
+        <div class="grid-2">
+          <div class="card">
+            <span class="metric-label">status</span>
+            <h3>${esc(projection.status)}</h3>
+            <p>${esc(projection.canonical_boundary)}</p>
+          </div>
+          <div class="card">
+            <span class="metric-label">namespaces</span>
+            <div class="tag-row">${projection.namespaces.map((ns) => `<span class="tag">${esc(ns)}</span>`).join("")}</div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="card">
+            <h3>Current triples</h3>
+            ${projection.current_triples.map((triple) => `<p class="small mono">${esc(triple.subject)} → ${esc(triple.predicate)} → ${esc(triple.object)}</p>`).join("")}
+          </div>
+          <div class="card">
+            <h3>Future bindings</h3>
+            ${projection.future_bindings.map((binding) => `<p class="small">• ${esc(binding)}</p>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadModel() {
+      const errors = [];
+      for (const source of MODEL_SOURCES) {
+        try {
+          const response = await fetch(`./${source}`, { cache: "no-store" });
+          if (!response.ok) {
+            errors.push(`${source}: HTTP ${response.status}`);
+            continue;
+          }
+          return { model: await response.json(), source };
+        } catch (error) {
+          errors.push(`${source}: ${error.message}`);
+        }
+      }
+      throw new Error(errors.join("; "));
+    }
+
+    function orbitalAssetPath(model) {
+      const viewer = model.orbital_viewer ?? {};
+      return viewer.gallery_asset_path ?? viewer.asset_path ?? "";
+    }
+
+    function renderDashboard(model, source) {
+      $("title").textContent = model.title;
+      $("subtitle").textContent = model.subtitle;
+      $("schema").textContent = model.schema_version;
+      $("maturity").textContent = model.maturity;
+      $("model-source").textContent = source;
+      renderTicker(model);
+      renderMetrics(model);
+      renderTopbarEvidence(model);
+      renderSubmissionSnapshot(model);
+      renderLiveSponsorEvidence(model);
+      const nextOrbitalAssetPath = orbitalAssetPath(model);
+      if (nextOrbitalAssetPath !== currentOrbitalAssetPath) {
+        currentOrbitalAssetPath = nextOrbitalAssetPath;
+        renderOrbitalViewer(model);
+      }
+      renderMap(model);
+      renderScienceTransactions(model);
+      renderArtifacts(model);
+      renderAgents(model);
+    }
+
+    async function refreshDashboard() {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      try {
+        const { model, source } = await loadModel();
+        renderDashboard(model, source);
+      } catch (error) {
+        $("title").textContent = "Could not load world model";
+        $("subtitle").textContent = `Serve this directory first: python3 -m http.server 8787 --directory demo. Error: ${error.message}`;
+      } finally {
+        refreshInFlight = false;
+      }
+    }
+
+    refreshDashboard();
+    setInterval(refreshDashboard, MODEL_REFRESH_MS);
+  </script>
+</body>
+</html>
