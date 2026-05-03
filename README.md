@@ -1,6 +1,43 @@
-# chimiaclaw
+# ChimiaClaw
 
-Rust-native scaffold for autonomous scientific agents, signed payload-bound artifact DAGs, and a future ChimiaDAO governance runtime.
+**Rust-native agent framework for decentralized science.** Every action — DFT computation, retrosynthesis, literature search, procurement, governance — is a signed, content-addressed artifact in a payload-bound DAG.
+
+> Built for ETHGlobal OpenAgents · Apache-2.0 · [Architecture](docs/ARCHITECTURE.md) · [Live demo](demo/world-map.html)
+
+## What makes this real
+
+- **Signed artifact DAG** — Ed25519 signatures + Blake3 content hashing. Tamper with the payload, the signature breaks. Every artifact commits to its canonical bytes via `PayloadRef`.
+- **Six real DFT results** — Water, methanol, benzene, propylene glycol, caprylic acid, capric acid. SCF-converged PBE/def2-tzvp on PySCF. HOMO/LUMO/total-density orbital cubes content-addressed via SHA-256. [View in SciCrucible →](SciCrucible_v1/)
+- **Live ENS identity on Sepolia** — Agent text records published, resolved, and verified on-chain. Three signed artifacts: `identity.ens.publication` → `identity.ens.resolution` → `identity.ens.verification`. No hard-coded values.
+- **Science service market** — Retrosynthesis, DFT, and literature service flows with full economic settlement: quote → acceptance → escrow → settlement intent → result → acknowledgement → release. Non-custodial by default.
+- **Portable Molecular ADT** — 21-atom ferrocene with η5-haptic bonding systems down to water. Pure-Rust SVG renderer, XYZ/PySCF projections, RDKit worker boundary for arbitrary SMILES.
+- **0G Storage adapter** — Signed `storage.zerog.upload` anchor artifacts with content-addressed payloads. Private keys never touch process arguments.
+- **KeeperHub execution scheduling** — Rust REST client for workflow scheduling with signed `exec.keeperhub.*` artifacts.
+- **Local polling runtime** — File-backed artifact store, skill registry, deterministic polling loop with idempotent child production.
+
+## Quick start
+
+```sh
+cargo run -p chimiaclaw-cli -- demo-dag              # route → quote → receipt
+cargo run -p chimiaclaw-cli -- science-market-demo    # three signed service flows
+cargo run -p chimiaclaw-cli -- moladt-dft-demo        # ferrocene MolADT + DFT request
+cargo run -p chimiaclaw-cli -- world-model verify     # preflight integrity check
+python3 -m http.server 8787 --directory demo          # then open localhost:8787/world-map.html
+```
+
+## Validate
+
+```sh
+cargo fmt --all -- --check
+cargo check --workspace
+cargo test --workspace
+cargo check --workspace --all-features
+forge test --root contracts
+```
+
+---
+
+## Detailed documentation
 
 `chimiaclaw` treats every scientific action, agent decision, optimization step, procurement move, and governance event as a signed artifact in a directed acyclic graph that commits to its scientific or procurement payload. Today, this repository ships the artifact substrate, deterministic local polling over a file-backed store, payload-bound demo flows, a science service transaction fixture with artifact-native economic settlement, and a contracts scaffold. Cross-machine autonomy and governance execution are planned, not yet present.
 
