@@ -2,6 +2,36 @@
 
 This is the near-term build order after the current scaffold.
 
+## 0. Current checkpoint from the 2026-05-12 tri-agent lab-swarm repair
+
+The current working surface is the focused tri-agent lab-swarm dashboard:
+
+1. Literature emits signed `science.literature.synthesis` artifacts.
+2. Retrosynthesis consumes curated molecule candidates and emits signed route evidence.
+3. DFT consumes `chem.molecule.adt` / `chem.dft.request` parents and emits signed `chem.dft.result` evidence.
+4. `demo/world-map.html` prefers `demo/world-model.live.json`, falls back to `demo/world-model.json`, and polls the selected model locally.
+5. `demo/live-dashboard-watch.py` now includes live Literature artifacts in its scanned evidence and counts.
+6. `demo/world-model.json` projects three applied chemistry lab sites: diester pharmaceutical ingredients, cannabis/cannabinoid analytics, and Ge/Sn APM. Each site repeats the same Literature/Retro/DFT core.
+7. `world-model verify` validates both the three-lane core and the new `swarm_sites` / `swarm_site_links` topology.
+
+Validation state:
+
+- `cargo build -p chimiaclaw-cli`
+- `cargo test -p chimiaclaw-cli`
+- `cargo test -p chimiaclaw-literature`
+- `uv run --project skills/literature_synthesis pytest`
+- `target/debug/chimiaclaw-cli world-model verify --world-model demo/world-model.json --artifact-dir demo`
+- `target/debug/chimiaclaw-cli world-model verify --world-model demo/world-model.live.json --artifact-dir demo`
+- `target/debug/chimiaclaw-cli live literature-handoff` converts structural Literature MolADT candidates into signed `chem.molecule.adt` artifacts for supported elements.
+
+Critical gaps to fix next:
+
+- `chimiaclaw-moladt::AtomicSymbol` still lacks Si, Ge, and Sn, so the main-group carbenoid Literature results cannot yet become first-class MolADT/DFT inputs without a deliberate element-support extension.
+- `demo/world-model.live.json` is generated live state but remains tracked; the watcher will keep dirtying the worktree until this file is moved, untracked, or treated as an explicit generated fixture.
+- The Literature lane is signed and testable, but not yet a chemically validated planner. Extraction-provided coordinates must be geometry-validated before any DFT claim.
+- PoX should integrate at the artifact/proof layer: ChimiaClaw artifacts should carry Filecoin CID, `dataHash`, `metricsHash`, experiment type, and reputation-impact metadata in a way that can round-trip through the PoX registry/dashboard.
+- `/Users/crischimiadao/Documents/ChimiaDAO-Cannabis/dashboard` is the primary local state for the cannabinoid site. It already contains cultivation analytics, PoX/Filecoin experiment services, experiment classification, and CID/hash validation, but it is not yet round-tripping signed ChimiaClaw artifacts through the PoX registry.
+
 ## 0. Current checkpoint from the 2026-05-03 evidence merge
 
 The demo is no longer just a scaffold plus mocked sponsor hooks. The current winning path is:

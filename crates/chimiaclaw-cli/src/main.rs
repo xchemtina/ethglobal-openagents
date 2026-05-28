@@ -1,6 +1,6 @@
 use chimiaclaw_artifact::{
-    Artifact, ArtifactDraft, ArtifactId, ArtifactSigner, ArtifactStore, InMemoryArtifactStore,
-    PayloadRef,
+    blake3_hex, canonical_bytes, Artifact, ArtifactDraft, ArtifactId, ArtifactSigner,
+    ArtifactStore, InMemoryArtifactStore, PayloadRef,
 };
 use chimiaclaw_crucible::{
     vote_artifact, ReviewVote, VoteKind, VoteProvenance, VoterIdentity, VOTE_SCHEMA_TAG,
@@ -8,8 +8,9 @@ use chimiaclaw_crucible::{
 use chimiaclaw_market::demo_science_market;
 use chimiaclaw_moladt::{
     demo_ferrocene_moladt, dft_request_artifact, library, molecule_artifact, render,
-    worker as moladt_worker, DftBackend, DftJobKind, DftMethodSpec, DftMoleculeRef, DftRequest,
-    MoleculeAdt,
+    worker as moladt_worker, Atom, AtomicSymbol, BondingSystem, Coordinate, DftBackend, DftJobKind,
+    DftMethodSpec, DftMoleculeRef, DftRequest, Edge, MoleculeAdt, MoleculeProjections,
+    MoleculeProvenance,
 };
 use chimiaclaw_node::{NodeProfile, NodeRuntime, RunCycleReport};
 use chimiaclaw_ord_adt::{
@@ -21,7 +22,7 @@ use retroquoter::{
     demo_execution_request, demo_reagent_catalog, demo_route_proposal, ProcurementExecutor,
     RetroQuoter, RouteQuoteSkill, PLANNER_AGENT, PROCUREMENT_AGENT, ROUTE_PROPOSAL_TAG,
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -72,6 +73,28 @@ fn main() -> ExitCode {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("science-market-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "science-literature-demo", rest @ ..] => match run_science_literature_demo(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("science-literature-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        #[cfg(feature = "live-sponsors")]
+        [_, "live", "literature-run", rest @ ..] => match run_live_literature_run(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live literature-run failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "live", "literature-handoff", rest @ ..] => match run_live_literature_handoff(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("live literature-handoff failed: {error}");
                 ExitCode::FAILURE
             }
         },
@@ -943,12 +966,17 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
             "lab_ids": labs_without_interactions,
         }));
     }
-    if real_labs.len() != 4 {
+    let expected_real_labs = expected_real_lab_count(&model);
+    if real_labs.len() != expected_real_labs {
         model_failures.push(serde_json::json!({
             "check": "labs.node_reality",
-            "error": "expected exactly four real ChimiaDAO nodes in the demo fixture",
+            "error": format!(
+                "expected exactly {expected_real_labs} real node(s) in this dashboard model"
+            ),
             "actual": real_labs.len(),
+            "expected": expected_real_labs,
             "real_labs": real_labs.clone(),
+            "hint": "three-agent-pipeline models derive this from submission_snapshot.metrics[Agent lanes]; broader lab-swarm models still default to four real nodes",
         }));
     }
     if data_channel_flows == 0 {
@@ -963,6 +991,8 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
             "error": "no concept-channel lab interactions found",
         }));
     }
+    let (swarm_site_count, swarm_site_link_count) =
+        validate_swarm_sites(&model, &lab_ids, &mut model_failures);
 
     let mut report = Vec::new();
     let mut failures = 0usize;
@@ -1051,6 +1081,8 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
         "model_checks": {
             "labs": lab_ids.len(),
             "real_labs": real_labs,
+            "swarm_sites": swarm_site_count,
+            "swarm_site_links": swarm_site_link_count,
             "lab_interactions": lab_interaction_count,
             "data_channel_flows": data_channel_flows,
             "concept_channel_flows": concept_channel_flows,
@@ -1068,6 +1100,294 @@ fn run_world_model_verify(args: &[&str]) -> Result<(), String> {
         ))
     } else {
         Ok(())
+    }
+}
+
+fn validate_swarm_sites(
+    model: &serde_json::Value,
+    lab_ids: &BTreeSet<String>,
+    model_failures: &mut Vec<serde_json::Value>,
+) -> (usize, usize) {
+    let required_core_lanes: BTreeSet<String> =
+        ["AGENT.LITERATURE", "AGENT.RETROSYNTHESIS", "AGENT.DFT"]
+            .into_iter()
+            .map(str::to_string)
+            .collect();
+    let mut site_ids = BTreeSet::new();
+    let mut site_count = 0usize;
+
+    if let Some(sites) = model.get("swarm_sites").and_then(|value| value.as_array()) {
+        site_count = sites.len();
+        for (index, site) in sites.iter().enumerate() {
+            let Some(site_id) = site.get("id").and_then(|value| value.as_str()) else {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_sites[{index}].id"),
+                    "error": "site missing string id",
+                }));
+                continue;
+            };
+            if !site_ids.insert(site_id.to_string()) {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_sites[{site_id}].id"),
+                    "error": "duplicate site id",
+                }));
+            }
+            for field in ["label", "short_label", "kind", "status", "summary"] {
+                if site
+                    .get(field)
+                    .and_then(|value| value.as_str())
+                    .map(str::trim)
+                    .unwrap_or_default()
+                    .is_empty()
+                {
+                    model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].{field}"),
+                        "error": "missing non-empty string field",
+                    }));
+                }
+            }
+            for coord in ["x", "y"] {
+                match site
+                    .get("location")
+                    .and_then(|location| location.get(coord))
+                    .and_then(|value| value.as_f64())
+                {
+                    Some(value) if (0.0..=100.0).contains(&value) => {}
+                    Some(value) => model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].location.{coord}"),
+                        "error": "site coordinate must be between 0 and 100",
+                        "actual": value,
+                    })),
+                    None => model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].location.{coord}"),
+                        "error": "missing numeric site coordinate",
+                    })),
+                }
+            }
+
+            let mut lane_ids = BTreeSet::new();
+            let mut role_names = Vec::new();
+            if let Some(lanes) = site
+                .get("tri_agent_core")
+                .and_then(|value| value.as_array())
+            {
+                if lanes.len() != required_core_lanes.len() {
+                    model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].tri_agent_core"),
+                        "error": "each lab site must expose exactly the three core agent lanes",
+                        "actual": lanes.len(),
+                        "expected": required_core_lanes.len(),
+                    }));
+                }
+                for (lane_index, lane) in lanes.iter().enumerate() {
+                    let role = lane
+                        .get("role")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or_default();
+                    if role.trim().is_empty() {
+                        model_failures.push(serde_json::json!({
+                            "check": format!(
+                                "swarm_sites[{site_id}].tri_agent_core[{lane_index}].role"
+                            ),
+                            "error": "lane missing role",
+                        }));
+                    } else {
+                        role_names.push(role.to_ascii_lowercase());
+                    }
+                    match lane.get("agent_id").and_then(|value| value.as_str()) {
+                        Some(agent_id) if lab_ids.contains(agent_id) => {
+                            lane_ids.insert(agent_id.to_string());
+                        }
+                        Some(agent_id) => model_failures.push(serde_json::json!({
+                            "check": format!(
+                                "swarm_sites[{site_id}].tri_agent_core[{lane_index}].agent_id"
+                            ),
+                            "error": "lane references unknown lab id",
+                            "agent_id": agent_id,
+                        })),
+                        None => model_failures.push(serde_json::json!({
+                            "check": format!(
+                                "swarm_sites[{site_id}].tri_agent_core[{lane_index}].agent_id"
+                            ),
+                            "error": "lane missing agent_id",
+                        })),
+                    }
+                    for field in ["status", "evidence"] {
+                        if lane
+                            .get(field)
+                            .and_then(|value| value.as_str())
+                            .map(str::trim)
+                            .unwrap_or_default()
+                            .is_empty()
+                        {
+                            model_failures.push(serde_json::json!({
+                                "check": format!(
+                                    "swarm_sites[{site_id}].tri_agent_core[{lane_index}].{field}"
+                                ),
+                                "error": "lane missing non-empty string field",
+                            }));
+                        }
+                    }
+                }
+            } else {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_sites[{site_id}].tri_agent_core"),
+                    "error": "missing tri_agent_core array",
+                }));
+            }
+
+            let missing_lane_ids: Vec<String> =
+                required_core_lanes.difference(&lane_ids).cloned().collect();
+            if !missing_lane_ids.is_empty() {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_sites[{site_id}].tri_agent_core.agent_id"),
+                    "error": "site is missing one or more required core lanes",
+                    "missing": missing_lane_ids,
+                }));
+            }
+            let unexpected_lane_ids: Vec<String> =
+                lane_ids.difference(&required_core_lanes).cloned().collect();
+            if !unexpected_lane_ids.is_empty() {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_sites[{site_id}].tri_agent_core.agent_id"),
+                    "error": "site contains non-core lane ids",
+                    "unexpected": unexpected_lane_ids,
+                }));
+            }
+            for (label, needle) in [
+                ("Literature", "literature"),
+                ("Retrosynthesis", "retro"),
+                ("DFT", "dft"),
+            ] {
+                if !role_names.iter().any(|role| role.contains(needle)) {
+                    model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].tri_agent_core.role"),
+                        "error": "site is missing expected core lane role",
+                        "role": label,
+                    }));
+                }
+            }
+
+            if let Some(bindings) = site.get("evidence_bindings") {
+                match bindings.as_array() {
+                    Some(bindings) => {
+                        for (binding_index, binding) in bindings.iter().enumerate() {
+                            for field in ["kind", "label", "status"] {
+                                if binding
+                                    .get(field)
+                                    .and_then(|value| value.as_str())
+                                    .map(str::trim)
+                                    .unwrap_or_default()
+                                    .is_empty()
+                                {
+                                    model_failures.push(serde_json::json!({
+                                        "check": format!(
+                                            "swarm_sites[{site_id}].evidence_bindings[{binding_index}].{field}"
+                                        ),
+                                        "error": "evidence binding missing non-empty string field",
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                    None => model_failures.push(serde_json::json!({
+                        "check": format!("swarm_sites[{site_id}].evidence_bindings"),
+                        "error": "evidence_bindings must be an array when present",
+                    })),
+                }
+            }
+        }
+    } else if model.get("swarm_site_links").is_some() {
+        model_failures.push(serde_json::json!({
+            "check": "swarm_sites",
+            "error": "swarm_site_links present but swarm_sites array missing",
+        }));
+    }
+
+    let mut site_link_count = 0usize;
+    if let Some(links) = model
+        .get("swarm_site_links")
+        .and_then(|value| value.as_array())
+    {
+        site_link_count = links.len();
+        for (index, link) in links.iter().enumerate() {
+            let link_id = link
+                .get("label")
+                .and_then(|value| value.as_str())
+                .unwrap_or("<unknown-site-link>");
+            for field in ["source_site", "target_site"] {
+                match link.get(field).and_then(|value| value.as_str()) {
+                    Some(site_id) if site_ids.contains(site_id) => {}
+                    Some(site_id) => model_failures.push(serde_json::json!({
+                        "check": format!("swarm_site_links[{link_id}].{field}"),
+                        "error": "site link references unknown site id",
+                        "site_id": site_id,
+                    })),
+                    None => model_failures.push(serde_json::json!({
+                        "check": format!("swarm_site_links[{index}].{field}"),
+                        "error": "site link missing string site id",
+                    })),
+                }
+            }
+            let channels: BTreeSet<&str> = link
+                .get("channels")
+                .and_then(|value| value.as_array())
+                .map(|channels| channels.iter().filter_map(|value| value.as_str()).collect())
+                .unwrap_or_default();
+            if channels.is_empty() {
+                model_failures.push(serde_json::json!({
+                    "check": format!("swarm_site_links[{link_id}].channels"),
+                    "error": "site link missing data/concept channel labels",
+                }));
+            }
+            for channel in &channels {
+                if !matches!(*channel, "data" | "concept") {
+                    model_failures.push(serde_json::json!({
+                        "check": format!("swarm_site_links[{link_id}].channels"),
+                        "error": "unsupported site link channel",
+                        "channel": channel,
+                    }));
+                }
+            }
+        }
+    } else if site_count > 1 {
+        model_failures.push(serde_json::json!({
+            "check": "swarm_site_links",
+            "error": "multi-site swarm is missing swarm_site_links array",
+        }));
+    }
+
+    (site_count, site_link_count)
+}
+
+fn expected_real_lab_count(model: &serde_json::Value) -> usize {
+    let agent_lanes = model
+        .get("submission_snapshot")
+        .and_then(|snapshot| snapshot.get("metrics"))
+        .and_then(|metrics| metrics.as_array())
+        .and_then(|metrics| {
+            metrics.iter().find_map(|metric| {
+                let label = metric.get("label").and_then(|value| value.as_str())?;
+                if label != "Agent lanes" {
+                    return None;
+                }
+                metric
+                    .get("value")
+                    .and_then(|value| value.as_str())
+                    .and_then(|value| value.trim().parse::<usize>().ok())
+            })
+        });
+    if let Some(count) = agent_lanes {
+        return count;
+    }
+    let maturity = model
+        .get("maturity")
+        .and_then(|value| value.as_str())
+        .unwrap_or_default();
+    if maturity.contains("three-agent-pipeline") {
+        3
+    } else {
+        4
     }
 }
 
@@ -1911,6 +2231,424 @@ fn run_live_keeperhub_status(args: &[&str]) -> Result<(), String> {
         .map_err(|error| format!("serialize: {error}"))?
     );
     Ok(())
+}
+
+// ---------------- literature lane ---------------- //
+
+fn run_science_literature_demo(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_literature::{
+        ingest_manifest_artifact, synthesis_artifact, LiteratureIngestManifest,
+        LiteratureSynthesis, LITERATURE_AGENT,
+    };
+
+    let default_fixture = "skills/literature_synthesis/fixtures/sample_synthesis.json".to_string();
+    let synthesis_path = parse_kv(args, "--synthesis-json")
+        .unwrap_or(default_fixture.as_str())
+        .to_string();
+    let manifest_path = parse_kv(args, "--manifest-json").map(str::to_string);
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or(LITERATURE_AGENT)
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or(1);
+    let signer = NodeProfile::dev_signer_from_seed_label(
+        parse_kv(args, "--seed-label").unwrap_or("science-literature-demo"),
+    );
+
+    let synthesis_body = std::fs::read_to_string(&synthesis_path)
+        .map_err(|error| format!("read synthesis json {synthesis_path}: {error}"))?;
+    let synthesis: LiteratureSynthesis = serde_json::from_str(&synthesis_body)
+        .map_err(|error| format!("parse synthesis json: {error}"))?;
+
+    let mut parents = Vec::new();
+    let mut ingest_artifact_json = serde_json::Value::Null;
+    if let Some(path) = manifest_path.as_ref() {
+        let body = std::fs::read_to_string(path)
+            .map_err(|error| format!("read manifest json {path}: {error}"))?;
+        let manifest: LiteratureIngestManifest =
+            serde_json::from_str(&body).map_err(|error| format!("parse manifest json: {error}"))?;
+        let manifest_art =
+            ingest_manifest_artifact(&manifest, agent.clone(), &signer, None, created_at_unix)
+                .map_err(|error| format!("sign ingest manifest artifact: {error}"))?;
+        parents.push(manifest_art.id.clone());
+        if let Some(dir) = out_dir.as_ref() {
+            std::fs::create_dir_all(dir)
+                .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+            let p = dir.join(format!(
+                "science_literature_ingest.{}.json",
+                manifest_art.id.0
+            ));
+            std::fs::write(
+                &p,
+                serde_json::to_string_pretty(&manifest_art)
+                    .map_err(|error| format!("serialize manifest artifact: {error}"))?,
+            )
+            .map_err(|error| format!("write {}: {error}", p.display()))?;
+        }
+        ingest_artifact_json = serde_json::to_value(&manifest_art)
+            .map_err(|error| format!("serialize manifest artifact: {error}"))?;
+    }
+
+    let synthesis_art =
+        synthesis_artifact(&synthesis, agent, &signer, parents, created_at_unix + 1)
+            .map_err(|error| format!("sign synthesis artifact: {error}"))?;
+    if let Some(dir) = out_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+        let p = dir.join(format!(
+            "science_literature_synthesis.{}.json",
+            synthesis_art.id.0
+        ));
+        std::fs::write(
+            &p,
+            serde_json::to_string_pretty(&synthesis_art)
+                .map_err(|error| format!("serialize synthesis artifact: {error}"))?,
+        )
+        .map_err(|error| format!("write {}: {error}", p.display()))?;
+    }
+
+    let report = serde_json::json!({
+        "synthesis_artifact_id": synthesis_art.id.0,
+        "ingest_artifact": ingest_artifact_json,
+        "synthesis_artifact": synthesis_art,
+        "out_dir": out_dir.as_ref().map(|p| p.display().to_string()),
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize literature demo report: {error}"))?
+    );
+    Ok(())
+}
+
+#[cfg(feature = "live-sponsors")]
+fn run_live_literature_run(args: &[&str]) -> Result<(), String> {
+    // Same signing path as the demo, but requires an explicit --synthesis-json
+    // produced by `literature-synthesis extract` against real PDFs. The Python
+    // worker does the network/LLM work; this command only signs and persists.
+    if parse_kv(args, "--synthesis-json").is_none() {
+        return Err(
+            "--synthesis-json is required (run `literature-synthesis extract ...` first)"
+                .to_string(),
+        );
+    }
+    run_science_literature_demo(args)
+}
+
+fn run_live_literature_handoff(args: &[&str]) -> Result<(), String> {
+    use chimiaclaw_literature::{ExtractedMoleculeCandidate, LiteratureSynthesis};
+
+    let synthesis_artifact_json = PathBuf::from(require_kv(args, "--synthesis-artifact-json")?);
+    let out_dir = parse_kv(args, "--out-dir").map(PathBuf::from);
+    let allow_worker = !args.iter().any(|arg| *arg == "--no-worker");
+    let agent = AgentId(
+        parse_kv(args, "--agent")
+            .unwrap_or("literature.handoff.chimiaclaw.eth")
+            .to_string(),
+    );
+    let created_at_unix = parse_optional_u64(args, "--created-at")?.unwrap_or(1);
+    let signer = NodeProfile::dev_signer_from_seed_label(
+        parse_kv(args, "--seed-label").unwrap_or("literature-handoff"),
+    );
+
+    let body = std::fs::read_to_string(&synthesis_artifact_json)
+        .map_err(|error| format!("read synthesis artifact json: {error}"))?;
+    let synthesis_art: chimiaclaw_artifact::Artifact = serde_json::from_str(&body)
+        .map_err(|error| format!("parse synthesis artifact: {error}"))?;
+    synthesis_art
+        .verify()
+        .map_err(|error| format!("synthesis artifact verification failed: {error:?}"))?;
+    let payload_ref = synthesis_art
+        .payload
+        .as_ref()
+        .ok_or_else(|| "synthesis artifact has no inline payload".to_string())?;
+    let payload_bytes = payload_ref
+        .inline_bytes()
+        .map_err(|error| format!("decode synthesis payload: {error:?}"))?
+        .ok_or_else(|| "synthesis payload must be inline".to_string())?;
+    let synthesis: LiteratureSynthesis = serde_json::from_slice(&payload_bytes)
+        .map_err(|error| format!("parse synthesis payload: {error}"))?;
+
+    if let Some(dir) = out_dir.as_ref() {
+        std::fs::create_dir_all(dir)
+            .map_err(|error| format!("create out-dir {}: {error}", dir.display()))?;
+    }
+    let mut handed_off = Vec::new();
+    let mut skipped = Vec::new();
+    for (index, candidate) in synthesis.molecule_candidates.iter().enumerate() {
+        let ExtractedMoleculeCandidate {
+            name,
+            smiles,
+            molecule: candidate_molecule,
+            role,
+            source_citation_index,
+            evidence_span,
+        } = candidate;
+        let (molecule, representation) = if let Some(smiles) = smiles.as_deref() {
+            if let Some(mol) = library::resolve_smiles(smiles) {
+                (mol, "smiles-curated")
+            } else if library::is_known_unsafe_for_dft(smiles) {
+                skipped.push(serde_json::json!({
+                    "index": index,
+                    "name": name,
+                    "smiles": smiles,
+                    "reason": "flagged unsafe-for-direct-DFT",
+                }));
+                continue;
+            } else if allow_worker {
+                match moladt_worker::resolve_with_worker(smiles) {
+                    Ok(Some(mol)) => (mol, "smiles-worker"),
+                    Ok(None) => {
+                        skipped.push(serde_json::json!({
+                            "index": index,
+                            "name": name,
+                            "smiles": smiles,
+                            "reason": format!(
+                                "not in curated library and {} is not configured",
+                                moladt_worker::SMILES_WORKER_ENV
+                            ),
+                        }));
+                        continue;
+                    }
+                    Err(error) => {
+                        skipped.push(serde_json::json!({
+                            "index": index,
+                            "name": name,
+                            "smiles": smiles,
+                            "reason": format!("smiles worker failed: {error}"),
+                        }));
+                        continue;
+                    }
+                }
+            } else {
+                skipped.push(serde_json::json!({
+                    "index": index,
+                    "name": name,
+                    "smiles": smiles,
+                    "reason": "not in curated library (--no-worker disables external worker)",
+                }));
+                continue;
+            }
+        } else if let Some(value) = candidate_molecule.as_ref() {
+            match molecule_from_literature_candidate(name, value) {
+                Ok(mol) => (mol, "structural-moladt"),
+                Err(error) => {
+                    skipped.push(serde_json::json!({
+                        "index": index,
+                        "name": name,
+                        "reason": format!("structural molecule conversion failed: {error}"),
+                    }));
+                    continue;
+                }
+            }
+        } else {
+            skipped.push(serde_json::json!({
+                "index": index,
+                "name": name,
+                "reason": "candidate carries neither smiles nor structural molecule",
+            }));
+            continue;
+        };
+        let mol_art = molecule_artifact(
+            &molecule,
+            agent.clone(),
+            &signer,
+            created_at_unix + index as u64,
+        )
+        .map_err(|error| format!("sign molecule artifact for {name}: {error}"))?;
+        if let Some(dir) = out_dir.as_ref() {
+            let p = dir.join(format!("chem_molecule_adt.{}.json", mol_art.id.0));
+            std::fs::write(
+                &p,
+                serde_json::to_string_pretty(&mol_art)
+                    .map_err(|error| format!("serialize molecule artifact: {error}"))?,
+            )
+            .map_err(|error| format!("write {}: {error}", p.display()))?;
+        }
+        handed_off.push(serde_json::json!({
+            "index": index,
+            "name": name,
+            "smiles": smiles,
+            "role": role,
+            "source_citation_index": source_citation_index,
+            "representation": representation,
+            "evidence_span": evidence_span,
+            "molecule_artifact_id": mol_art.id.0,
+            "payload_hash": mol_art.payload.as_ref().map(|p| p.hash.clone()),
+        }));
+    }
+
+    let report = serde_json::json!({
+        "synthesis_artifact_id": synthesis_art.id.0,
+        "handed_off": handed_off,
+        "skipped": skipped,
+        "out_dir": out_dir.as_ref().map(|p| p.display().to_string()),
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("serialize handoff report: {error}"))?
+    );
+    Ok(())
+}
+
+fn molecule_from_literature_candidate(
+    name: &str,
+    value: &serde_json::Value,
+) -> Result<MoleculeAdt, String> {
+    let atoms_value = value
+        .get("atoms")
+        .and_then(|atoms| atoms.as_array())
+        .ok_or_else(|| "molecule.atoms must be an array".to_string())?;
+    let mut atoms = BTreeMap::new();
+    for atom_value in atoms_value {
+        let atom_id = json_u32(atom_value, "atom_id")?;
+        let symbol = atom_value
+            .get("symbol")
+            .and_then(|symbol| symbol.as_str())
+            .ok_or_else(|| "atom.symbol must be a string".to_string())
+            .and_then(parse_atomic_symbol)?;
+        let coordinate = atom_value
+            .get("coordinate")
+            .ok_or_else(|| "atom.coordinate is required".to_string())?;
+        let mut atom = Atom::new(
+            atom_id,
+            symbol,
+            Coordinate::new(
+                json_f64(coordinate, "x")?,
+                json_f64(coordinate, "y")?,
+                json_f64(coordinate, "z")?,
+            ),
+        );
+        atom.formal_charge = atom_value
+            .get("formal_charge")
+            .and_then(|charge| charge.as_i64())
+            .unwrap_or(0)
+            .try_into()
+            .map_err(|_| "atom.formal_charge is out of i32 range".to_string())?;
+        if atoms.insert(atom_id, atom).is_some() {
+            return Err(format!("duplicate atom_id {atom_id}"));
+        }
+    }
+
+    let local_bonds = value
+        .get("local_bonds")
+        .and_then(|bonds| bonds.as_array())
+        .map(|bonds| {
+            bonds
+                .iter()
+                .map(json_edge)
+                .collect::<Result<BTreeSet<_>, _>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
+
+    let systems = value
+        .get("systems")
+        .and_then(|systems| systems.as_array())
+        .map(|systems| {
+            systems
+                .iter()
+                .map(json_bonding_system)
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
+
+    let digest = canonical_bytes(value)
+        .map(|bytes| blake3_hex(&bytes))
+        .map_err(|error| format!("canonicalise structural molecule: {error:?}"))?;
+    let stem = sanitize_filename_stem(name).to_ascii_uppercase();
+    let molecule = MoleculeAdt {
+        molecule_id: format!("MOLADT.LITERATURE.{stem}.{}", &digest[..12]),
+        name: name.to_string(),
+        atoms,
+        local_bonds,
+        systems,
+        provenance: MoleculeProvenance {
+            source_kind: "literature-structural-moladt".to_string(),
+            source_ref: "science.literature.synthesis.molecule_candidates".to_string(),
+            notes: vec![
+                "Converted from the Literature worker's compact Haskell-shaped MolADT JSON"
+                    .to_string(),
+                "Coordinates are extraction-provided and must be geometry-validated before DFT"
+                    .to_string(),
+            ],
+        },
+        projections: MoleculeProjections {
+            canonical_smiles: None,
+            inchi: None,
+            inchikey: None,
+        },
+    };
+    molecule
+        .validate()
+        .map_err(|error| format!("invalid MolADT conversion: {error}"))?;
+    Ok(molecule)
+}
+
+fn json_bonding_system(value: &serde_json::Value) -> Result<BondingSystem, String> {
+    let member_edges = value
+        .get("member_edges")
+        .and_then(|edges| edges.as_array())
+        .ok_or_else(|| "bonding system member_edges must be an array".to_string())?
+        .iter()
+        .map(json_edge)
+        .collect::<Result<BTreeSet<_>, _>>()?;
+    Ok(BondingSystem {
+        system_id: json_u32(value, "system_id")?,
+        shared_electrons: json_u32(value, "shared_electrons")?,
+        member_edges,
+        tag: value
+            .get("tag")
+            .and_then(|tag| tag.as_str())
+            .map(str::to_string),
+    })
+}
+
+fn json_edge(value: &serde_json::Value) -> Result<Edge, String> {
+    let pair = value
+        .as_array()
+        .ok_or_else(|| "edge must be a two-element array".to_string())?;
+    if pair.len() != 2 {
+        return Err("edge must be a two-element array".to_string());
+    }
+    let a = pair[0]
+        .as_u64()
+        .ok_or_else(|| "edge[0] must be a non-negative integer".to_string())?
+        .try_into()
+        .map_err(|_| "edge[0] is out of u32 range".to_string())?;
+    let b = pair[1]
+        .as_u64()
+        .ok_or_else(|| "edge[1] must be a non-negative integer".to_string())?
+        .try_into()
+        .map_err(|_| "edge[1] is out of u32 range".to_string())?;
+    Ok(Edge::new(a, b))
+}
+
+fn json_u32(value: &serde_json::Value, key: &str) -> Result<u32, String> {
+    value
+        .get(key)
+        .and_then(|field| field.as_u64())
+        .ok_or_else(|| format!("{key} must be a non-negative integer"))?
+        .try_into()
+        .map_err(|_| format!("{key} is out of u32 range"))
+}
+
+fn json_f64(value: &serde_json::Value, key: &str) -> Result<f64, String> {
+    value
+        .get(key)
+        .and_then(|field| field.as_f64())
+        .ok_or_else(|| format!("{key} must be a number"))
+}
+
+fn parse_atomic_symbol(symbol: &str) -> Result<AtomicSymbol, String> {
+    // Delegate to the canonical parser in chimiaclaw-moladt so the CLI's
+    // accepted element list automatically tracks the source-of-truth crate.
+    AtomicSymbol::from_symbol(symbol)
+        .ok_or_else(|| format!("unsupported atomic symbol {symbol:?}"))
 }
 
 fn run_demo_dag() {

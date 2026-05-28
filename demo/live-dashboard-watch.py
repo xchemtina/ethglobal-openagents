@@ -193,6 +193,38 @@ def scan_zerog(pipeline_dir: Path, repo_root: Path) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda row: row.get("created_at_unix") or 0)
 
 
+def scan_literature(pipeline_dir: Path, repo_root: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for record in artifact_records(pipeline_dir / "literature", "science_literature_*.art_*.json"):
+        artifact = record["artifact"]
+        payload = record.get("payload") or {}
+        schema = (artifact.get("schema_tags") or ["science.literature.artifact"])[0]
+        kind = "synthesis" if "synthesis" in str(schema) else "ingest"
+        provenance = payload.get("model_provenance", {}) if isinstance(payload.get("model_provenance"), dict) else {}
+        rows.append(
+            {
+                "artifact_id": artifact.get("id"),
+                "kind": kind,
+                "schema_tag": schema,
+                "path": short_path(record["path"], repo_root),
+                "query": payload.get("query"),
+                "sector": payload.get("sector"),
+                "summary": payload.get("summary"),
+                "citation_count": len(payload.get("citations", [])) if isinstance(payload.get("citations"), list) else None,
+                "source_count": len(payload.get("sources", [])) if isinstance(payload.get("sources"), list) else None,
+                "claim_count": len(payload.get("extracted_claims", [])) if isinstance(payload.get("extracted_claims"), list) else None,
+                "molecule_count": len(payload.get("molecule_candidates", [])) if isinstance(payload.get("molecule_candidates"), list) else None,
+                "reaction_count": len(payload.get("reaction_candidates", [])) if isinstance(payload.get("reaction_candidates"), list) else None,
+                "runtime": provenance.get("runtime"),
+                "model_id": provenance.get("model_id"),
+                "prompt_hash": provenance.get("prompt_hash"),
+                "deterministic": provenance.get("deterministic"),
+                "created_at_unix": artifact.get("created_at_unix", 0),
+            }
+        )
+    return sorted(rows, key=lambda row: (row.get("created_at_unix") or 0, row.get("kind") or ""))
+
+
 def scan_ens(pipeline_dir: Path, repo_root: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for record in artifact_records(pipeline_dir / "ens", "identity_ens_*.json"):
@@ -297,6 +329,7 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
     quote_rows = scan_uniswap(pipeline_dir, repo_root)
     zerog_rows = scan_zerog(pipeline_dir, repo_root)
     ens_rows = scan_ens(pipeline_dir, repo_root)
+    literature_rows = scan_literature(pipeline_dir, repo_root)
     log_line = latest_log_line(pipeline_dir)
     dft_started = len(list((pipeline_dir / "molecules").glob("*"))) if (pipeline_dir / "molecules").exists() else 0
     artifact_ids = [
@@ -304,6 +337,7 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
         *(row["artifact_id"] for row in quote_rows if row.get("artifact_id")),
         *(row["artifact_id"] for row in zerog_rows if row.get("artifact_id")),
         *(row["artifact_id"] for row in ens_rows if row.get("artifact_id")),
+        *(row["artifact_id"] for row in literature_rows if row.get("artifact_id")),
     ]
 
     model = copy.deepcopy(base_model)
@@ -329,6 +363,13 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
     upsert_metric(snapshot, "Live Uniswap quotes", f"{len(quote_rows)}/{EXPECTED_UNISWAP_QUOTES} quote-only", "live-quote-only" if quote_rows else "operator-gated-next")
     upsert_metric(snapshot, "Live 0G anchors", str(len(zerog_rows)), "testnet-anchor" if zerog_rows else "operator-gated-next")
     upsert_metric(snapshot, "Live ENS artifacts", f"{len(ens_rows)} artifacts", "live-sepolia-verified" if ens_rows else "operator-gated-next")
+    literature_synth_count = sum(1 for row in literature_rows if row.get("kind") == "synthesis")
+    upsert_metric(
+        snapshot,
+        "Live Literature synthesis",
+        f"{literature_synth_count} signed synthesis artifact(s)",
+        "real-execution" if literature_synth_count else "operator-gated",
+    )
 
     model.setdefault("activity_ticker", []).insert(
         0,
@@ -426,6 +467,66 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
             },
         )
 
+    if literature_rows:
+        synth_rows = [row for row in literature_rows if row.get("kind") == "synthesis"]
+        ingest_rows = [row for row in literature_rows if row.get("kind") == "ingest"]
+        latest_synth = synth_rows[-1] if synth_rows else None
+        records = []
+        if latest_synth:
+            records.extend(
+                [
+                    {"key": "query", "value": str(latest_synth.get("query") or "-")},
+                    {"key": "runtime", "value": f"{latest_synth.get('runtime') or '?'}:{latest_synth.get('model_id') or '?'}"},
+                    {
+                        "key": "counts",
+                        "value": (
+                            f"{latest_synth.get('citation_count') or 0} citations · "
+                            f"{latest_synth.get('claim_count') or 0} claims · "
+                            f"{latest_synth.get('molecule_count') or 0} molecules · "
+                            f"{latest_synth.get('reaction_count') or 0} reactions"
+                        ),
+                    },
+                    {"key": "prompt_hash", "value": str(latest_synth.get("prompt_hash") or "-")},
+                    {"key": "deterministic", "value": str(latest_synth.get("deterministic"))},
+                ]
+            )
+        for row in literature_rows[-6:]:
+            records.append(
+                {
+                    "key": f"{row.get('kind')}:{row.get('artifact_id')}",
+                    "value": str(row.get("summary") or row.get("query") or row.get("path")),
+                }
+            )
+        upsert_evidence(
+            model,
+            {
+                "sponsor": "Literature",
+                "status": "real-execution" if synth_rows else "operator-gated",
+                "summary": (
+                    f"Live signed Literature artifacts: {len(ingest_rows)} ingest manifest(s), "
+                    f"{len(synth_rows)} synthesis result(s)."
+                ),
+                "records": records,
+                "artifacts": [
+                    {"kind": row["kind"], "id": row["artifact_id"]}
+                    for row in literature_rows
+                    if row.get("artifact_id")
+                ],
+                "caveat": "Generated locally from signed science.literature.* artifacts; the browser does not call any LLM or paper API.",
+            },
+        )
+        if synth_rows:
+            append_artifact_card(
+                model,
+                {
+                    "id": "ART.LIVE.LITERATURE.SYNTHESIS",
+                    "label": "Live signed Literature synthesis artifacts",
+                    "schema_tag": "science.literature.synthesis",
+                    "lineage": [row["artifact_id"] for row in synth_rows if row.get("artifact_id")],
+                    "status": "real-execution",
+                },
+            )
+
     if ens_rows:
         publications = [row for row in ens_rows if row.get("kind") == "publication"]
         verifications = [row for row in ens_rows if row.get("kind") == "verification"]
@@ -503,6 +604,8 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
         )
 
     model["overnight_full_pipeline"] = {
+        "literature_artifact_ids": [row["artifact_id"] for row in literature_rows if row.get("artifact_id")],
+        "literature_artifacts": literature_rows,
         "schema_tag": "chimiaclaw.live_dashboard.scan.v1",
         "source_dir": rel_pipeline_dir(pipeline_dir, repo_root),
         "generated_at": now,
@@ -523,6 +626,8 @@ def build_live_model(base_model: dict[str, Any], pipeline_dir: Path, output_path
             "zerog_anchors": len(zerog_rows),
             "ens_artifacts": len(ens_rows),
             "ens_expected_agents": EXPECTED_ENS_AGENTS,
+            "literature_artifacts": len(literature_rows),
+            "literature_syntheses": literature_synth_count,
         },
         "dft_results": dft_rows,
         "dft_result_artifacts": all_dft_rows,
@@ -551,7 +656,8 @@ def run_once(args: argparse.Namespace) -> None:
         "live dashboard refreshed: "
         f"DFT {counts['dft_results']}/{counts['dft_expected']}, "
         f"Uniswap {counts['uniswap_quotes']}/{counts['uniswap_expected']}, "
-        f"0G {counts['zerog_anchors']}, ENS artifacts {counts['ens_artifacts']} -> {args.output}"
+        f"0G {counts['zerog_anchors']}, ENS artifacts {counts['ens_artifacts']}, "
+        f"Literature syntheses {counts['literature_syntheses']} -> {args.output}"
     )
 
 

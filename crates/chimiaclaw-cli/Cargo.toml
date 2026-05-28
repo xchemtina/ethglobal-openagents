@@ -26,6 +26,7 @@ chimiaclaw-dft-skala = { path = "../chimiaclaw-dft-skala", optional = true }
 chimiaclaw-exec-keeperhub = { path = "../chimiaclaw-exec-keeperhub", optional = true }
 chimiaclaw-governance = { path = "../chimiaclaw-governance" }
 chimiaclaw-identity-ens = { path = "../chimiaclaw-identity-ens", optional = true }
+chimiaclaw-literature = { path = "../chimiaclaw-literature" }
 chimiaclaw-market = { path = "../chimiaclaw-market" }
 chimiaclaw-moladt = { path = "../chimiaclaw-moladt" }
 chimiaclaw-node = { path = "../chimiaclaw-node" }

@@ -131,3 +131,15 @@ The current smoke test verifies 35 signed references against `demo/` with zero f
 The AiZynthFinder/B3LYP merge surfaced a silicon-containing TBS alcohol precursor. Because `chimiaclaw-moladt::AtomicSymbol` does not yet support Si, the correct behavior is a signed/modelled blocker (`chimiaclaw.model.blocker` / `blocked:MolADT.AtomicSymbol.Si`), not a fake DFT attempt and not omission from the dashboard.
 
 This decision generalizes: unsupported elements, missing safety data, absent ENS ownership, failed storage uploads, and unconverged SCF runs should appear as explicit blockers with lineage. A blocked artifact is more valuable to ChimiaClaw than a polished but unverifiable success story.
+
+## D20. PoX integration must happen at the artifact/proof boundary
+
+The legacy ChimiaDAO NFT marketplace, the newer ChimiaDAO PoX registry, and ChimiaClaw should not become three dashboards sharing screenshots. The shared contract is a proof envelope: signed ChimiaClaw artifacts produce payload digests, experiment type, metrics hash, Filecoin/0G CID, and parent lineage; PoX contracts and dashboards anchor and reward those proofs; dashboards render the same provenance rather than re-modeling it.
+
+The local LabNodes UI already reads Filecoin Calibration experiment metadata and displays analytical traces. Its next useful role is to become a PoX view over signed ChimiaClaw artifacts, not a separate source of scientific truth.
+
+## D21. Lab sites repeat the same three-agent core
+
+The dashboard-level swarm model is now site-first: diester pharmaceutical ingredients, cannabis/cannabinoid analytics, and Ge/Sn APM are lab sites, not replacements for the core agents. Every lab site must expose the same Literature, Retrosynthesis, and DFT lanes, then specialize through evidence bindings, chemistry constraints, and proof adapters.
+
+`world-model verify` now checks this site layer: each `swarm_sites[]` entry must contain exactly the three core agent ids, site coordinates must be bounded, evidence bindings must be shaped, and `swarm_site_links[]` must reference declared sites with data/concept channels. Rendering a site is no longer enough; broken site topology fails the verifier.

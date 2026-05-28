@@ -127,6 +127,7 @@ dependencies = [
  "chimiaclaw-exec-keeperhub",
  "chimiaclaw-governance",
  "chimiaclaw-identity-ens",
+ "chimiaclaw-literature",
  "chimiaclaw-market",
  "chimiaclaw-moladt",
  "chimiaclaw-node",
@@ -199,6 +200,16 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-schema",
+]
+
+[[package]]
+name = "chimiaclaw-literature"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-schema",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

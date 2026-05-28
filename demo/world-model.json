@@ -1,13 +1,13 @@
 {
   "schema_version": "chimiaclaw.world-model.v1",
-  "fixture_id": "WM.CHIMIACLAW.THREE_AGENT_PIPELINE.001",
+  "fixture_id": "WM.CHIMIACLAW.TRI_AGENT_LAB_SWARM.001",
   "generated_at": "2026-05-03T05:28:00Z",
-  "maturity": "three-agent-pipeline-snapshot",
-  "title": "ChimiaClaw Three-Agent Pipeline",
-  "subtitle": "A focused dashboard for the current submission: Literature extracts cited reaction candidates, Retrosynthesis turns curated molecules into signed route proposals, and DFT runs real PySCF calculations with signed result artifacts, HOMO/LUMO cube evidence, and an overnight five-molecule germanium scalar test. ENS and 0G are shown only where evidence exists or as the next operator-gated publication step.",
+  "maturity": "tri-agent-lab-swarm-snapshot",
+  "title": "ChimiaClaw Tri-Agent Lab Swarm",
+  "subtitle": "A focused dashboard for applied chemistry lab sites that each carry the same Literature, Retrosynthesis, and DFT core. The current projection covers diester pharmaceutical ingredients, cannabis/cannabinoid analytics, and Ge/Sn organometallics for Atomically Precise Manufacturing, while preserving signed artifacts as source truth.",
   "design_language": {
     "mode": "dark-terminal-hud",
-    "source_reference": "Three agent lanes over the signed artifact DAG: literature extraction, retrosynthesis, and DFT.",
+    "source_reference": "Tri-agent cores over the signed artifact DAG: each lab site repeats literature extraction, retrosynthesis, and DFT while specializing by chemistry domain.",
     "tone": "evidence-first and minimal; completed work is separated from next runs so the demo is easy to explain without implying unavailable infrastructure.",
     "palette": {
       "background": "oklch(0.07 0 0)",
@@ -22,7 +22,7 @@
   },
   "current_truth": [
     "The canonical state remains the signed artifact DAG; this dashboard is a static projection of that state.",
-    "The dashboard now centers only three agent lanes: Literature, Retrosynthesis, and DFT.",
+    "The dashboard now projects multiple applied chemistry lab sites; each site carries the same three core agent lanes: Literature, Retrosynthesis, and DFT.",
     "The Literature lane is the upstream extraction bridge: Semantic Scholar/API-backed paper search should extract candidate chemical reaction equations with citations and confidence, then sign science.literature.synthesis artifacts. The available backends are operator-owned and local-network reachable, but the public dashboard does not expose host details.",
     "The Retrosynthesis lane already has the Rust retroquoter skill and signed route/quote artifact shape; it should consume curated molecules/reactions from Literature rather than attempting to parse papers itself.",
     "The DFT lane has real PySCF execution evidence: six PBE/def2-tzvp cube-backed molecule results, three B3LYP/def2-svp precursor results, and five overnight PBE/def2-svp germanium single-point results, all signed as chem.dft.result artifacts; HOMO/LUMO/total-density cube hashes exist only where cube generation was requested.",
@@ -36,9 +36,9 @@
   "layers": [
     {
       "id": "pipeline",
-      "label": "Three-Agent Pipeline",
-      "stamp": "01 / 05 \u2014 PIPELINE",
-      "description": "Literature \u2192 Retrosynthesis \u2192 DFT artifact handoffs."
+      "label": "Tri-Agent Lab Swarm",
+      "stamp": "01 / 05 \u2014 LAB SWARM",
+      "description": "Applied chemistry lab sites with repeated Literature \u2192 Retrosynthesis \u2192 DFT artifact handoffs."
     },
     {
       "id": "runs",
@@ -106,6 +106,189 @@
       "id": "real-compute",
       "label": "Real Compute",
       "description": "The lane has signed results produced by real PySCF/AiZynth execution rather than only fixtures."
+    }
+  ],
+  "swarm_sites": [
+    {
+      "id": "SITE.PHARMA_DIESTERS",
+      "label": "Pharma Ingredients Lab",
+      "short_label": "Diesters",
+      "kind": "applied pharmaceutical ingredient research site",
+      "status": "active-local",
+      "specialty": "pharmaceutical-ingredient-diester-route-and-dft",
+      "location": {
+        "display": "local operator machine + signed artifact store",
+        "precision": "repo-local",
+        "x": 25,
+        "y": 31
+      },
+      "summary": "Reference lab site for ingredient-grade diesters. It anchors the current literature, retrosynthesis, and DFT evidence flows before they are generalized to additional applied chemistry sites.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "signed-local",
+          "evidence": "diester literature synthesis"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "implemented",
+          "evidence": "route/quote skill"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "real-execution",
+          "evidence": "cube-backed PySCF"
+        }
+      ]
+    },
+    {
+      "id": "SITE.CANNABINOID_ANALYTICS",
+      "label": "Cannabinoid Research Lab",
+      "short_label": "Cannabinoids",
+      "kind": "cannabinoid analytical chemistry and formulation site",
+      "status": "pox-adapter-ready",
+      "specialty": "cannabinoid-assay-route-and-proof-of-origin",
+      "location": {
+        "display": "ChimiaDAO-Cannabis dashboard inspected locally",
+        "precision": "operator-approved alias",
+        "x": 75,
+        "y": 31
+      },
+      "summary": "Specialist lab site for cannabis cultivation and cannabinoid analytics. The same three-agent core is now bound to the local ChimiaDAO-Cannabis dashboard: cultivation telemetry, Filecoin/PoX experiment metadata, HPLC/NMR classification, CIDs, data hashes, metrics hashes, and validation guards.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "domain-ingest-next",
+          "evidence": "cannabinoid paper corpus"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "route-filter-next",
+          "evidence": "lab-safe route screens"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "property-screen-next",
+          "evidence": "spectral/property models"
+        }
+      ],
+      "evidence_bindings": [
+        {
+          "kind": "local-ui",
+          "label": "Cannabis dashboard",
+          "status": "source-inspected",
+          "source_path": "/Users/crischimiadao/Documents/ChimiaDAO-Cannabis/dashboard",
+          "summary": "Next.js 15 dashboard for cannabis cultivation telemetry, soil analytics, stress detection, and PoX/Filecoin experiment integration."
+        },
+        {
+          "kind": "contract",
+          "label": "PoX Registry",
+          "status": "configured",
+          "network": "Filecoin Calibration",
+          "address": "0xA6Fa61924F06DB9A84B92182B69F5C08F3176554",
+          "rpc": "https://api.calibration.node.glif.io/rpc/v1",
+          "source_path": "lib/web3-service.ts",
+          "schema": [
+            "totalExperiments()",
+            "getExperiment(id) -> cid,dataHash,metricsHash,difficulty,initialRV,submittedAt"
+          ]
+        },
+        {
+          "kind": "assay",
+          "label": "Experiment classifier",
+          "status": "service-ready",
+          "source_path": "lib/experiment-service.ts",
+          "schema": [
+            "difficulty < 15 -> HPLC",
+            "difficulty 15-24 -> AIR_QUALITY",
+            "difficulty >= 25 -> NMR",
+            "optional Filecoin CID data download"
+          ]
+        },
+        {
+          "kind": "validation",
+          "label": "CID/hash guards",
+          "status": "implemented",
+          "source_path": "lib/validation.ts",
+          "schema": [
+            "CIDv0/CIDv1/Filecoin piece CID",
+            "0x dataHash and metricsHash",
+            "submitter address",
+            "difficulty and timestamp bounds"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SITE.GE_SN_APM",
+      "label": "Ge/Sn APM Lab",
+      "short_label": "Ge/Sn APM",
+      "kind": "organogermanium and organotin atomically precise manufacturing site",
+      "status": "frontier-specialist",
+      "specialty": "group-14-organometallics-for-atomically-precise-manufacturing",
+      "location": {
+        "display": "planned high-rigor compute and synthesis site",
+        "precision": "operator-approved alias",
+        "x": 50,
+        "y": 75
+      },
+      "summary": "Frontier lab site for Ge/Sn organometallics in Atomically Precise Manufacturing. It shares the same agent core but needs element-aware chemistry rules, DFT basis coverage, and stricter safety gates.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "main-group-literature",
+          "evidence": "Ge/Sn source corpus"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "element-gated",
+          "evidence": "main-group constraints"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "basis-coverage-next",
+          "evidence": "needs Si/Ge/Sn MolADT extension"
+        }
+      ]
+    }
+  ],
+  "swarm_site_links": [
+    {
+      "source_site": "SITE.PHARMA_DIESTERS",
+      "target_site": "SITE.CANNABINOID_ANALYTICS",
+      "label": "shared HPLC/PoX assay grammar",
+      "status": "planned",
+      "channels": [
+        "data",
+        "concept"
+      ]
+    },
+    {
+      "source_site": "SITE.PHARMA_DIESTERS",
+      "target_site": "SITE.GE_SN_APM",
+      "label": "DFT/orbital method transfer",
+      "status": "active",
+      "channels": [
+        "concept"
+      ]
+    },
+    {
+      "source_site": "SITE.GE_SN_APM",
+      "target_site": "SITE.PHARMA_DIESTERS",
+      "label": "signed computed evidence return",
+      "status": "operator-gated-next",
+      "channels": [
+        "data"
+      ]
     }
   ],
   "labs": [
@@ -950,6 +1133,51 @@
         }
       ],
       "caveat": "Do not imply every DFT cube or new literature artifact has already been uploaded."
+    },
+    {
+      "sponsor": "Cannabis PoX Dashboard",
+      "status": "source-inspected",
+      "summary": "Local ChimiaDAO-Cannabis dashboard contains the cannabinoid/cultivation UI plus PoX/Filecoin experiment services; the cannabinoid lab site is now wired to this as its proof-of-experiment boundary.",
+      "network": "Filecoin Calibration",
+      "workflow_path": "/Users/crischimiadao/Documents/ChimiaDAO-Cannabis/dashboard",
+      "storage_uri": "CID-ready via registry cid field",
+      "records": [
+        {
+          "key": "registry",
+          "value": "0xA6Fa61924F06DB9A84B92182B69F5C08F3176554"
+        },
+        {
+          "key": "rpc",
+          "value": "https://api.calibration.node.glif.io/rpc/v1"
+        },
+        {
+          "key": "contract shape",
+          "value": "totalExperiments/getExperiment => cid,dataHash,metricsHash,difficulty,initialRV,submittedAt"
+        },
+        {
+          "key": "experiment classes",
+          "value": "HPLC, AIR_QUALITY, NMR via difficulty score"
+        },
+        {
+          "key": "cultivation UI",
+          "value": "rooting/flowering/drying zones, soil analytics, stress alerts"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "source",
+          "id": "lib/web3-service.ts"
+        },
+        {
+          "kind": "source",
+          "id": "lib/experiment-service.ts"
+        },
+        {
+          "kind": "source",
+          "id": "lib/validation.ts"
+        }
+      ],
+      "caveat": "This is a local source binding; this dashboard has not yet performed a live registry read or CID fetch."
     },
     {
       "sponsor": "Literature Backend",

@@ -1,13 +1,13 @@
 {
   "schema_version": "chimiaclaw.world-model.v1",
-  "fixture_id": "WM.CHIMIACLAW.THREE_AGENT_PIPELINE.001",
-  "generated_at": "2026-05-03T07:32:01Z",
+  "fixture_id": "WM.CHIMIACLAW.TRI_AGENT_LAB_SWARM.001",
+  "generated_at": "2026-05-28T07:40:27Z",
   "maturity": "three-agent-pipeline-live-refresh",
-  "title": "ChimiaClaw Three-Agent Pipeline",
+  "title": "ChimiaClaw Tri-Agent Lab Swarm",
   "subtitle": "Live auto-refresh projection of the Literature \u2192 Retrosynthesis \u2192 DFT dashboard. The static model remains the fallback; this live layer scans overnight DFT, Uniswap, 0G, and ENS artifacts emitted by demo/overnight-full-pipeline.sh.",
   "design_language": {
     "mode": "dark-terminal-hud",
-    "source_reference": "Three agent lanes over the signed artifact DAG: literature extraction, retrosynthesis, and DFT.",
+    "source_reference": "Tri-agent cores over the signed artifact DAG: each lab site repeats literature extraction, retrosynthesis, and DFT while specializing by chemistry domain.",
     "tone": "evidence-first and minimal; completed work is separated from next runs so the demo is easy to explain without implying unavailable infrastructure.",
     "palette": {
       "background": "oklch(0.07 0 0)",
@@ -22,7 +22,7 @@
   },
   "current_truth": [
     "The canonical state remains the signed artifact DAG; this dashboard is a static projection of that state.",
-    "The dashboard now centers only three agent lanes: Literature, Retrosynthesis, and DFT.",
+    "The dashboard now projects multiple applied chemistry lab sites; each site carries the same three core agent lanes: Literature, Retrosynthesis, and DFT.",
     "The Literature lane is the upstream extraction bridge: Semantic Scholar/API-backed paper search should extract candidate chemical reaction equations with citations and confidence, then sign science.literature.synthesis artifacts. The available backends are operator-owned and local-network reachable, but the public dashboard does not expose host details.",
     "The Retrosynthesis lane already has the Rust retroquoter skill and signed route/quote artifact shape; it should consume curated molecules/reactions from Literature rather than attempting to parse papers itself.",
     "The DFT lane has real PySCF execution evidence: six PBE/def2-tzvp cube-backed molecule results, three B3LYP/def2-svp precursor results, and five overnight PBE/def2-svp germanium single-point results, all signed as chem.dft.result artifacts; HOMO/LUMO/total-density cube hashes exist only where cube generation was requested.",
@@ -37,9 +37,9 @@
   "layers": [
     {
       "id": "pipeline",
-      "label": "Three-Agent Pipeline",
-      "stamp": "01 / 05 \u2014 PIPELINE",
-      "description": "Literature \u2192 Retrosynthesis \u2192 DFT artifact handoffs."
+      "label": "Tri-Agent Lab Swarm",
+      "stamp": "01 / 05 \u2014 LAB SWARM",
+      "description": "Applied chemistry lab sites with repeated Literature \u2192 Retrosynthesis \u2192 DFT artifact handoffs."
     },
     {
       "id": "runs",
@@ -107,6 +107,189 @@
       "id": "real-compute",
       "label": "Real Compute",
       "description": "The lane has signed results produced by real PySCF/AiZynth execution rather than only fixtures."
+    }
+  ],
+  "swarm_sites": [
+    {
+      "id": "SITE.PHARMA_DIESTERS",
+      "label": "Pharma Ingredients Lab",
+      "short_label": "Diesters",
+      "kind": "applied pharmaceutical ingredient research site",
+      "status": "active-local",
+      "specialty": "pharmaceutical-ingredient-diester-route-and-dft",
+      "location": {
+        "display": "local operator machine + signed artifact store",
+        "precision": "repo-local",
+        "x": 25,
+        "y": 31
+      },
+      "summary": "Reference lab site for ingredient-grade diesters. It anchors the current literature, retrosynthesis, and DFT evidence flows before they are generalized to additional applied chemistry sites.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "signed-local",
+          "evidence": "diester literature synthesis"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "implemented",
+          "evidence": "route/quote skill"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "real-execution",
+          "evidence": "cube-backed PySCF"
+        }
+      ]
+    },
+    {
+      "id": "SITE.CANNABINOID_ANALYTICS",
+      "label": "Cannabinoid Research Lab",
+      "short_label": "Cannabinoids",
+      "kind": "cannabinoid analytical chemistry and formulation site",
+      "status": "pox-adapter-ready",
+      "specialty": "cannabinoid-assay-route-and-proof-of-origin",
+      "location": {
+        "display": "ChimiaDAO-Cannabis dashboard inspected locally",
+        "precision": "operator-approved alias",
+        "x": 75,
+        "y": 31
+      },
+      "summary": "Specialist lab site for cannabis cultivation and cannabinoid analytics. The same three-agent core is now bound to the local ChimiaDAO-Cannabis dashboard: cultivation telemetry, Filecoin/PoX experiment metadata, HPLC/NMR classification, CIDs, data hashes, metrics hashes, and validation guards.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "domain-ingest-next",
+          "evidence": "cannabinoid paper corpus"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "route-filter-next",
+          "evidence": "lab-safe route screens"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "property-screen-next",
+          "evidence": "spectral/property models"
+        }
+      ],
+      "evidence_bindings": [
+        {
+          "kind": "local-ui",
+          "label": "Cannabis dashboard",
+          "status": "source-inspected",
+          "source_path": "/Users/crischimiadao/Documents/ChimiaDAO-Cannabis/dashboard",
+          "summary": "Next.js 15 dashboard for cannabis cultivation telemetry, soil analytics, stress detection, and PoX/Filecoin experiment integration."
+        },
+        {
+          "kind": "contract",
+          "label": "PoX Registry",
+          "status": "configured",
+          "network": "Filecoin Calibration",
+          "address": "0xA6Fa61924F06DB9A84B92182B69F5C08F3176554",
+          "rpc": "https://api.calibration.node.glif.io/rpc/v1",
+          "source_path": "lib/web3-service.ts",
+          "schema": [
+            "totalExperiments()",
+            "getExperiment(id) -> cid,dataHash,metricsHash,difficulty,initialRV,submittedAt"
+          ]
+        },
+        {
+          "kind": "assay",
+          "label": "Experiment classifier",
+          "status": "service-ready",
+          "source_path": "lib/experiment-service.ts",
+          "schema": [
+            "difficulty < 15 -> HPLC",
+            "difficulty 15-24 -> AIR_QUALITY",
+            "difficulty >= 25 -> NMR",
+            "optional Filecoin CID data download"
+          ]
+        },
+        {
+          "kind": "validation",
+          "label": "CID/hash guards",
+          "status": "implemented",
+          "source_path": "lib/validation.ts",
+          "schema": [
+            "CIDv0/CIDv1/Filecoin piece CID",
+            "0x dataHash and metricsHash",
+            "submitter address",
+            "difficulty and timestamp bounds"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SITE.GE_SN_APM",
+      "label": "Ge/Sn APM Lab",
+      "short_label": "Ge/Sn APM",
+      "kind": "organogermanium and organotin atomically precise manufacturing site",
+      "status": "frontier-specialist",
+      "specialty": "group-14-organometallics-for-atomically-precise-manufacturing",
+      "location": {
+        "display": "planned high-rigor compute and synthesis site",
+        "precision": "operator-approved alias",
+        "x": 50,
+        "y": 75
+      },
+      "summary": "Frontier lab site for Ge/Sn organometallics in Atomically Precise Manufacturing. It shares the same agent core but needs element-aware chemistry rules, DFT basis coverage, and stricter safety gates.",
+      "tri_agent_core": [
+        {
+          "role": "Literature",
+          "agent_id": "AGENT.LITERATURE",
+          "status": "main-group-literature",
+          "evidence": "Ge/Sn source corpus"
+        },
+        {
+          "role": "Retro",
+          "agent_id": "AGENT.RETROSYNTHESIS",
+          "status": "element-gated",
+          "evidence": "main-group constraints"
+        },
+        {
+          "role": "DFT",
+          "agent_id": "AGENT.DFT",
+          "status": "basis-coverage-next",
+          "evidence": "needs Si/Ge/Sn MolADT extension"
+        }
+      ]
+    }
+  ],
+  "swarm_site_links": [
+    {
+      "source_site": "SITE.PHARMA_DIESTERS",
+      "target_site": "SITE.CANNABINOID_ANALYTICS",
+      "label": "shared HPLC/PoX assay grammar",
+      "status": "planned",
+      "channels": [
+        "data",
+        "concept"
+      ]
+    },
+    {
+      "source_site": "SITE.PHARMA_DIESTERS",
+      "target_site": "SITE.GE_SN_APM",
+      "label": "DFT/orbital method transfer",
+      "status": "active",
+      "channels": [
+        "concept"
+      ]
+    },
+    {
+      "source_site": "SITE.GE_SN_APM",
+      "target_site": "SITE.PHARMA_DIESTERS",
+      "label": "signed computed evidence return",
+      "status": "operator-gated-next",
+      "channels": [
+        "data"
+      ]
     }
   ],
   "labs": [
@@ -583,30 +766,13 @@
       "status": "webgpu-gallery-rendered-from-signed-cubes"
     },
     {
-      "id": "ART.LIVE.OVERNIGHT_FULL.DFT",
-      "label": "Live overnight full-pipeline DFT results",
-      "schema_tag": "chem.dft.result",
+      "id": "ART.LIVE.LITERATURE.SYNTHESIS",
+      "label": "Live signed Literature synthesis artifacts",
+      "schema_tag": "science.literature.synthesis",
       "lineage": [
-        "art_dc304c0ee27ff5e5",
-        "art_8134f4cfe538f0a0",
-        "art_c186f3052b8156c6",
-        "art_4c9525e1e15d5173",
-        "art_db624b0bf1c084de",
-        "art_06259b13c154631b",
-        "art_83814605e6db0693"
+        "art_b934475133fca4ca"
       ],
       "status": "real-execution"
-    },
-    {
-      "id": "ART.LIVE.UNISWAP.QUOTE_BATCH",
-      "label": "Live Uniswap quote-only settlement artifacts",
-      "schema_tag": "market.uniswap.quote",
-      "lineage": [
-        "art_f133c17ea02e86b2",
-        "art_fc49c5e9bd8dd55b",
-        "art_009c563d99981b87"
-      ],
-      "status": "live-quote-only"
     }
   ],
   "backend_bindings": {
@@ -625,7 +791,7 @@
     {
       "timestamp": "LIVE",
       "agent": "Overnight full pipeline",
-      "action": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json",
+      "action": "watching demo/overnight-full-out",
       "color": "oklch(0.70 0.18 148)"
     },
     {
@@ -851,62 +1017,6 @@
       "refund_policy": {
         "refund_to_agent": "operator.chimiaclaw.eth"
       }
-    },
-    {
-      "id": "TX.LIVE.OVERNIGHT_FULL.DFT",
-      "status": "real-execution",
-      "service_kind": "dft",
-      "provider_ens": "dft.service.chimiaclaw.eth",
-      "provider_agent": "AGENT.DFT",
-      "requester_agent": "operator.chimiaclaw.eth",
-      "target_lab": "AGENT.DFT",
-      "offer_id": "OFFER.LIVE.OVERNIGHT_FULL.DFT",
-      "request_id": "LIVE.DFT.BATCH.7",
-      "quote_id": "art_009c563d99981b87",
-      "settlement_id": "SETTLE.LIVE.UNISWAP.QUOTE_ONLY",
-      "result_id": "art_83814605e6db0693",
-      "price_usdc_micros": 0,
-      "estimated_latency_seconds": 531,
-      "summary": "Live overnight full-pipeline scalar DFT batch has 7 signed result artifact(s) so far.",
-      "summary_chem": "methylgermane gap 7.942 eV; cyclopropylgermane gap 6.954 eV; propylene-glycol-dioctanoate gap 7.286 eV",
-      "artifact_flow": [
-        "chem.molecule.adt",
-        "chem.dft.request",
-        "chem.dft.result",
-        "market.uniswap.quote",
-        "storage.zerog.upload",
-        "identity.ens.publication"
-      ],
-      "sponsor_bindings": [
-        {
-          "sponsor": "Uniswap",
-          "live_status": "live-quote-only",
-          "attachment": "3 quote artifact(s)"
-        },
-        {
-          "sponsor": "0G",
-          "live_status": "operator-gated-next",
-          "attachment": "0 anchor artifact(s)"
-        },
-        {
-          "sponsor": "ENS",
-          "live_status": "live-sepolia-agent-records",
-          "attachment": "9 ENS artifact(s)"
-        }
-      ],
-      "payer_agent": "operator.chimiaclaw.eth",
-      "payee_agent": "dft.service.chimiaclaw.eth",
-      "asset": "USDC quote-only",
-      "settlement_method": "UniswapPreparedTransfer quote-only",
-      "acceptance_id": "ACCEPT.LIVE.OVERNIGHT_FULL.DFT",
-      "escrow_id": "ESCROW.LIVE.UNISWAP.QUOTE_ONLY",
-      "acknowledgement_id": "ACK.LIVE.OVERNIGHT_FULL.DFT",
-      "release_id": "art_83814605e6db0693",
-      "release_status": "verified-signed-result",
-      "transaction_ref": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
-      "refund_policy": {
-        "refund_to_agent": "operator.chimiaclaw.eth"
-      }
     }
   ],
   "crucible_votes": [],
@@ -967,18 +1077,18 @@
       },
       {
         "label": "Live model",
-        "value": "refreshed 2026-05-03T07:32:01Z",
+        "value": "refreshed 2026-05-28T07:40:27Z",
         "status": "active"
       },
       {
         "label": "Live DFT batch",
-        "value": "7/6 latest results",
-        "status": "real-execution"
+        "value": "0/6 latest results",
+        "status": "active"
       },
       {
         "label": "Live Uniswap quotes",
-        "value": "3/3 quote-only",
-        "status": "live-quote-only"
+        "value": "0/3 quote-only",
+        "status": "operator-gated-next"
       },
       {
         "label": "Live 0G anchors",
@@ -987,8 +1097,13 @@
       },
       {
         "label": "Live ENS artifacts",
-        "value": "9 artifacts",
-        "status": "live-sepolia-verified"
+        "value": "0 artifacts",
+        "status": "operator-gated-next"
+      },
+      {
+        "label": "Live Literature synthesis",
+        "value": "1 signed synthesis artifact(s)",
+        "status": "real-execution"
       }
     ],
     "capture_notes": [
@@ -1003,82 +1118,39 @@
   "live_sponsor_evidence": [
     {
       "sponsor": "ENS",
-      "status": "live-sepolia-agent-records",
-      "summary": "Full-pipeline ENS publication/resolution/verification artifacts are live for service capability records (3 publication(s), 3 verification(s)).",
+      "status": "live-sepolia-verified",
+      "summary": "Root chimiaclaw.eth identity is live and verified; per-agent Literature/Retro/DFT capability records are the next publication step.",
       "network": "Sepolia chain 11155111",
+      "block_range": "10778688-10778692",
       "records": [
         {
-          "key": "resolution:dft.service.chimiaclaw.eth",
-          "value": "verified=None mismatches=None \u00b7 art_06a07b6133d57ae6"
+          "key": "records",
+          "value": "5/5 resolved"
         },
         {
-          "key": "verification:dft.service.chimiaclaw.eth",
-          "value": "verified=True mismatches=0 \u00b7 art_9a806f75845f1597"
+          "key": "mismatches",
+          "value": "0"
         },
         {
-          "key": "publication:retro.service.chimiaclaw.eth",
-          "value": "2 record(s) \u00b7 art_c1310e0e1498adaa"
-        },
-        {
-          "key": "resolution:retro.service.chimiaclaw.eth",
-          "value": "verified=None mismatches=None \u00b7 art_753ae1595cbbe9d1"
-        },
-        {
-          "key": "verification:retro.service.chimiaclaw.eth",
-          "value": "verified=True mismatches=0 \u00b7 art_0eed16fdb4cbf1bb"
-        },
-        {
-          "key": "publication:literature.service.chimiaclaw.eth",
-          "value": "2 record(s) \u00b7 art_3976ea2aa08e13ac"
-        },
-        {
-          "key": "resolution:literature.service.chimiaclaw.eth",
-          "value": "verified=None mismatches=None \u00b7 art_5775f5d4a882a452"
-        },
-        {
-          "key": "verification:literature.service.chimiaclaw.eth",
-          "value": "verified=True mismatches=0 \u00b7 art_ff80ca363cb9cad1"
+          "key": "next",
+          "value": "publish per-agent capability text records/subnames if needed"
         }
       ],
       "artifacts": [
         {
           "kind": "publication",
-          "id": "art_461de2a2b503dcb0"
+          "id": "art_bcf73364c39fb152"
         },
         {
           "kind": "resolution",
-          "id": "art_06a07b6133d57ae6"
+          "id": "art_bc5f74fa853df294"
         },
         {
           "kind": "verification",
-          "id": "art_9a806f75845f1597"
-        },
-        {
-          "kind": "publication",
-          "id": "art_c1310e0e1498adaa"
-        },
-        {
-          "kind": "resolution",
-          "id": "art_753ae1595cbbe9d1"
-        },
-        {
-          "kind": "verification",
-          "id": "art_0eed16fdb4cbf1bb"
-        },
-        {
-          "kind": "publication",
-          "id": "art_3976ea2aa08e13ac"
-        },
-        {
-          "kind": "resolution",
-          "id": "art_5775f5d4a882a452"
-        },
-        {
-          "kind": "verification",
-          "id": "art_ff80ca363cb9cad1"
+          "id": "art_1eb873d15595ba6e"
         }
       ],
-      "caveat": "Generated from local signed identity.ens.* artifacts; private key material remains outside dashboard files."
+      "caveat": "The live claim is for the root identity; service subnames/capability records should be published separately before claiming them live."
     },
     {
       "sponsor": "0G Storage",
@@ -1107,6 +1179,51 @@
         }
       ],
       "caveat": "Do not imply every DFT cube or new literature artifact has already been uploaded."
+    },
+    {
+      "sponsor": "Cannabis PoX Dashboard",
+      "status": "source-inspected",
+      "summary": "Local ChimiaDAO-Cannabis dashboard contains the cannabinoid/cultivation UI plus PoX/Filecoin experiment services; the cannabinoid lab site is now wired to this as its proof-of-experiment boundary.",
+      "network": "Filecoin Calibration",
+      "workflow_path": "/Users/crischimiadao/Documents/ChimiaDAO-Cannabis/dashboard",
+      "storage_uri": "CID-ready via registry cid field",
+      "records": [
+        {
+          "key": "registry",
+          "value": "0xA6Fa61924F06DB9A84B92182B69F5C08F3176554"
+        },
+        {
+          "key": "rpc",
+          "value": "https://api.calibration.node.glif.io/rpc/v1"
+        },
+        {
+          "key": "contract shape",
+          "value": "totalExperiments/getExperiment => cid,dataHash,metricsHash,difficulty,initialRV,submittedAt"
+        },
+        {
+          "key": "experiment classes",
+          "value": "HPLC, AIR_QUALITY, NMR via difficulty score"
+        },
+        {
+          "key": "cultivation UI",
+          "value": "rooting/flowering/drying zones, soil analytics, stress alerts"
+        }
+      ],
+      "artifacts": [
+        {
+          "kind": "source",
+          "id": "lib/web3-service.ts"
+        },
+        {
+          "kind": "source",
+          "id": "lib/experiment-service.ts"
+        },
+        {
+          "kind": "source",
+          "id": "lib/validation.ts"
+        }
+      ],
+      "caveat": "This is a local source binding; this dashboard has not yet performed a live registry read or CID fetch."
     },
     {
       "sponsor": "Literature Backend",
@@ -1240,7 +1357,7 @@
     },
     {
       "sponsor": "Overnight Full Pipeline",
-      "status": "real-execution",
+      "status": "active",
       "summary": "Auto-refreshing local projection of demo/overnight-full-pipeline.sh outputs.",
       "records": [
         {
@@ -1249,15 +1366,15 @@
         },
         {
           "key": "last scan",
-          "value": "2026-05-03T07:32:01Z"
+          "value": "2026-05-28T07:40:27Z"
         },
         {
           "key": "DFT",
-          "value": "7/6 unique molecules complete; 13 result artifacts; 19 molecule dirs started"
+          "value": "0/6 unique molecules complete; 0 result artifacts; 0 molecule dirs started"
         },
         {
           "key": "Uniswap",
-          "value": "3/3 quote-only artifacts"
+          "value": "0/3 quote-only artifacts"
         },
         {
           "key": "0G",
@@ -1265,156 +1382,54 @@
         },
         {
           "key": "ENS",
-          "value": "9 publication/resolution/verification artifacts"
-        },
-        {
-          "key": "latest log",
-          "value": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json"
+          "value": "0 publication/resolution/verification artifacts"
         }
       ],
       "artifacts": [
         {
           "kind": "artifact",
-          "id": "art_009c563d99981b87"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_461de2a2b503dcb0"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_06a07b6133d57ae6"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_9a806f75845f1597"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_c1310e0e1498adaa"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_753ae1595cbbe9d1"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_0eed16fdb4cbf1bb"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_3976ea2aa08e13ac"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_5775f5d4a882a452"
-        },
-        {
-          "kind": "artifact",
-          "id": "art_ff80ca363cb9cad1"
+          "id": "art_b934475133fca4ca"
         }
       ],
       "caveat": "This card is generated locally from files already written by the operator-run pipeline; it never invokes external services itself."
     },
     {
-      "sponsor": "Live Pipeline DFT",
+      "sponsor": "Literature",
       "status": "real-execution",
-      "summary": "New overnight full-pipeline PySCF PBE/def2-svp scalar DFT results are appearing as signed chem.dft.result artifacts.",
+      "summary": "Live signed Literature artifacts: 0 ingest manifest(s), 1 synthesis result(s).",
       "records": [
         {
-          "key": "propylene-glycol-dibutyrate",
-          "value": "OK \u00b7 gap 5.034 eV \u00b7 |\u03bc| 2.665 D \u00b7 142.5s \u00b7 art_dc304c0ee27ff5e5"
+          "key": "query",
+          "value": "main-group hypovalent carbenoids"
         },
         {
-          "key": "propylene-glycol-dipentanoate",
-          "value": "OK \u00b7 gap 5.077 eV \u00b7 |\u03bc| 0.967 D \u00b7 246.0s \u00b7 art_8134f4cfe538f0a0"
+          "key": "runtime",
+          "value": "mlx-local:gemma-4-e4b-it-4bit"
         },
         {
-          "key": "propylene-glycol-dihexanoate",
-          "value": "OK \u00b7 gap 5.153 eV \u00b7 |\u03bc| 0.271 D \u00b7 331.8s \u00b7 art_c186f3052b8156c6"
+          "key": "counts",
+          "value": "2 citations \u00b7 2 claims \u00b7 2 molecules \u00b7 1 reactions"
         },
         {
-          "key": "germane",
-          "value": "OK \u00b7 gap 8.944 eV \u00b7 |\u03bc| 0.000 D \u00b7 0.4s \u00b7 art_4c9525e1e15d5173"
+          "key": "prompt_hash",
+          "value": "blake3:fixture-deterministic-prompt"
         },
         {
-          "key": "methylgermane",
-          "value": "OK \u00b7 gap 7.942 eV \u00b7 |\u03bc| 0.713 D \u00b7 0.9s \u00b7 art_db624b0bf1c084de"
+          "key": "deterministic",
+          "value": "True"
         },
         {
-          "key": "cyclopropylgermane",
-          "value": "OK \u00b7 gap 6.954 eV \u00b7 |\u03bc| 0.793 D \u00b7 2.4s \u00b7 art_06259b13c154631b"
-        },
-        {
-          "key": "propylene-glycol-dioctanoate",
-          "value": "OK \u00b7 gap 7.286 eV \u00b7 |\u03bc| 2.928 D \u00b7 531.8s \u00b7 art_83814605e6db0693"
+          "key": "synthesis:art_b934475133fca4ca",
+          "value": "Open-access reports converge on amido-stabilised germylenes, silylenes, and stannylenes as isolable singlet carbenoids that survive ambient conditions when flanked by sterically demanding N,N-bis(trimethylsilyl)amido ligands."
         }
       ],
       "artifacts": [
         {
-          "kind": "dft-result",
-          "id": "art_dc304c0ee27ff5e5"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_8134f4cfe538f0a0"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_c186f3052b8156c6"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_4c9525e1e15d5173"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_db624b0bf1c084de"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_06259b13c154631b"
-        },
-        {
-          "kind": "dft-result",
-          "id": "art_83814605e6db0693"
+          "kind": "synthesis",
+          "id": "art_b934475133fca4ca"
         }
       ],
-      "caveat": "These full-pipeline DFT jobs request scalar energy/gap/dipole values unless cube generation is explicitly enabled; do not add them to the WebGPU orbital gallery without cube-backed reruns."
-    },
-    {
-      "sponsor": "Uniswap Settlement",
-      "status": "live-quote-only",
-      "summary": "Live Uniswap Trade API quote artifacts exist for service settlement pricing; no swap execution is claimed.",
-      "records": [
-        {
-          "key": "CLASSIC",
-          "value": "3.10 USDC \u2192 3.10 USDT \u00b7 gas $0.06077834556652045 \u00b7 quote-only \u00b7 art_f133c17ea02e86b2"
-        },
-        {
-          "key": "CLASSIC",
-          "value": "8.25 USDC \u2192 8.25 USDT \u00b7 gas $0.06077834556652045 \u00b7 quote-only \u00b7 art_fc49c5e9bd8dd55b"
-        },
-        {
-          "key": "CLASSIC",
-          "value": "49.50 USDC \u2192 49.50 USDT \u00b7 gas $0.06078813553670861 \u00b7 quote-only \u00b7 art_009c563d99981b87"
-        }
-      ],
-      "artifacts": [
-        {
-          "kind": "quote",
-          "id": "art_f133c17ea02e86b2"
-        },
-        {
-          "kind": "quote",
-          "id": "art_fc49c5e9bd8dd55b"
-        },
-        {
-          "kind": "quote",
-          "id": "art_009c563d99981b87"
-        }
-      ],
-      "caveat": "Quote-only boundary: ChimiaClaw signs market.uniswap.quote artifacts and does not call /swap without explicit operator confirmation."
+      "caveat": "Generated locally from signed science.literature.* artifacts; the browser does not call any LLM or paper API."
     }
   ],
   "overnight_dft_test": {
@@ -1630,564 +1645,59 @@
     "caveat": "The gallery is a WebGPU-rendered sampled point-cloud plus inferred bond skeleton visualization of signed cube fields, not a replacement for the cube files or a full quantum chemistry viewer."
   },
   "overnight_full_pipeline": {
+    "literature_artifact_ids": [
+      "art_b934475133fca4ca"
+    ],
+    "literature_artifacts": [
+      {
+        "artifact_id": "art_b934475133fca4ca",
+        "kind": "synthesis",
+        "schema_tag": "science.literature.synthesis",
+        "path": "demo/overnight-full-out/literature/science_literature_synthesis.art_b934475133fca4ca.json",
+        "query": "main-group hypovalent carbenoids",
+        "sector": "automated-synthesis",
+        "summary": "Open-access reports converge on amido-stabilised germylenes, silylenes, and stannylenes as isolable singlet carbenoids that survive ambient conditions when flanked by sterically demanding N,N-bis(trimethylsilyl)amido ligands.",
+        "citation_count": 2,
+        "source_count": null,
+        "claim_count": 2,
+        "molecule_count": 2,
+        "reaction_count": 1,
+        "runtime": "mlx-local",
+        "model_id": "gemma-4-e4b-it-4bit",
+        "prompt_hash": "blake3:fixture-deterministic-prompt",
+        "deterministic": true,
+        "created_at_unix": 2
+      }
+    ],
     "schema_tag": "chimiaclaw.live_dashboard.scan.v1",
     "source_dir": "demo/overnight-full-out",
-    "generated_at": "2026-05-03T07:32:01Z",
+    "generated_at": "2026-05-28T07:40:27Z",
     "log_path": "demo/overnight-full-out/overnight-full.log",
-    "latest_log_line": "live dashboard refreshed: DFT 7/6, Uniswap 3/3, 0G 0, ENS artifacts 9 -> /Users/duck/ChimiaDAO/OpenAgents/demo/world-model.live.json",
+    "latest_log_line": null,
     "artifact_ids": [
-      "art_dc304c0ee27ff5e5",
-      "art_8134f4cfe538f0a0",
-      "art_c186f3052b8156c6",
-      "art_4c9525e1e15d5173",
-      "art_db624b0bf1c084de",
-      "art_06259b13c154631b",
-      "art_83814605e6db0693",
-      "art_f133c17ea02e86b2",
-      "art_fc49c5e9bd8dd55b",
-      "art_009c563d99981b87",
-      "art_461de2a2b503dcb0",
-      "art_06a07b6133d57ae6",
-      "art_9a806f75845f1597",
-      "art_c1310e0e1498adaa",
-      "art_753ae1595cbbe9d1",
-      "art_0eed16fdb4cbf1bb",
-      "art_3976ea2aa08e13ac",
-      "art_5775f5d4a882a452",
-      "art_ff80ca363cb9cad1"
+      "art_b934475133fca4ca"
     ],
-    "dft_result_artifact_ids": [
-      "art_dc304c0ee27ff5e5",
-      "art_8134f4cfe538f0a0",
-      "art_c186f3052b8156c6",
-      "art_4c9525e1e15d5173",
-      "art_db624b0bf1c084de",
-      "art_06259b13c154631b",
-      "art_83814605e6db0693"
-    ],
-    "dft_all_result_artifact_ids": [
-      "art_ede3ca5e8022eca0",
-      "art_c1f1893a99a993fd",
-      "art_f275fb5cdf3fc69f",
-      "art_b19083c6a599429a",
-      "art_2f4a17d98f12ee76",
-      "art_ec791c60c5eb86b8",
-      "art_dc304c0ee27ff5e5",
-      "art_8134f4cfe538f0a0",
-      "art_c186f3052b8156c6",
-      "art_4c9525e1e15d5173",
-      "art_db624b0bf1c084de",
-      "art_06259b13c154631b",
-      "art_83814605e6db0693"
-    ],
-    "uniswap_quote_artifact_ids": [
-      "art_f133c17ea02e86b2",
-      "art_fc49c5e9bd8dd55b",
-      "art_009c563d99981b87"
-    ],
+    "dft_result_artifact_ids": [],
+    "dft_all_result_artifact_ids": [],
+    "uniswap_quote_artifact_ids": [],
     "zerog_anchor_artifact_ids": [],
-    "ens_artifact_ids": [
-      "art_461de2a2b503dcb0",
-      "art_06a07b6133d57ae6",
-      "art_9a806f75845f1597",
-      "art_c1310e0e1498adaa",
-      "art_753ae1595cbbe9d1",
-      "art_0eed16fdb4cbf1bb",
-      "art_3976ea2aa08e13ac",
-      "art_5775f5d4a882a452",
-      "art_ff80ca363cb9cad1"
-    ],
+    "ens_artifact_ids": [],
     "counts": {
-      "dft_results": 7,
-      "dft_result_artifacts": 13,
+      "dft_results": 0,
+      "dft_result_artifacts": 0,
       "dft_expected": 6,
-      "uniswap_quotes": 3,
+      "uniswap_quotes": 0,
       "uniswap_expected": 3,
       "zerog_anchors": 0,
-      "ens_artifacts": 9,
-      "ens_expected_agents": 3
+      "ens_artifacts": 0,
+      "ens_expected_agents": 3,
+      "literature_artifacts": 1,
+      "literature_syntheses": 1
     },
-    "dft_results": [
-      {
-        "label": "propylene-glycol-dibutyrate",
-        "artifact_id": "art_dc304c0ee27ff5e5",
-        "request_artifact_id": "art_c530e2aa9a1c63a1",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_dc304c0ee27ff5e5.json",
-        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -730.7136386429252,
-        "gap_ev": 5.034439089702265,
-        "dipole_debye": 2.665080797949823,
-        "wall_seconds": 142.49481177330017,
-        "converged": true,
-        "created_at_unix": 1777789537
-      },
-      {
-        "label": "propylene-glycol-dipentanoate",
-        "artifact_id": "art_8134f4cfe538f0a0",
-        "request_artifact_id": "art_38675c5ceb55ac30",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_8134f4cfe538f0a0.json",
-        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -809.167704753964,
-        "gap_ev": 5.076909239030293,
-        "dipole_debye": 0.9666493156903162,
-        "wall_seconds": 245.95058178901672,
-        "converged": true,
-        "created_at_unix": 1777789548
-      },
-      {
-        "label": "propylene-glycol-dihexanoate",
-        "artifact_id": "art_c186f3052b8156c6",
-        "request_artifact_id": "art_ebd744602a93af10",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_c186f3052b8156c6.json",
-        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -887.6214280512183,
-        "gap_ev": 5.152751819289588,
-        "dipole_debye": 0.2712284430683576,
-        "wall_seconds": 331.79716300964355,
-        "converged": true,
-        "created_at_unix": 1777789558
-      },
-      {
-        "label": "germane",
-        "artifact_id": "art_4c9525e1e15d5173",
-        "request_artifact_id": "art_6bf4b629cd02ee39",
-        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_4c9525e1e15d5173.json",
-        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2078.7925731898563,
-        "gap_ev": 8.943968217554175,
-        "dipole_debye": 3.043160817471758e-05,
-        "wall_seconds": 0.3610150814056397,
-        "converged": true,
-        "created_at_unix": 1777789569
-      },
-      {
-        "label": "methylgermane",
-        "artifact_id": "art_db624b0bf1c084de",
-        "request_artifact_id": "art_6e535561617fb79a",
-        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_db624b0bf1c084de.json",
-        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2118.0287415083944,
-        "gap_ev": 7.941803510990133,
-        "dipole_debye": 0.71263378407231,
-        "wall_seconds": 0.911625862121582,
-        "converged": true,
-        "created_at_unix": 1777789579
-      },
-      {
-        "label": "cyclopropylgermane",
-        "artifact_id": "art_06259b13c154631b",
-        "request_artifact_id": "art_959a01b928c494eb",
-        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_06259b13c154631b.json",
-        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2195.2488714303418,
-        "gap_ev": 6.954072756568466,
-        "dipole_debye": 0.7927670188472256,
-        "wall_seconds": 2.368964910507202,
-        "converged": true,
-        "created_at_unix": 1777789589
-      },
-      {
-        "label": "propylene-glycol-dioctanoate",
-        "artifact_id": "art_83814605e6db0693",
-        "request_artifact_id": "art_febec4187b2a74c5",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
-        "molecule_id": "MOLADT.RDKIT.OVYMWJFNQQOJBU-QGZVFWFLSA-N",
-        "functional": "b3lyp",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -1045.8846781029804,
-        "gap_ev": 7.286498563391633,
-        "dipole_debye": 2.9276725062222853,
-        "wall_seconds": 531.7745687961578,
-        "converged": true,
-        "created_at_unix": 1777791262
-      }
-    ],
-    "dft_result_artifacts": [
-      {
-        "label": "propylene-glycol-dibutyrate",
-        "artifact_id": "art_ede3ca5e8022eca0",
-        "request_artifact_id": "art_c530e2aa9a1c63a1",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_ede3ca5e8022eca0.json",
-        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -730.7136386429252,
-        "gap_ev": 5.034439089702265,
-        "dipole_debye": 2.665080797949823,
-        "wall_seconds": 142.49481177330017,
-        "converged": true,
-        "created_at_unix": 1777787382
-      },
-      {
-        "label": "propylene-glycol-dipentanoate",
-        "artifact_id": "art_c1f1893a99a993fd",
-        "request_artifact_id": "art_38675c5ceb55ac30",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_c1f1893a99a993fd.json",
-        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -809.167704753964,
-        "gap_ev": 5.076909239030293,
-        "dipole_debye": 0.9666493156903162,
-        "wall_seconds": 245.95058178901672,
-        "converged": true,
-        "created_at_unix": 1777787535
-      },
-      {
-        "label": "propylene-glycol-dihexanoate",
-        "artifact_id": "art_f275fb5cdf3fc69f",
-        "request_artifact_id": "art_ebd744602a93af10",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_f275fb5cdf3fc69f.json",
-        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -887.6214280512183,
-        "gap_ev": 5.152751819289588,
-        "dipole_debye": 0.2712284430683576,
-        "wall_seconds": 331.79716300964355,
-        "converged": true,
-        "created_at_unix": 1777787792
-      },
-      {
-        "label": "germane",
-        "artifact_id": "art_b19083c6a599429a",
-        "request_artifact_id": "art_6bf4b629cd02ee39",
-        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_b19083c6a599429a.json",
-        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2078.7925731898563,
-        "gap_ev": 8.943968217554175,
-        "dipole_debye": 3.043160817471758e-05,
-        "wall_seconds": 0.3610150814056397,
-        "converged": true,
-        "created_at_unix": 1777788134
-      },
-      {
-        "label": "methylgermane",
-        "artifact_id": "art_2f4a17d98f12ee76",
-        "request_artifact_id": "art_6e535561617fb79a",
-        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_2f4a17d98f12ee76.json",
-        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2118.0287415083944,
-        "gap_ev": 7.941803510990133,
-        "dipole_debye": 0.71263378407231,
-        "wall_seconds": 0.911625862121582,
-        "converged": true,
-        "created_at_unix": 1777788144
-      },
-      {
-        "label": "cyclopropylgermane",
-        "artifact_id": "art_ec791c60c5eb86b8",
-        "request_artifact_id": "art_959a01b928c494eb",
-        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_ec791c60c5eb86b8.json",
-        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2195.2488714303418,
-        "gap_ev": 6.954072756568466,
-        "dipole_debye": 0.7927670188472256,
-        "wall_seconds": 2.368964910507202,
-        "converged": true,
-        "created_at_unix": 1777788155
-      },
-      {
-        "label": "propylene-glycol-dibutyrate",
-        "artifact_id": "art_dc304c0ee27ff5e5",
-        "request_artifact_id": "art_c530e2aa9a1c63a1",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dibutyrate/chem_dft_result.art_dc304c0ee27ff5e5.json",
-        "molecule_id": "MOLADT.RDKIT.RWNOITVZTGQIRG-SECBINFHSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -730.7136386429252,
-        "gap_ev": 5.034439089702265,
-        "dipole_debye": 2.665080797949823,
-        "wall_seconds": 142.49481177330017,
-        "converged": true,
-        "created_at_unix": 1777789537
-      },
-      {
-        "label": "propylene-glycol-dipentanoate",
-        "artifact_id": "art_8134f4cfe538f0a0",
-        "request_artifact_id": "art_38675c5ceb55ac30",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dipentanoate/chem_dft_result.art_8134f4cfe538f0a0.json",
-        "molecule_id": "MOLADT.RDKIT.YQXQGZJZISGSBK-NSHDSACASA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -809.167704753964,
-        "gap_ev": 5.076909239030293,
-        "dipole_debye": 0.9666493156903162,
-        "wall_seconds": 245.95058178901672,
-        "converged": true,
-        "created_at_unix": 1777789548
-      },
-      {
-        "label": "propylene-glycol-dihexanoate",
-        "artifact_id": "art_c186f3052b8156c6",
-        "request_artifact_id": "art_ebd744602a93af10",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dihexanoate/chem_dft_result.art_c186f3052b8156c6.json",
-        "molecule_id": "MOLADT.RDKIT.RMZFJNNOMUICLE-ZDUSSCGKSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -887.6214280512183,
-        "gap_ev": 5.152751819289588,
-        "dipole_debye": 0.2712284430683576,
-        "wall_seconds": 331.79716300964355,
-        "converged": true,
-        "created_at_unix": 1777789558
-      },
-      {
-        "label": "germane",
-        "artifact_id": "art_4c9525e1e15d5173",
-        "request_artifact_id": "art_6bf4b629cd02ee39",
-        "path": "demo/overnight-full-out/dft/germane/chem_dft_result.art_4c9525e1e15d5173.json",
-        "molecule_id": "MOLADT.RDKIT.QUZPNFFHZPRKJD-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2078.7925731898563,
-        "gap_ev": 8.943968217554175,
-        "dipole_debye": 3.043160817471758e-05,
-        "wall_seconds": 0.3610150814056397,
-        "converged": true,
-        "created_at_unix": 1777789569
-      },
-      {
-        "label": "methylgermane",
-        "artifact_id": "art_db624b0bf1c084de",
-        "request_artifact_id": "art_6e535561617fb79a",
-        "path": "demo/overnight-full-out/dft/methylgermane/chem_dft_result.art_db624b0bf1c084de.json",
-        "molecule_id": "MOLADT.RDKIT.FOTXTBSEOHNRCB-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2118.0287415083944,
-        "gap_ev": 7.941803510990133,
-        "dipole_debye": 0.71263378407231,
-        "wall_seconds": 0.911625862121582,
-        "converged": true,
-        "created_at_unix": 1777789579
-      },
-      {
-        "label": "cyclopropylgermane",
-        "artifact_id": "art_06259b13c154631b",
-        "request_artifact_id": "art_959a01b928c494eb",
-        "path": "demo/overnight-full-out/dft/cyclopropylgermane/chem_dft_result.art_06259b13c154631b.json",
-        "molecule_id": "MOLADT.RDKIT.ZDQWHGXPJKDDJV-UHFFFAOYSA-N",
-        "functional": "pbe",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -2195.2488714303418,
-        "gap_ev": 6.954072756568466,
-        "dipole_debye": 0.7927670188472256,
-        "wall_seconds": 2.368964910507202,
-        "converged": true,
-        "created_at_unix": 1777789589
-      },
-      {
-        "label": "propylene-glycol-dioctanoate",
-        "artifact_id": "art_83814605e6db0693",
-        "request_artifact_id": "art_febec4187b2a74c5",
-        "path": "demo/overnight-full-out/dft/propylene-glycol-dioctanoate/chem_dft_result.art_83814605e6db0693.json",
-        "molecule_id": "MOLADT.RDKIT.OVYMWJFNQQOJBU-QGZVFWFLSA-N",
-        "functional": "b3lyp",
-        "basis_set": "def2-svp",
-        "backend": "PyScf",
-        "energy_hartree": -1045.8846781029804,
-        "gap_ev": 7.286498563391633,
-        "dipole_debye": 2.9276725062222853,
-        "wall_seconds": 531.7745687961578,
-        "converged": true,
-        "created_at_unix": 1777791262
-      }
-    ],
-    "uniswap_quotes": [
-      {
-        "artifact_id": "art_f133c17ea02e86b2",
-        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_f133c17ea02e86b2.json",
-        "amount_in": "3100000",
-        "amount_out": "3099992",
-        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        "routing_type": "CLASSIC",
-        "gas_fee_usd": "0.06077834556652045",
-        "quote_only": true,
-        "created_at_unix": 1777789600
-      },
-      {
-        "artifact_id": "art_fc49c5e9bd8dd55b",
-        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_fc49c5e9bd8dd55b.json",
-        "amount_in": "8250000",
-        "amount_out": "8249980",
-        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        "routing_type": "CLASSIC",
-        "gas_fee_usd": "0.06077834556652045",
-        "quote_only": true,
-        "created_at_unix": 1777789603
-      },
-      {
-        "artifact_id": "art_009c563d99981b87",
-        "path": "demo/overnight-full-out/uniswap/market_uniswap_quote.art_009c563d99981b87.json",
-        "amount_in": "49500000",
-        "amount_out": "49499887",
-        "token_in": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        "routing_type": "CLASSIC",
-        "gas_fee_usd": "0.06078813553670861",
-        "quote_only": true,
-        "created_at_unix": 1777789606
-      }
-    ],
+    "dft_results": [],
+    "dft_result_artifacts": [],
+    "uniswap_quotes": [],
     "zerog_anchors": [],
-    "ens_artifacts": [
-      {
-        "artifact_id": "art_461de2a2b503dcb0",
-        "kind": "publication",
-        "schema_tag": "identity.ens.publication",
-        "agent": "dft.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_461de2a2b503dcb0.json",
-        "chain_id": 11155111,
-        "verified": null,
-        "mismatches": null,
-        "records": 2,
-        "created_at_unix": 1777789796
-      },
-      {
-        "artifact_id": "art_06a07b6133d57ae6",
-        "kind": "resolution",
-        "schema_tag": "identity.ens.resolution",
-        "agent": "dft.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_06a07b6133d57ae6.json",
-        "chain_id": null,
-        "verified": null,
-        "mismatches": null,
-        "records": null,
-        "created_at_unix": 1777789798
-      },
-      {
-        "artifact_id": "art_9a806f75845f1597",
-        "kind": "verification",
-        "schema_tag": "identity.ens.verification",
-        "agent": "dft.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_9a806f75845f1597.json",
-        "chain_id": null,
-        "verified": true,
-        "mismatches": 0,
-        "records": null,
-        "created_at_unix": 1777789799
-      },
-      {
-        "artifact_id": "art_c1310e0e1498adaa",
-        "kind": "publication",
-        "schema_tag": "identity.ens.publication",
-        "agent": "retro.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_c1310e0e1498adaa.json",
-        "chain_id": 11155111,
-        "verified": null,
-        "mismatches": null,
-        "records": 2,
-        "created_at_unix": 1777789820
-      },
-      {
-        "artifact_id": "art_753ae1595cbbe9d1",
-        "kind": "resolution",
-        "schema_tag": "identity.ens.resolution",
-        "agent": "retro.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_753ae1595cbbe9d1.json",
-        "chain_id": null,
-        "verified": null,
-        "mismatches": null,
-        "records": null,
-        "created_at_unix": 1777789822
-      },
-      {
-        "artifact_id": "art_0eed16fdb4cbf1bb",
-        "kind": "verification",
-        "schema_tag": "identity.ens.verification",
-        "agent": "retro.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_0eed16fdb4cbf1bb.json",
-        "chain_id": null,
-        "verified": true,
-        "mismatches": 0,
-        "records": null,
-        "created_at_unix": 1777789823
-      },
-      {
-        "artifact_id": "art_3976ea2aa08e13ac",
-        "kind": "publication",
-        "schema_tag": "identity.ens.publication",
-        "agent": "literature.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_publication.art_3976ea2aa08e13ac.json",
-        "chain_id": 11155111,
-        "verified": null,
-        "mismatches": null,
-        "records": 2,
-        "created_at_unix": 1777789843
-      },
-      {
-        "artifact_id": "art_5775f5d4a882a452",
-        "kind": "resolution",
-        "schema_tag": "identity.ens.resolution",
-        "agent": "literature.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_resolution.art_5775f5d4a882a452.json",
-        "chain_id": null,
-        "verified": null,
-        "mismatches": null,
-        "records": null,
-        "created_at_unix": 1777789845
-      },
-      {
-        "artifact_id": "art_ff80ca363cb9cad1",
-        "kind": "verification",
-        "schema_tag": "identity.ens.verification",
-        "agent": "literature.service.chimiaclaw.eth",
-        "ens_name": "chimiaclaw.eth",
-        "path": "demo/overnight-full-out/ens/identity_ens_verification.art_ff80ca363cb9cad1.json",
-        "chain_id": null,
-        "verified": true,
-        "mismatches": 0,
-        "records": null,
-        "created_at_unix": 1777789846
-      }
-    ]
+    "ens_artifacts": []
   }
 }

@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ChimiaClaw Three-Agent Pipeline</title>
+  <title>ChimiaClaw Tri-Agent Lab Swarm</title>
   <style>
     :root {
       color-scheme: dark;
+      --renderer-revision: "orbital-render-v2.4-dense-orbitals";
       --bg: oklch(0.07 0 0);
       --panel: oklch(0.105 0 0);
       --panel-2: oklch(0.13 0 0);
@@ -240,8 +241,8 @@
 
     .map {
       position: relative;
-      height: min(420px, 43vh);
-      min-height: 340px;
+      height: min(520px, 54vh);
+      min-height: 420px;
       overflow: hidden;
       background:
         linear-gradient(90deg, oklch(0.18 0 0 / 0.35) 1px, transparent 1px),
@@ -374,6 +375,119 @@
     .lab-node.allied .lab-tx-count { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 12px oklch(0.72 0.16 78 / 0.45); }
     .lab-node.virtual .lab-tx-count { border-color: var(--purple); color: var(--purple); box-shadow: 0 0 12px oklch(0.65 0.16 262 / 0.45); }
     .lab-node.quarantine .lab-tx-count { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 12px oklch(0.65 0.20 25 / 0.45); }
+
+    .swarm-site {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: min(275px, 34vw);
+      min-width: 205px;
+      border: 1px solid oklch(0.76 0.17 192 / 0.52);
+      background:
+        linear-gradient(180deg, oklch(0.105 0.02 220 / 0.96), oklch(0.07 0 0 / 0.95));
+      padding: 12px;
+      text-align: left;
+      color: var(--text);
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 0.6),
+        0 0 28px oklch(0.76 0.17 192 / 0.14),
+        0 18px 42px oklch(0 0 0 / 0.42);
+    }
+
+    .swarm-site.real-compute {
+      border-color: oklch(0.70 0.18 148 / 0.62);
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 0.6),
+        0 0 30px oklch(0.70 0.18 148 / 0.20),
+        0 18px 42px oklch(0 0 0 / 0.42);
+    }
+
+    .swarm-site-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .swarm-site h3 {
+      font-size: 15px;
+      line-height: 1.1;
+    }
+
+    .swarm-site-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .swarm-lane {
+      position: relative;
+      min-height: 78px;
+      border: 1px solid var(--border);
+      background: oklch(0.06 0 0 / 0.92);
+      color: var(--muted);
+      padding: 8px 6px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .swarm-lane:hover,
+    .swarm-lane:focus,
+    .swarm-lane.selected {
+      outline: 1px solid var(--primary);
+      outline-offset: 2px;
+      color: var(--text);
+      background: oklch(0.09 0.03 220 / 0.92);
+    }
+
+    .swarm-lane-role {
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .swarm-lane-status {
+      min-height: 24px;
+      color: var(--faint);
+      font-size: 7px;
+      line-height: 1.25;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      overflow-wrap: anywhere;
+    }
+
+    .swarm-lane-evidence {
+      margin-top: 7px;
+      color: var(--agent);
+      font-size: 7px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      overflow-wrap: anywhere;
+    }
+
+    .swarm-site-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .swarm-site-bindings {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .swarm-site-bindings .tag {
+      padding: 3px 5px;
+      font-size: 7px;
+      letter-spacing: 0.09em;
+      overflow-wrap: anywhere;
+    }
+
     .map-legend {
       display: flex;
       flex-wrap: wrap;
@@ -792,6 +906,11 @@
       background: var(--warning);
     }
 
+    .phase-dot.atom {
+      color: oklch(0.90 0.03 220);
+      background: oklch(0.90 0.03 220);
+    }
+
     .orbital-controls {
       display: flex;
       flex-wrap: wrap;
@@ -830,6 +949,31 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+    }
+
+    .card-mode-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .card-mode-row button {
+      border: 1px solid var(--border);
+      background: oklch(0.075 0 0);
+      color: var(--muted);
+      padding: 5px 8px;
+      font: inherit;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+    }
+
+    .card-mode-row button.active {
+      color: var(--primary);
+      border-color: oklch(0.76 0.17 192 / 0.48);
+      background: oklch(0.76 0.17 192 / 0.10);
     }
 
     .orbital-meta-grid {
@@ -949,15 +1093,15 @@
         <div class="stack pipeline-column">
           <section class="panel">
             <div class="panel-header">
-              <span class="stamp"><strong>01</strong> / 05 — THREE-AGENT PIPELINE</span>
+              <span class="stamp"><strong>01</strong> / 05 — TRI-AGENT LAB SWARM</span>
               <span class="stamp" id="selected-lab-label">NO AGENT SELECTED</span>
             </div>
             <div id="metrics" class="metric-grid"></div>
-            <div id="map" class="map" aria-label="Three-agent pipeline map"></div>
+            <div id="map" class="map" aria-label="Tri-agent lab swarm map"></div>
             <div class="map-legend mono" aria-label="Map legend">
-              <span class="legend-pill"><span class="lab-real-badge" style="position: static; pointer-events: none;">REAL</span> current agent lane</span>
-              <span class="legend-pill"><span class="channel-dot data"></span> signed data handoff</span>
-              <span class="legend-pill"><span class="channel-dot concept"></span> curation / decision flow</span>
+              <span class="legend-pill"><span class="lab-real-badge" style="position: static; pointer-events: none;">REAL</span> active lab site / core lane</span>
+              <span class="legend-pill"><span class="channel-dot data"></span> signed data or PoX handoff</span>
+              <span class="legend-pill"><span class="channel-dot concept"></span> methods / decision flow</span>
               <span class="legend-pill"><span class="legend-line"></span> active or next interaction</span>
               <span class="legend-pill"><span class="legend-line blocked"></span> gated / not claimed live</span>
             </div>
@@ -1020,6 +1164,10 @@
   </main>
 
   <script>
+    if (window.location.protocol === "file:") {
+      window.location.replace("http://localhost:8787/world-map.html?v=tri-agent-lab-swarm-v2.4");
+    }
+
     const $ = (id) => document.getElementById(id);
     const MODEL_SOURCES = ["world-model.live.json", "world-model.json"];
     const MODEL_REFRESH_MS = 5000;
@@ -1205,19 +1353,20 @@
       root.innerHTML = `
         <div class="orbital-title-line">
           <h2 id="orbital-active-title">WebGPU orbital gallery</h2>
-          <p class="small">Signed cube fields become rotatable HOMO/LUMO clouds with a visible bond skeleton. The render is derived evidence; cube hashes remain source truth.</p>
+          <p class="small">Renderer v2.4: dense cube-derived orbital fields with an explicit atom-and-bond structure layer. Signed cube hashes remain source truth.</p>
         </div>
         <div id="orbital-tabs" class="orbital-tabs mono"></div>
         <div class="orbital-stage">
           <canvas id="orbital-canvas" class="orbital-canvas" data-renderer="webgpu" aria-label="Interactive WebGPU HOMO/LUMO orbital gallery with bond skeletons"></canvas>
           <div class="orbital-hud mono">
-            <span id="orbital-renderer" class="tag real">WebGPU renderer</span>
+            <span id="orbital-renderer" class="tag real">WebGPU v2.4 dense orbitals</span>
             <span id="orbital-status" class="tag">loading signed cube gallery</span>
           </div>
           <div class="orbital-overlay mono">
             <div class="orbital-legend">
               <span class="tag"><span class="phase-dot positive"></span>positive phase</span>
               <span class="tag"><span class="phase-dot negative"></span>negative phase</span>
+              <span class="tag"><span class="phase-dot atom"></span>atom cores</span>
               <span class="tag">bond skeleton</span>
             </div>
             <span class="tag real">drag to rotate</span>
@@ -1228,7 +1377,10 @@
             <button type="button" data-orbital-mode="both" class="active">Both</button>
             <button type="button" data-orbital-mode="HOMO">HOMO</button>
             <button type="button" data-orbital-mode="LUMO">LUMO</button>
+            <button type="button" data-orbital-atoms="toggle" class="active">Atoms</button>
+            <button type="button" data-orbital-density="toggle">Full Cloud</button>
             <button type="button" data-orbital-pause="toggle">Pause</button>
+            <button type="button" data-orbital-reset="camera">Reset</button>
           </div>
           <div id="orbital-active-facts" class="tag-row mono"></div>
         </div>
@@ -1295,16 +1447,21 @@
         return;
       }
 
-      if (rendererNode) rendererNode.textContent = "WebGPU gallery renderer";
+      if (rendererNode) rendererNode.textContent = "WebGPU v2.4 dense orbital density + atom-core renderer";
       device.lost.then((info) => {
         setStatus(`WebGPU device lost: ${info.reason || "unknown"}`);
       });
 
       let activeIndex = Math.max(0, molecules.findIndex((molecule) => molecule.molecule_id === viewer.default_molecule_id));
       let mode = "both";
+      let cardMode = "technical";
       let paused = false;
-      let yaw = 0.72;
-      let pitch = -0.36;
+      let showAtoms = true;
+      let densityGain = 1.42;
+      let cameraScale = 0.82;
+      let userZoom = 1.0;
+      let yaw = 0.28;
+      let pitch = -0.42;
       let dragging = false;
       let lastX = 0;
       let lastY = 0;
@@ -1312,6 +1469,8 @@
       let pointCount = 0;
       let bondBuffer;
       let bondCount = 0;
+      let atomBuffer;
+      let atomCount = 0;
 
       const format = navigator.gpu.getPreferredCanvasFormat();
       context.configure({
@@ -1328,7 +1487,7 @@ struct Uniforms {
   scale : f32,
   viewport : vec2<f32>,
   pointScale : f32,
-  _pad : f32,
+  densityGain : f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -1372,13 +1531,14 @@ fn vsMain(
     (x1 / depth) * uniforms.scale / max(uniforms.aspect, 0.001),
     (y1 / depth) * uniforms.scale
   );
-  let radiusPx = uniforms.pointScale * (1.15 + magnitude * 4.8 + max(z2, 0.0) * 0.65);
+  let shaped = smoothstep(0.035, 0.72, clamp(magnitude, 0.0, 1.0));
+  let radiusPx = uniforms.pointScale * (1.20 + uniforms.densityGain * (1.25 + shaped * 4.90) + max(z2, 0.0) * 0.32);
   let offset = corner * radiusPx * vec2<f32>(
     2.0 / max(uniforms.viewport.x, 1.0),
     2.0 / max(uniforms.viewport.y, 1.0)
   );
   var out : VertexOut;
-  out.position = vec4<f32>(center + offset, 0.0, 1.0);
+  out.position = vec4<f32>(center + offset, clamp(0.48 - z2 * 0.06, 0.05, 0.95), 1.0);
   out.corner = corner;
   out.phase = phase;
   out.magnitude = magnitude;
@@ -1393,11 +1553,14 @@ fn fsMain(in : VertexOut) -> @location(0) vec4<f32> {
   if (dist > 1.0) {
     discard;
   }
-  let glow = pow(max(0.0, 1.0 - dist), 1.7);
-  let alpha = clamp(in.depthAlpha * in.magnitude * in.boost, 0.16, 0.88) * glow;
+  let glow = pow(max(0.0, 1.0 - dist), 1.05);
+  let halo = 1.0 - smoothstep(0.48, 1.0, dist);
+  let core = 1.0 - smoothstep(0.0, 0.85, dist);
+  let shaped = smoothstep(0.035, 0.72, clamp(in.magnitude, 0.0, 1.0));
+  let alpha = clamp(in.depthAlpha * (0.16 + shaped * 0.74) * in.boost * (0.72 + uniforms.densityGain * 0.26), 0.10, 0.66) * max(glow * 0.82, max(halo * 0.58, core * 0.42));
   let positive = vec3<f32>(0.20, 0.87, 1.0);
   let negative = vec3<f32>(1.0, 0.58, 0.18);
-  let color = select(negative, positive, in.phase >= 0.0);
+  let color = mix(select(negative, positive, in.phase >= 0.0), vec3<f32>(1.0, 1.0, 1.0), core * 0.10);
   return vec4<f32>(color, alpha);
 }
 `;
@@ -1410,7 +1573,7 @@ struct Uniforms {
   scale : f32,
   viewport : vec2<f32>,
   pointScale : f32,
-  _pad : f32,
+  densityGain : f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -1458,29 +1621,119 @@ fn vsMain(
   let line = b.xy - a.xy;
   let lineLength = max(length(line), 0.0001);
   let perp = vec2<f32>(-line.y / lineLength, line.x / lineLength);
-  let thickness = uniforms.pointScale * (1.45 + 0.35 * strength);
+  let thickness = uniforms.pointScale * (2.85 + 0.65 * strength);
   let offset = perp * corner.y * thickness * vec2<f32>(
     2.0 / max(uniforms.viewport.x, 1.0),
     2.0 / max(uniforms.viewport.y, 1.0)
   );
   let z = mix(a.z, b.z, corner.x);
   var out : BondOut;
-  out.position = vec4<f32>(mix(a.xy, b.xy, corner.x) + offset, 0.03, 1.0);
-  out.depthAlpha = clamp((z + 1.8) / 3.6, 0.28, 0.9);
+  out.position = vec4<f32>(mix(a.xy, b.xy, corner.x) + offset, clamp(0.34 - z * 0.06, 0.03, 0.78), 1.0);
+  out.depthAlpha = clamp((z + 1.8) / 3.6, 0.45, 1.0);
   return out;
 }
 
 @fragment
 fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
-  return vec4<f32>(0.78, 0.94, 1.0, 0.48 * in.depthAlpha);
+  return vec4<f32>(0.86, 0.97, 1.0, 0.76 * in.depthAlpha);
+}
+`;
+
+      const atomShaderSource = `
+struct Uniforms {
+  yaw : f32,
+  pitch : f32,
+  aspect : f32,
+  scale : f32,
+  viewport : vec2<f32>,
+  pointScale : f32,
+  densityGain : f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms : Uniforms;
+
+struct AtomOut {
+  @builtin(position) position : vec4<f32>,
+  @location(0) corner : vec2<f32>,
+  @location(1) color : vec3<f32>,
+  @location(2) alpha : f32,
+  @location(3) depthAlpha : f32,
+}
+
+fn project(pointPosition : vec3<f32>) -> vec3<f32> {
+  let cy = cos(uniforms.yaw);
+  let sy = sin(uniforms.yaw);
+  let cp = cos(uniforms.pitch);
+  let sp = sin(uniforms.pitch);
+  let x1 = pointPosition.x * cy - pointPosition.z * sy;
+  let z1 = pointPosition.x * sy + pointPosition.z * cy;
+  let y1 = pointPosition.y * cp - z1 * sp;
+  let z2 = pointPosition.y * sp + z1 * cp;
+  let depth = max(0.75, 3.1 - z2);
+  let center = vec2<f32>(
+    (x1 / depth) * uniforms.scale / max(uniforms.aspect, 0.001),
+    (y1 / depth) * uniforms.scale
+  );
+  return vec3<f32>(center, z2);
+}
+
+@vertex
+fn vsMain(
+  @builtin(vertex_index) vertexIndex : u32,
+  @location(0) atomPosition : vec3<f32>,
+  @location(1) atomRadius : f32,
+  @location(2) atomColor : vec3<f32>,
+  @location(3) atomAlpha : f32
+) -> AtomOut {
+  let corners = array<vec2<f32>, 6>(
+    vec2<f32>(-1.0, -1.0),
+    vec2<f32>( 1.0, -1.0),
+    vec2<f32>(-1.0,  1.0),
+    vec2<f32>(-1.0,  1.0),
+    vec2<f32>( 1.0, -1.0),
+    vec2<f32>( 1.0,  1.0)
+  );
+  let corner = corners[vertexIndex % 6u];
+  let projected = project(atomPosition);
+  let depthRadius = uniforms.pointScale * atomRadius * (118.0 + projected.z * 12.0) / max(0.8, 3.1 - projected.z);
+  let offset = corner * depthRadius * vec2<f32>(
+    2.0 / max(uniforms.viewport.x, 1.0),
+    2.0 / max(uniforms.viewport.y, 1.0)
+  );
+  var out : AtomOut;
+  out.position = vec4<f32>(projected.xy + offset, clamp(0.42 - projected.z * 0.07, 0.02, 0.9), 1.0);
+  out.corner = corner;
+  out.color = atomColor;
+  out.alpha = atomAlpha;
+  out.depthAlpha = clamp((projected.z + 1.8) / 3.6, 0.45, 1.0);
+  return out;
+}
+
+@fragment
+fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
+  let dist = length(in.corner);
+  if (dist > 1.0) {
+    discard;
+  }
+  let z = sqrt(max(0.0, 1.0 - dist * dist));
+  let normal = normalize(vec3<f32>(in.corner.x * 0.72, -in.corner.y * 0.72, z));
+  let light = normalize(vec3<f32>(-0.35, 0.55, 0.76));
+  let diffuse = clamp(dot(normal, light), 0.0, 1.0);
+  let rim = pow(1.0 - z, 2.2);
+  let shade = 0.28 + diffuse * 0.72;
+  let color = in.color * shade + vec3<f32>(0.22, 0.72, 1.0) * rim * 0.18;
+  let alpha = in.alpha * in.depthAlpha * (1.0 - smoothstep(0.72, 1.0, dist));
+  return vec4<f32>(color, alpha);
 }
 `;
 
       let pointPipeline;
       let bondPipeline;
+      let atomPipeline;
       let uniformBuffer;
       let pointBindGroup;
       let bondBindGroup;
+      let atomBindGroup;
       try {
         device.pushErrorScope("validation");
         uniformBuffer = device.createBuffer({
@@ -1495,6 +1748,10 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         const bondModule = device.createShaderModule({
           label: "orbital gallery bond shader",
           code: bondShaderSource,
+        });
+        const atomModule = device.createShaderModule({
+          label: "orbital gallery atom shader",
+          code: atomShaderSource,
         });
         pointPipeline = device.createRenderPipeline({
           label: "orbital gallery point pipeline",
@@ -1519,7 +1776,7 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
             targets: [{
               format,
               blend: {
-                color: { srcFactor: "src-alpha", dstFactor: "one", operation: "add" },
+                color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
                 alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
               },
             }],
@@ -1555,6 +1812,36 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
           },
           primitive: { topology: "triangle-list" },
         });
+        atomPipeline = device.createRenderPipeline({
+          label: "orbital gallery atom-core pipeline",
+          layout: "auto",
+          vertex: {
+            module: atomModule,
+            entryPoint: "vsMain",
+            buffers: [{
+              arrayStride: 32,
+              stepMode: "instance",
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x3" },
+                { shaderLocation: 1, offset: 12, format: "float32" },
+                { shaderLocation: 2, offset: 16, format: "float32x3" },
+                { shaderLocation: 3, offset: 28, format: "float32" },
+              ],
+            }],
+          },
+          fragment: {
+            module: atomModule,
+            entryPoint: "fsMain",
+            targets: [{
+              format,
+              blend: {
+                color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+                alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+              },
+            }],
+          },
+          primitive: { topology: "triangle-list" },
+        });
         pointBindGroup = device.createBindGroup({
           label: "orbital point bind group",
           layout: pointPipeline.getBindGroupLayout(0),
@@ -1563,6 +1850,11 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         bondBindGroup = device.createBindGroup({
           label: "orbital bond bind group",
           layout: bondPipeline.getBindGroupLayout(0),
+          entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+        });
+        atomBindGroup = device.createBindGroup({
+          label: "orbital atom bind group",
+          layout: atomPipeline.getBindGroupLayout(0),
           entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
         });
         const validationError = await device.popErrorScope();
@@ -1587,6 +1879,69 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         return [orbitals.HOMO, orbitals.LUMO].filter(Boolean);
       }
 
+      function clampNumber(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function atomColor(element) {
+        const colors = {
+          H: [0.92, 0.96, 1.00],
+          C: [0.48, 0.58, 0.64],
+          N: [0.23, 0.47, 1.00],
+          O: [1.00, 0.28, 0.22],
+          F: [0.52, 1.00, 0.64],
+          P: [1.00, 0.58, 0.18],
+          S: [1.00, 0.84, 0.24],
+          Cl: [0.42, 0.92, 0.42],
+          Br: [0.72, 0.32, 0.20],
+          I: [0.55, 0.36, 0.86],
+          Fe: [1.00, 0.44, 0.20],
+          B: [1.00, 0.64, 0.78],
+          Na: [0.42, 0.58, 1.00],
+        };
+        return colors[element] ?? [0.78, 0.86, 0.92];
+      }
+
+      function atomRadius(element, atomicNumber) {
+        const radii = {
+          H: 0.066,
+          C: 0.104,
+          N: 0.100,
+          O: 0.102,
+          F: 0.096,
+          P: 0.126,
+          S: 0.130,
+          Cl: 0.132,
+          Br: 0.140,
+          I: 0.154,
+          Fe: 0.148,
+          B: 0.112,
+          Na: 0.150,
+        };
+        return radii[element] ?? clampNumber(0.072 + Math.sqrt(Math.max(atomicNumber ?? 6, 1)) * 0.012, 0.078, 0.162);
+      }
+
+      function sceneRadius(molecule) {
+        let radius = 0.85;
+        for (const atom of molecule.atoms ?? []) {
+          const p = atom.position ?? [0, 0, 0];
+          radius = Math.max(radius, Math.hypot(p[0] ?? 0, p[1] ?? 0, p[2] ?? 0));
+        }
+        for (const orbital of molecule.orbitals ?? []) {
+          const points = orbital.points ?? [];
+          const stride = Math.max(1, Math.floor(points.length / 900));
+          for (let i = 0; i < points.length; i += stride) {
+            const p = points[i];
+            radius = Math.max(radius, Math.hypot(p[0] ?? 0, p[1] ?? 0, p[2] ?? 0));
+          }
+        }
+        return radius;
+      }
+
+      function fitCameraToMolecule() {
+        cameraScale = clampNumber(1.08 / Math.max(sceneRadius(activeMolecule()), 0.85), 0.72, 1.18);
+      }
+
       function renderMoleculeTabs() {
         tabsNode.innerHTML = molecules.map((molecule, index) => `
           <button type="button" data-orbital-molecule="${index}" class="${index === activeIndex ? "active" : ""}">${esc(molecule.molecule_label ?? molecule.molecule_id)}</button>
@@ -1604,25 +1959,60 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         const molecule = activeMolecule();
         titleNode.textContent = `${molecule.molecule_label ?? molecule.molecule_id} HOMO/LUMO`;
         const gap = Number(molecule.gap_ev ?? 0);
+        const cardModes = `
+          <div class="card-mode-row mono" aria-label="Orbital card mode">
+            <button type="button" data-orbital-card-mode="technical" class="${cardMode === "technical" ? "active" : ""}">Technical</button>
+            <button type="button" data-orbital-card-mode="plain" class="${cardMode === "plain" ? "active" : ""}">Plain</button>
+          </div>
+        `;
         factsNode.innerHTML = `
           <span class="tag real">${molecule.atoms?.length ?? 0} atoms</span>
           <span class="tag good">${molecule.bonds?.length ?? 0} bonds</span>
           <span class="tag">${pointCount.toLocaleString()} points</span>
+          <span class="tag">${densityGain > 1.6 ? "full cloud" : "dense density"}</span>
         `;
-        metaNode.innerHTML = `
+        const technicalCard = `
           <div class="panel-header" style="margin-bottom: 8px;">
             <span class="stamp">${esc(molecule.molecule_id)}</span>
             ${statusTag(viewer.status)}
           </div>
+          ${cardModes}
           <h3>${esc(molecule.molecule_label ?? molecule.molecule_id)} · signed cube-derived orbital render</h3>
           <div class="orbital-meta-grid mono" style="margin-top: 10px;">
             <div class="evidence-line"><span>artifact</span><strong>${esc(molecule.result_artifact_id)}</strong></div>
             <div class="evidence-line"><span>method</span><strong>${esc(molecule.method)} · gap ${Number.isFinite(gap) ? gap.toFixed(3) : "—"} eV</strong></div>
             <div class="evidence-line"><span>renderer</span><strong>${esc(viewer.renderer ?? orbitalData.preferred_renderer ?? "WebGPU instanced point sprites + bond skeletons")}</strong></div>
             <div class="evidence-line"><span>asset</span><strong>${esc(assetPath)}</strong></div>
+            <div class="evidence-line"><span>structure</span><strong>${atomCount} shaded atom cores · ${bondCount} screen-space bonds</strong></div>
+            <div class="evidence-line"><span>camera</span><strong>fit ${cameraScale.toFixed(2)} · zoom ${userZoom.toFixed(2)}</strong></div>
           </div>
           <p class="small" style="margin-top: 8px;">${esc(viewer.caveat ?? orbitalData.caveat)}</p>
         `;
+        const plainCard = `
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(molecule.molecule_label ?? molecule.molecule_id)}</span>
+            ${statusTag(viewer.status)}
+          </div>
+          ${cardModes}
+          <h3>${esc(molecule.molecule_label ?? molecule.molecule_id)} · what this picture means</h3>
+          <p style="margin-top: 10px;">
+            This view shows the molecule's frontier electron clouds: HOMO is the electron-rich region most likely to donate electron density, and LUMO is the region most ready to accept it.
+            Cyan and amber mark opposite mathematical phases of the same quantum field, not two different chemicals.
+          </p>
+          <div class="orbital-meta-grid mono" style="margin-top: 10px;">
+            <div class="evidence-line"><span>molecule</span><strong>${molecule.atoms?.length ?? 0} atoms connected by ${molecule.bonds?.length ?? 0} inferred bonds</strong></div>
+            <div class="evidence-line"><span>energy gap</span><strong>${Number.isFinite(gap) ? gap.toFixed(2) : "unknown"} eV between HOMO and LUMO</strong></div>
+            <div class="evidence-line"><span>evidence</span><strong>rendered from signed DFT cube-derived samples</strong></div>
+            <div class="evidence-line"><span>important limit</span><strong>visual guide, not a replacement for the signed result artifact</strong></div>
+          </div>
+        `;
+        metaNode.innerHTML = cardMode === "plain" ? plainCard : technicalCard;
+        metaNode.querySelectorAll("[data-orbital-card-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            cardMode = button.dataset.orbitalCardMode ?? "technical";
+            renderActiveMeta();
+          });
+        });
       }
 
       function uploadPointBuffer() {
@@ -1679,12 +2069,41 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         bondCount = bonds.length;
       }
 
+      function uploadAtomBuffer() {
+        const atoms = activeMolecule().atoms ?? [];
+        const floats = new Float32Array(Math.max(8, atoms.length * 8));
+        let offset = 0;
+        for (const atom of atoms) {
+          const position = atom.position ?? [0, 0, 0];
+          const element = atom.element ?? "";
+          const color = atomColor(element);
+          floats[offset++] = position[0] ?? 0;
+          floats[offset++] = position[1] ?? 0;
+          floats[offset++] = position[2] ?? 0;
+          floats[offset++] = atomRadius(element, atom.atomic_number);
+          floats[offset++] = color[0];
+          floats[offset++] = color[1];
+          floats[offset++] = color[2];
+          floats[offset++] = element === "H" ? 0.74 : 0.88;
+        }
+        if (atomBuffer) atomBuffer.destroy();
+        atomBuffer = device.createBuffer({
+          label: "orbital gallery atom-core instances",
+          size: floats.byteLength,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(atomBuffer, 0, floats);
+        atomCount = atoms.length;
+      }
+
       function refreshActiveMolecule() {
+        fitCameraToMolecule();
         uploadPointBuffer();
         uploadBondBuffer();
+        uploadAtomBuffer();
         renderActiveMeta();
         const molecule = activeMolecule();
-        setStatus(`${molecule.molecule_label ?? molecule.molecule_id} · ${mode} · ${pointCount.toLocaleString()} WebGPU points · ${bondCount} bonds`);
+        setStatus(`${molecule.molecule_label ?? molecule.molecule_id} · ${mode} · ${pointCount.toLocaleString()} density points · ${bondCount} bonds · ${atomCount} atoms`);
       }
 
       function sizeCanvas() {
@@ -1710,11 +2129,11 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
             yaw,
             pitch,
             width / Math.max(height, 1),
-            0.82,
+            cameraScale * userZoom,
             width,
             height,
             ratio,
-            0,
+            densityGain,
           ]),
         );
 
@@ -1729,17 +2148,23 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
               storeOp: "store",
             }],
           });
+          if (pointBuffer && pointCount > 0) {
+            pass.setPipeline(pointPipeline);
+            pass.setBindGroup(0, pointBindGroup);
+            pass.setVertexBuffer(0, pointBuffer);
+            pass.draw(6, pointCount);
+          }
           if (bondBuffer && bondCount > 0) {
             pass.setPipeline(bondPipeline);
             pass.setBindGroup(0, bondBindGroup);
             pass.setVertexBuffer(0, bondBuffer);
             pass.draw(6, bondCount);
           }
-          if (pointBuffer && pointCount > 0) {
-            pass.setPipeline(pointPipeline);
-            pass.setBindGroup(0, pointBindGroup);
-            pass.setVertexBuffer(0, pointBuffer);
-            pass.draw(6, pointCount);
+          if (showAtoms && atomBuffer && atomCount > 0) {
+            pass.setPipeline(atomPipeline);
+            pass.setBindGroup(0, atomBindGroup);
+            pass.setVertexBuffer(0, atomBuffer);
+            pass.draw(6, atomCount);
           }
           pass.end();
           device.queue.submit([encoder.finish()]);
@@ -1766,6 +2191,12 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
       });
       canvas.addEventListener("pointerup", () => { dragging = false; });
       canvas.addEventListener("pointercancel", () => { dragging = false; });
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        const delta = event.deltaY > 0 ? 0.92 : 1.08;
+        userZoom = clampNumber(userZoom * delta, 0.62, 1.55);
+        renderActiveMeta();
+      }, { passive: false });
 
       root.querySelectorAll("[data-orbital-mode]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -1778,6 +2209,23 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
         paused = !paused;
         event.currentTarget.classList.toggle("active", paused);
         event.currentTarget.textContent = paused ? "Resume" : "Pause";
+      });
+      root.querySelector("[data-orbital-atoms]")?.addEventListener("click", (event) => {
+        showAtoms = !showAtoms;
+        event.currentTarget.classList.toggle("active", showAtoms);
+        renderActiveMeta();
+      });
+      root.querySelector("[data-orbital-density]")?.addEventListener("click", (event) => {
+        densityGain = densityGain > 1.6 ? 1.42 : 1.82;
+        event.currentTarget.classList.toggle("active", densityGain > 1.6);
+        renderActiveMeta();
+      });
+      root.querySelector("[data-orbital-reset]")?.addEventListener("click", () => {
+        yaw = 0.28;
+        pitch = -0.42;
+        userZoom = 1.0;
+        fitCameraToMolecule();
+        renderActiveMeta();
       });
 
       renderMoleculeTabs();
@@ -1851,7 +2299,107 @@ fn fsMain(in : BondOut) -> @location(0) vec4<f32> {
     // Position of the operator anchor on the map; transactions originate visually here.
     const OPERATOR_ANCHOR = { x: 6, y: 8 };
 
+    function laneColor(role) {
+      const key = `${role ?? ""}`.toLowerCase();
+      if (key.includes("literature")) return "oklch(0.65 0.16 262)";
+      if (key.includes("retro")) return "oklch(0.72 0.16 78)";
+      if (key.includes("dft")) return "oklch(0.70 0.18 148)";
+      return "oklch(0.76 0.17 192)";
+    }
+
+    function siteNodeClass(site) {
+      const status = `${site.status ?? ""}`;
+      return /active|compute|frontier|real/i.test(status) ? "real-compute" : "";
+    }
+
+    function renderSwarmSiteMap(model) {
+      const map = $("map");
+      const sites = model.swarm_sites ?? [];
+      const sitesById = Object.fromEntries(sites.map((site) => [site.id, site]));
+      const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
+      const counts = txCountByLab(model);
+      const channelCounts = channelCountsByLab(model);
+      const siteEdges = (model.swarm_site_links ?? []).map((link) => {
+        const source = sitesById[link.source_site];
+        const target = sitesById[link.target_site];
+        if (!source || !target) return "";
+        return `<line class="${interactionLineClass(link, "base")}" x1="${source.location.x}" y1="${source.location.y}" x2="${target.location.x}" y2="${target.location.y}" stroke="${interactionColor(link)}"></line>`;
+      }).join("");
+      const edgeSvg = `
+        <svg class="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <g id="trust-edges">${siteEdges}</g>
+          <g id="interaction-edges"></g>
+          <g id="tx-flow-edges"></g>
+        </svg>
+      `;
+      map.innerHTML = edgeSvg + sites.map((site) => `
+        <article class="swarm-site ${siteNodeClass(site)}" style="left: ${site.location.x}%; top: ${site.location.y}%;">
+          <div class="swarm-site-head">
+            <div>
+              <div class="lab-id mono">${esc(site.id)}</div>
+              <h3>${esc(site.label)}</h3>
+            </div>
+            ${statusTag(site.status)}
+          </div>
+          <div class="swarm-site-grid">
+            ${(site.tri_agent_core ?? []).map((lane) => {
+              const count = counts[lane.agent_id] ?? 0;
+              const channels = channelCounts[lane.agent_id] ?? { data: 0, concept: 0 };
+              const badge = count > 0
+                ? `<span class="lab-tx-count" title="${count} interaction, transaction, or vote events">${count}×</span>`
+                : "";
+              return `
+                <button class="swarm-lane" data-lab="${esc(lane.agent_id)}" data-site="${esc(site.id)}" style="border-color: ${laneColor(lane.role)};">
+                  ${badge}
+                  <div class="swarm-lane-role">${esc(lane.role)}</div>
+                  <div class="swarm-lane-status mono">${esc(lane.status)}</div>
+                  <div class="swarm-lane-evidence mono">${esc(lane.evidence)}</div>
+                  <div class="lab-channel-row"><span class="channel-dot data"></span>${channels.data}<span class="channel-dot concept"></span>${channels.concept}</div>
+                </button>
+              `;
+            }).join("")}
+          </div>
+          <p class="swarm-site-note">${esc(site.short_label)} · ${esc(site.kind)}</p>
+          ${(site.evidence_bindings ?? []).length ? `
+            <div class="swarm-site-bindings mono">
+              ${(site.evidence_bindings ?? []).map((binding) =>
+                `<span class="tag ${tagClassForStatus(binding.status)}">${esc(binding.kind)}:${esc(binding.label)}</span>`
+              ).join("")}
+            </div>
+          ` : ""}
+        </article>
+      `).join("");
+
+      map.querySelectorAll(".swarm-lane").forEach((node) => {
+        node.addEventListener("click", () => {
+          map.querySelectorAll(".swarm-lane").forEach((n) => n.classList.remove("selected"));
+          node.classList.add("selected");
+          const lab = labsById[node.dataset.lab];
+          if (!lab) return;
+          renderSelectedLab(model, lab);
+          renderLabInteractions(model, lab.id);
+          renderScienceTransactions(model, lab.id);
+          renderCrucibleDiscourse(model, lab.id);
+        });
+      });
+
+      const firstLane = map.querySelector(".swarm-lane");
+      firstLane?.classList.add("selected");
+      const firstLab = labsById[firstLane?.dataset.lab] ?? model.labs[0];
+      if (firstLab) {
+        renderSelectedLab(model, firstLab);
+        renderLabInteractions(model, firstLab.id);
+        renderScienceTransactions(model, firstLab.id);
+        renderCrucibleDiscourse(model, firstLab.id);
+      }
+    }
+
     function renderMap(model) {
+      if ((model.swarm_sites ?? []).length) {
+        renderSwarmSiteMap(model);
+        return;
+      }
+
       const map = $("map");
       const labsById = Object.fromEntries(model.labs.map((lab) => [lab.id, lab]));
       const trustEdgeSvg = model.trust_edges.map((edge) => {

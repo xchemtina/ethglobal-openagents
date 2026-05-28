@@ -6,6 +6,14 @@ This document explains the entire ChimiaClaw / OpenAgents project to an agent th
 
 ChimiaClaw is a Rust-native framework where every scientific action — DFT quantum chemistry, retrosynthesis, literature extraction — produces a signed, content-addressed artifact in a directed acyclic graph, with live ENS identity, 0G storage anchoring, and Uniswap quote-only settlement, all visible through a dependency-free auto-refreshing dashboard with a WebGPU orbital viewer.
 
+## Current operating state
+
+As of the 2026-05-11 dashboard repair, the submission surface is the three-agent pipeline rather than the older four-real-lab swarm model. `world-model verify` derives the expected real node count from the dashboard's `Agent lanes` metric, so both `demo/world-model.json` and `demo/world-model.live.json` verify with three real lanes: Literature, Retrosynthesis, and DFT.
+
+The Literature lane now accepts both legacy SMILES candidates and structural MolADT-shaped candidates. Structural candidates are converted into signed `chem.molecule.adt` artifacts when their elements are supported by `chimiaclaw-moladt`. Unsupported symbols remain explicit blockers; Si, Ge, and Sn support is the next chemistry-critical extension because the current carbenoid Literature results need those elements.
+
+The live dashboard watcher scans signed Literature artifacts in `demo/overnight-full-out/literature/` and projects them into `world-model.live.json`. The browser still performs no wallet, paper API, LLM, or sponsor calls; it reads local JSON only.
+
 ## The core thesis
 
 ```mermaid
@@ -28,8 +36,8 @@ The hackathon dashboard shows exactly three agent lanes connected in a loop:
 %%{init: {'theme':'dark','themeVariables':{'primaryColor':'#0891b2','primaryTextColor':'#fff','lineColor':'#67e8f9','secondaryColor':'#1e293b','tertiaryColor':'#064e3b'}}}%%
 flowchart LR
     Papers([Papers]) --> LIT
-    subgraph LIT [LITERATURE - next]
-        L1[Extract citations]
+    subgraph LIT [LITERATURE - signed]
+        L1[Extract citations and molecule candidates]
     end
     LIT -- science.literature.synthesis --> RETRO
     subgraph RETRO [RETROSYNTHESIS - implemented]
@@ -44,10 +52,10 @@ flowchart LR
     DFT_LANE -. computed evidence .-> LIT
 ```
 
-### Agent 1: Literature (status: operator-gated-next)
-- Not yet a completed extraction claim.
-- Will sign `science.literature.synthesis` with citations, extracted reaction equations, confidence, and candidate molecules.
-- The next signed run. Shown in the dashboard as the bridge between papers and executable chemistry.
+### Agent 1: Literature (status: signed-local-execution)
+- Signs `science.literature.synthesis` with citations, extracted claims, reaction candidates, confidence, and molecule candidates.
+- Supports both legacy SMILES candidates and structural MolADT-shaped candidates.
+- The next hardening step is chemical validation and element coverage, especially Si, Ge, and Sn.
 
 ### Agent 2: Retrosynthesis (status: implemented-local-skill)
 - RetroQuoter produces signed `chem.retrosynth.route_proposal` and `chem.procurement.route_quote` artifacts.
@@ -290,7 +298,7 @@ apps/
 demo/
 ├── world-map.html             # Dashboard (2,500-line single file)
 ├── world-model.json           # Static model fixture
-├── world-model.live.json      # Auto-generated live projection (gitignored)
+├── world-model.live.json      # Generated live projection (currently tracked; should be untracked or treated as a fixture)
 ├── live-dashboard-watch.py    # Watcher script
 ├── overnight-full-pipeline.sh # Full 5-phase pipeline
 ├── overnight-full-out/        # Pipeline output artifacts
@@ -346,7 +354,7 @@ cargo run -p chimiaclaw-cli -- world-model verify \
   --world-model demo/world-model.live.json --artifact-dir demo
 ```
 
-Latest results: static model verified 12/12 references, live model verified 51–73 references (depends on pipeline state), all tests pass.
+Latest focused-dashboard result: static and live models each verify the active signed artifact reference, the three-lane model invariants, and the tri-agent lab-site topology. Older full-pipeline states verify more references when DFT, Uniswap, 0G, and ENS output directories are populated.
 
 ## Key evidence numbers
 
@@ -358,11 +366,12 @@ Latest results: static model verified 12/12 references, live model verified 51�
 - **3** Uniswap quote-only settlement artifacts
 - **12** 0G Galileo Turbo storage anchors
 - **9** ENS publication/resolution/verification artifacts
-- **3** agent lanes, **3** handoffs, **3** agent-run cards
+- **3** agent lanes, **3** lab sites, **3** site links, **3** handoffs, **3** agent-run cards
 
 ## What is NOT claimed
 
-- Literature lane has no completed extraction artifact yet.
+- The lab-site swarm is a projection over the three agent lanes; only evidence bindings with signed artifacts or inspected local source paths should be treated as grounded.
+- Literature lane artifacts are signed locally, but extraction-provided coordinates are not yet chemically validated DFT geometries.
 - No `/swap` execution — Uniswap is quote-only.
 - 0G anchors prove the storage path, not that every payload is uploaded.
 - ENS proves root identity + per-agent capabilities, not autonomous behavior.
@@ -376,7 +385,7 @@ Latest results: static model verified 12/12 references, live model verified 51�
 
 If you are rendering diagrams from this briefing:
 
-1. **The three-agent loop** is the most important diagram. Literature → Retrosynthesis → DFT → back to Literature. This is the submission story.
+1. **The tri-agent lab swarm** is the most important diagram. Each lab site contains Literature → Retrosynthesis → DFT → back to Literature, then specializes by chemistry domain.
 
 2. **The DFT evidence layers** diagram shows the three tiers (cube-backed gallery, scalar germanium, live pipeline) and why they are kept separate.
 
