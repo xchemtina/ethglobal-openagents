@@ -13,6 +13,7 @@ use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 pub mod geometry;
 pub mod library;
@@ -24,78 +25,188 @@ pub const MOLECULE_ADT_SKILL: &str = "chem.molecule.adt.v1";
 pub const DFT_REQUEST_TAG: &str = "chem.dft.request";
 pub const DFT_REQUEST_SKILL: &str = "chem.dft.request.v1";
 
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+/// Canonical element coverage for the MolADT family.
+///
+/// This crate is the **single source of truth** for atomic-symbol coverage
+/// across every language binding (Rust, Python `literature_synthesis`, Haskell
+/// `MolADT-Bayes`). The coverage is periods 1–6 in full plus Th and U from
+/// the actinides (85 elements). Declared in atomic-number (Z) order so the
+/// derived `Ord` sorts by Z, which is what every downstream consumer expects.
+///
+/// Extending coverage is a one-place change: append a variant in Z order,
+/// add arms to the four exhaustive matches below, and append a row to
+/// [`MOLADT_ELEMENT_MANIFEST`]. The Python and Haskell mirrors validate
+/// themselves against the manifest at test time.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum AtomicSymbol {
-    H,
-    B,
-    C,
-    N,
-    O,
-    F,
-    Na,
-    P,
-    S,
-    Cl,
-    Fe,
-    Br,
-    I,
+    // Period 1
+    H,  He,
+    // Period 2
+    Li, Be, B,  C,  N,  O,  F,  Ne,
+    // Period 3
+    Na, Mg, Al, Si, P,  S,  Cl, Ar,
+    // Period 4
+    K,  Ca, Sc, Ti, V,  Cr, Mn, Fe, Co, Ni, Cu, Zn,
+    Ga, Ge, As, Se, Br, Kr,
+    // Period 5
+    Rb, Sr, Y,  Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd,
+    In, Sn, Sb, Te, I,  Xe,
+    // Period 6
+    Cs, Ba, La, Ce, Pr, Nd, Pm, Sm, Eu, Gd, Tb, Dy,
+    Ho, Er, Tm, Yb, Lu,
+    Hf, Ta, W,  Re, Os, Ir, Pt, Au, Hg,
+    Tl, Pb, Bi,
+    // Selected actinides
+    Th, U,
 }
 
+/// Error returned when a string cannot be parsed as an [`AtomicSymbol`].
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ParseAtomicSymbolError {
+    symbol: String,
+}
+
+impl ParseAtomicSymbolError {
+    /// The offending input, with surrounding whitespace stripped.
+    #[must_use]
+    pub fn symbol(&self) -> &str {
+        &self.symbol
+    }
+}
+
+impl Display for ParseAtomicSymbolError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unsupported atomic symbol {:?}", self.symbol)
+    }
+}
+
+impl std::error::Error for ParseAtomicSymbolError {}
+
 impl AtomicSymbol {
+    /// Parse the textual form of an atomic symbol (e.g. `"Cu"`).
+    ///
+    /// Surrounding whitespace is trimmed. Case is **significant** —
+    /// chemistry convention requires the canonical capitalisation (`"Cu"`,
+    /// not `"CU"` or `"cu"`).
+    #[must_use]
+    pub fn from_symbol(symbol: &str) -> Option<Self> {
+        // Linear scan over the manifest keeps the lookup table and the
+        // exhaustive matches in lock-step — there is no separate hash table
+        // to maintain.
+        let trimmed = symbol.trim();
+        MOLADT_ELEMENT_MANIFEST
+            .iter()
+            .find(|(_, _, _, s)| *s == trimmed)
+            .map(|(sym, _, _, _)| *sym)
+    }
+
+    /// All 85 supported symbols in Z order.
+    #[must_use]
+    pub fn all() -> &'static [AtomicSymbol] {
+        ATOMIC_SYMBOLS_IN_Z_ORDER
+    }
+
+    /// Canonical textual representation. Matches the enum constructor name
+    /// and the wire-format value in the Python/Haskell mirrors.
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
-            Self::H => "H",
-            Self::B => "B",
-            Self::C => "C",
-            Self::N => "N",
-            Self::O => "O",
-            Self::F => "F",
-            Self::Na => "Na",
-            Self::P => "P",
-            Self::S => "S",
-            Self::Cl => "Cl",
-            Self::Fe => "Fe",
-            Self::Br => "Br",
-            Self::I => "I",
+            Self::H => "H",   Self::He => "He",
+            Self::Li => "Li", Self::Be => "Be", Self::B => "B",  Self::C => "C",
+            Self::N => "N",   Self::O => "O",   Self::F => "F",  Self::Ne => "Ne",
+            Self::Na => "Na", Self::Mg => "Mg", Self::Al => "Al", Self::Si => "Si",
+            Self::P => "P",   Self::S => "S",   Self::Cl => "Cl", Self::Ar => "Ar",
+            Self::K => "K",   Self::Ca => "Ca", Self::Sc => "Sc", Self::Ti => "Ti",
+            Self::V => "V",   Self::Cr => "Cr", Self::Mn => "Mn", Self::Fe => "Fe",
+            Self::Co => "Co", Self::Ni => "Ni", Self::Cu => "Cu", Self::Zn => "Zn",
+            Self::Ga => "Ga", Self::Ge => "Ge", Self::As => "As", Self::Se => "Se",
+            Self::Br => "Br", Self::Kr => "Kr",
+            Self::Rb => "Rb", Self::Sr => "Sr", Self::Y => "Y",   Self::Zr => "Zr",
+            Self::Nb => "Nb", Self::Mo => "Mo", Self::Tc => "Tc", Self::Ru => "Ru",
+            Self::Rh => "Rh", Self::Pd => "Pd", Self::Ag => "Ag", Self::Cd => "Cd",
+            Self::In => "In", Self::Sn => "Sn", Self::Sb => "Sb", Self::Te => "Te",
+            Self::I => "I",   Self::Xe => "Xe",
+            Self::Cs => "Cs", Self::Ba => "Ba", Self::La => "La", Self::Ce => "Ce",
+            Self::Pr => "Pr", Self::Nd => "Nd", Self::Pm => "Pm", Self::Sm => "Sm",
+            Self::Eu => "Eu", Self::Gd => "Gd", Self::Tb => "Tb", Self::Dy => "Dy",
+            Self::Ho => "Ho", Self::Er => "Er", Self::Tm => "Tm", Self::Yb => "Yb",
+            Self::Lu => "Lu",
+            Self::Hf => "Hf", Self::Ta => "Ta", Self::W => "W",   Self::Re => "Re",
+            Self::Os => "Os", Self::Ir => "Ir", Self::Pt => "Pt", Self::Au => "Au",
+            Self::Hg => "Hg",
+            Self::Tl => "Tl", Self::Pb => "Pb", Self::Bi => "Bi",
+            Self::Th => "Th", Self::U => "U",
         }
     }
 
+    /// Atomic number (Z).
     #[must_use]
     pub const fn atomic_number(&self) -> u8 {
         match self {
-            Self::H => 1,
-            Self::B => 5,
-            Self::C => 6,
-            Self::N => 7,
-            Self::O => 8,
-            Self::F => 9,
-            Self::Na => 11,
-            Self::P => 15,
-            Self::S => 16,
-            Self::Cl => 17,
-            Self::Fe => 26,
-            Self::Br => 35,
-            Self::I => 53,
+            Self::H => 1,   Self::He => 2,
+            Self::Li => 3,  Self::Be => 4,  Self::B => 5,   Self::C => 6,
+            Self::N => 7,   Self::O => 8,   Self::F => 9,   Self::Ne => 10,
+            Self::Na => 11, Self::Mg => 12, Self::Al => 13, Self::Si => 14,
+            Self::P => 15,  Self::S => 16,  Self::Cl => 17, Self::Ar => 18,
+            Self::K => 19,  Self::Ca => 20, Self::Sc => 21, Self::Ti => 22,
+            Self::V => 23,  Self::Cr => 24, Self::Mn => 25, Self::Fe => 26,
+            Self::Co => 27, Self::Ni => 28, Self::Cu => 29, Self::Zn => 30,
+            Self::Ga => 31, Self::Ge => 32, Self::As => 33, Self::Se => 34,
+            Self::Br => 35, Self::Kr => 36,
+            Self::Rb => 37, Self::Sr => 38, Self::Y => 39,  Self::Zr => 40,
+            Self::Nb => 41, Self::Mo => 42, Self::Tc => 43, Self::Ru => 44,
+            Self::Rh => 45, Self::Pd => 46, Self::Ag => 47, Self::Cd => 48,
+            Self::In => 49, Self::Sn => 50, Self::Sb => 51, Self::Te => 52,
+            Self::I => 53,  Self::Xe => 54,
+            Self::Cs => 55, Self::Ba => 56, Self::La => 57, Self::Ce => 58,
+            Self::Pr => 59, Self::Nd => 60, Self::Pm => 61, Self::Sm => 62,
+            Self::Eu => 63, Self::Gd => 64, Self::Tb => 65, Self::Dy => 66,
+            Self::Ho => 67, Self::Er => 68, Self::Tm => 69, Self::Yb => 70,
+            Self::Lu => 71,
+            Self::Hf => 72, Self::Ta => 73, Self::W => 74,  Self::Re => 75,
+            Self::Os => 76, Self::Ir => 77, Self::Pt => 78, Self::Au => 79,
+            Self::Hg => 80,
+            Self::Tl => 81, Self::Pb => 82, Self::Bi => 83,
+            Self::Th => 90, Self::U => 92,
         }
     }
 
+    /// CIAAW standard atomic weight (g/mol). Synthetic / radioactive
+    /// elements (Tc, Pm, Th, U) use the mass number of the most stable or
+    /// most common isotope.
     #[must_use]
     pub const fn default_atomic_weight(&self) -> f64 {
         match self {
-            Self::H => 1.008,
-            Self::B => 10.81,
-            Self::C => 12.011,
-            Self::N => 14.007,
-            Self::O => 15.999,
-            Self::F => 18.998,
-            Self::Na => 22.990,
-            Self::P => 30.974,
-            Self::S => 32.06,
-            Self::Cl => 35.45,
-            Self::Fe => 55.845,
-            Self::Br => 79.904,
-            Self::I => 126.904,
+            Self::H => 1.008,    Self::He => 4.0026,
+            Self::Li => 6.94,    Self::Be => 9.0122,  Self::B => 10.811,
+            Self::C => 12.011,   Self::N => 14.007,   Self::O => 15.999,
+            Self::F => 18.998,   Self::Ne => 20.180,
+            Self::Na => 22.990,  Self::Mg => 24.305,  Self::Al => 26.982,
+            Self::Si => 28.085,  Self::P => 30.974,   Self::S => 32.065,
+            Self::Cl => 35.453,  Self::Ar => 39.948,
+            Self::K => 39.098,   Self::Ca => 40.078,  Self::Sc => 44.956,
+            Self::Ti => 47.867,  Self::V => 50.942,   Self::Cr => 51.996,
+            Self::Mn => 54.938,  Self::Fe => 55.845,  Self::Co => 58.933,
+            Self::Ni => 58.693,  Self::Cu => 63.546,  Self::Zn => 65.38,
+            Self::Ga => 69.723,  Self::Ge => 72.630,  Self::As => 74.922,
+            Self::Se => 78.971,  Self::Br => 79.904,  Self::Kr => 83.798,
+            Self::Rb => 85.468,  Self::Sr => 87.62,   Self::Y => 88.906,
+            Self::Zr => 91.224,  Self::Nb => 92.906,  Self::Mo => 95.95,
+            Self::Tc => 98.0,    Self::Ru => 101.07,  Self::Rh => 102.906,
+            Self::Pd => 106.42,  Self::Ag => 107.868, Self::Cd => 112.414,
+            Self::In => 114.818, Self::Sn => 118.710, Self::Sb => 121.760,
+            Self::Te => 127.60,  Self::I => 126.904,  Self::Xe => 131.293,
+            Self::Cs => 132.905, Self::Ba => 137.327, Self::La => 138.905,
+            Self::Ce => 140.116, Self::Pr => 140.908, Self::Nd => 144.242,
+            Self::Pm => 145.0,   Self::Sm => 150.36,  Self::Eu => 151.964,
+            Self::Gd => 157.25,  Self::Tb => 158.925, Self::Dy => 162.500,
+            Self::Ho => 164.930, Self::Er => 167.259, Self::Tm => 168.934,
+            Self::Yb => 173.045, Self::Lu => 174.967,
+            Self::Hf => 178.49,  Self::Ta => 180.948, Self::W => 183.84,
+            Self::Re => 186.207, Self::Os => 190.23,  Self::Ir => 192.217,
+            Self::Pt => 195.084, Self::Au => 196.967, Self::Hg => 200.592,
+            Self::Tl => 204.38,  Self::Pb => 207.2,   Self::Bi => 208.980,
+            Self::Th => 232.038, Self::U => 238.029,
         }
     }
 }
@@ -105,6 +216,138 @@ impl Display for AtomicSymbol {
         write!(f, "{}", self.as_str())
     }
 }
+
+impl FromStr for AtomicSymbol {
+    type Err = ParseAtomicSymbolError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_symbol(s).ok_or_else(|| ParseAtomicSymbolError {
+            symbol: s.trim().to_string(),
+        })
+    }
+}
+
+/// Canonical element manifest. Each row is `(symbol, atomic number,
+/// standard atomic weight, textual representation)` and is the authoritative
+/// data the Python and Haskell mirrors validate against.
+pub const MOLADT_ELEMENT_MANIFEST: &[(AtomicSymbol, u8, f64, &str)] = &[
+    (AtomicSymbol::H,  1,   1.008,   "H"),
+    (AtomicSymbol::He, 2,   4.0026,  "He"),
+    (AtomicSymbol::Li, 3,   6.94,    "Li"),
+    (AtomicSymbol::Be, 4,   9.0122,  "Be"),
+    (AtomicSymbol::B,  5,  10.811,   "B"),
+    (AtomicSymbol::C,  6,  12.011,   "C"),
+    (AtomicSymbol::N,  7,  14.007,   "N"),
+    (AtomicSymbol::O,  8,  15.999,   "O"),
+    (AtomicSymbol::F,  9,  18.998,   "F"),
+    (AtomicSymbol::Ne, 10, 20.180,   "Ne"),
+    (AtomicSymbol::Na, 11, 22.990,   "Na"),
+    (AtomicSymbol::Mg, 12, 24.305,   "Mg"),
+    (AtomicSymbol::Al, 13, 26.982,   "Al"),
+    (AtomicSymbol::Si, 14, 28.085,   "Si"),
+    (AtomicSymbol::P,  15, 30.974,   "P"),
+    (AtomicSymbol::S,  16, 32.065,   "S"),
+    (AtomicSymbol::Cl, 17, 35.453,   "Cl"),
+    (AtomicSymbol::Ar, 18, 39.948,   "Ar"),
+    (AtomicSymbol::K,  19, 39.098,   "K"),
+    (AtomicSymbol::Ca, 20, 40.078,   "Ca"),
+    (AtomicSymbol::Sc, 21, 44.956,   "Sc"),
+    (AtomicSymbol::Ti, 22, 47.867,   "Ti"),
+    (AtomicSymbol::V,  23, 50.942,   "V"),
+    (AtomicSymbol::Cr, 24, 51.996,   "Cr"),
+    (AtomicSymbol::Mn, 25, 54.938,   "Mn"),
+    (AtomicSymbol::Fe, 26, 55.845,   "Fe"),
+    (AtomicSymbol::Co, 27, 58.933,   "Co"),
+    (AtomicSymbol::Ni, 28, 58.693,   "Ni"),
+    (AtomicSymbol::Cu, 29, 63.546,   "Cu"),
+    (AtomicSymbol::Zn, 30, 65.38,    "Zn"),
+    (AtomicSymbol::Ga, 31, 69.723,   "Ga"),
+    (AtomicSymbol::Ge, 32, 72.630,   "Ge"),
+    (AtomicSymbol::As, 33, 74.922,   "As"),
+    (AtomicSymbol::Se, 34, 78.971,   "Se"),
+    (AtomicSymbol::Br, 35, 79.904,   "Br"),
+    (AtomicSymbol::Kr, 36, 83.798,   "Kr"),
+    (AtomicSymbol::Rb, 37, 85.468,   "Rb"),
+    (AtomicSymbol::Sr, 38, 87.62,    "Sr"),
+    (AtomicSymbol::Y,  39, 88.906,   "Y"),
+    (AtomicSymbol::Zr, 40, 91.224,   "Zr"),
+    (AtomicSymbol::Nb, 41, 92.906,   "Nb"),
+    (AtomicSymbol::Mo, 42, 95.95,    "Mo"),
+    (AtomicSymbol::Tc, 43, 98.0,     "Tc"),
+    (AtomicSymbol::Ru, 44, 101.07,   "Ru"),
+    (AtomicSymbol::Rh, 45, 102.906,  "Rh"),
+    (AtomicSymbol::Pd, 46, 106.42,   "Pd"),
+    (AtomicSymbol::Ag, 47, 107.868,  "Ag"),
+    (AtomicSymbol::Cd, 48, 112.414,  "Cd"),
+    (AtomicSymbol::In, 49, 114.818,  "In"),
+    (AtomicSymbol::Sn, 50, 118.710,  "Sn"),
+    (AtomicSymbol::Sb, 51, 121.760,  "Sb"),
+    (AtomicSymbol::Te, 52, 127.60,   "Te"),
+    (AtomicSymbol::I,  53, 126.904,  "I"),
+    (AtomicSymbol::Xe, 54, 131.293,  "Xe"),
+    (AtomicSymbol::Cs, 55, 132.905,  "Cs"),
+    (AtomicSymbol::Ba, 56, 137.327,  "Ba"),
+    (AtomicSymbol::La, 57, 138.905,  "La"),
+    (AtomicSymbol::Ce, 58, 140.116,  "Ce"),
+    (AtomicSymbol::Pr, 59, 140.908,  "Pr"),
+    (AtomicSymbol::Nd, 60, 144.242,  "Nd"),
+    (AtomicSymbol::Pm, 61, 145.0,    "Pm"),
+    (AtomicSymbol::Sm, 62, 150.36,   "Sm"),
+    (AtomicSymbol::Eu, 63, 151.964,  "Eu"),
+    (AtomicSymbol::Gd, 64, 157.25,   "Gd"),
+    (AtomicSymbol::Tb, 65, 158.925,  "Tb"),
+    (AtomicSymbol::Dy, 66, 162.500,  "Dy"),
+    (AtomicSymbol::Ho, 67, 164.930,  "Ho"),
+    (AtomicSymbol::Er, 68, 167.259,  "Er"),
+    (AtomicSymbol::Tm, 69, 168.934,  "Tm"),
+    (AtomicSymbol::Yb, 70, 173.045,  "Yb"),
+    (AtomicSymbol::Lu, 71, 174.967,  "Lu"),
+    (AtomicSymbol::Hf, 72, 178.49,   "Hf"),
+    (AtomicSymbol::Ta, 73, 180.948,  "Ta"),
+    (AtomicSymbol::W,  74, 183.84,   "W"),
+    (AtomicSymbol::Re, 75, 186.207,  "Re"),
+    (AtomicSymbol::Os, 76, 190.23,   "Os"),
+    (AtomicSymbol::Ir, 77, 192.217,  "Ir"),
+    (AtomicSymbol::Pt, 78, 195.084,  "Pt"),
+    (AtomicSymbol::Au, 79, 196.967,  "Au"),
+    (AtomicSymbol::Hg, 80, 200.592,  "Hg"),
+    (AtomicSymbol::Tl, 81, 204.38,   "Tl"),
+    (AtomicSymbol::Pb, 82, 207.2,    "Pb"),
+    (AtomicSymbol::Bi, 83, 208.980,  "Bi"),
+    (AtomicSymbol::Th, 90, 232.038,  "Th"),
+    (AtomicSymbol::U,  92, 238.029,  "U"),
+];
+
+/// Convenience static parallel to [`MOLADT_ELEMENT_MANIFEST`] containing
+/// just the symbols in Z order, useful when callers only need to iterate
+/// the supported elements without their associated metadata.
+const ATOMIC_SYMBOLS_IN_Z_ORDER: &[AtomicSymbol] = &[
+    AtomicSymbol::H,  AtomicSymbol::He,
+    AtomicSymbol::Li, AtomicSymbol::Be, AtomicSymbol::B,  AtomicSymbol::C,
+    AtomicSymbol::N,  AtomicSymbol::O,  AtomicSymbol::F,  AtomicSymbol::Ne,
+    AtomicSymbol::Na, AtomicSymbol::Mg, AtomicSymbol::Al, AtomicSymbol::Si,
+    AtomicSymbol::P,  AtomicSymbol::S,  AtomicSymbol::Cl, AtomicSymbol::Ar,
+    AtomicSymbol::K,  AtomicSymbol::Ca, AtomicSymbol::Sc, AtomicSymbol::Ti,
+    AtomicSymbol::V,  AtomicSymbol::Cr, AtomicSymbol::Mn, AtomicSymbol::Fe,
+    AtomicSymbol::Co, AtomicSymbol::Ni, AtomicSymbol::Cu, AtomicSymbol::Zn,
+    AtomicSymbol::Ga, AtomicSymbol::Ge, AtomicSymbol::As, AtomicSymbol::Se,
+    AtomicSymbol::Br, AtomicSymbol::Kr,
+    AtomicSymbol::Rb, AtomicSymbol::Sr, AtomicSymbol::Y,  AtomicSymbol::Zr,
+    AtomicSymbol::Nb, AtomicSymbol::Mo, AtomicSymbol::Tc, AtomicSymbol::Ru,
+    AtomicSymbol::Rh, AtomicSymbol::Pd, AtomicSymbol::Ag, AtomicSymbol::Cd,
+    AtomicSymbol::In, AtomicSymbol::Sn, AtomicSymbol::Sb, AtomicSymbol::Te,
+    AtomicSymbol::I,  AtomicSymbol::Xe,
+    AtomicSymbol::Cs, AtomicSymbol::Ba, AtomicSymbol::La, AtomicSymbol::Ce,
+    AtomicSymbol::Pr, AtomicSymbol::Nd, AtomicSymbol::Pm, AtomicSymbol::Sm,
+    AtomicSymbol::Eu, AtomicSymbol::Gd, AtomicSymbol::Tb, AtomicSymbol::Dy,
+    AtomicSymbol::Ho, AtomicSymbol::Er, AtomicSymbol::Tm, AtomicSymbol::Yb,
+    AtomicSymbol::Lu,
+    AtomicSymbol::Hf, AtomicSymbol::Ta, AtomicSymbol::W,  AtomicSymbol::Re,
+    AtomicSymbol::Os, AtomicSymbol::Ir, AtomicSymbol::Pt, AtomicSymbol::Au,
+    AtomicSymbol::Hg,
+    AtomicSymbol::Tl, AtomicSymbol::Pb, AtomicSymbol::Bi,
+    AtomicSymbol::Th, AtomicSymbol::U,
+];
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ElementAttributes {
@@ -727,6 +970,59 @@ mod tests {
         assert!(artifact
             .schema_tags
             .contains(&SchemaTag(MOLECULE_ADT_TAG.to_string())));
+    }
+
+    #[test]
+    fn manifest_is_z_sorted_and_round_trips_through_from_symbol() {
+        // The manifest is the cross-language source of truth, so every row
+        // must be discoverable by symbol and the column data must agree with
+        // the per-element helper methods.
+        let mut last_z = 0_u8;
+        for (symbol, z, weight, text) in MOLADT_ELEMENT_MANIFEST {
+            assert_eq!(symbol.as_str(), *text, "as_str mismatch for Z={z}");
+            assert_eq!(symbol.atomic_number(), *z, "atomic_number mismatch for {text}");
+            assert!(
+                (symbol.default_atomic_weight() - *weight).abs() < 1e-9,
+                "atomic_weight mismatch for {text}"
+            );
+            assert_eq!(
+                AtomicSymbol::from_symbol(text),
+                Some(*symbol),
+                "from_symbol round-trip failed for {text}"
+            );
+            assert!(
+                *z >= last_z,
+                "manifest is not sorted by Z at element {text} (z={z}, previous z={last_z})"
+            );
+            last_z = *z;
+        }
+    }
+
+    #[test]
+    fn all_returns_complete_z_sorted_list() {
+        let symbols = AtomicSymbol::all();
+        assert_eq!(symbols.len(), MOLADT_ELEMENT_MANIFEST.len());
+        for (lhs, rhs) in symbols.iter().zip(MOLADT_ELEMENT_MANIFEST.iter()) {
+            assert_eq!(*lhs, rhs.0);
+        }
+        // Cu, Sn, Ge, Au, U specifically are addressable from the public API.
+        for sym in [
+            AtomicSymbol::Cu,
+            AtomicSymbol::Sn,
+            AtomicSymbol::Ge,
+            AtomicSymbol::Au,
+            AtomicSymbol::U,
+        ] {
+            assert!(symbols.contains(&sym), "missing {sym:?}");
+        }
+    }
+
+    #[test]
+    fn from_str_trims_whitespace_and_rejects_unknown() {
+        assert_eq!("  Cu ".parse::<AtomicSymbol>().unwrap(), AtomicSymbol::Cu);
+        let err = "Xx".parse::<AtomicSymbol>().unwrap_err();
+        assert_eq!(err.symbol(), "Xx");
+        assert!(format!("{err}").contains("unsupported atomic symbol"));
     }
 
     #[test]

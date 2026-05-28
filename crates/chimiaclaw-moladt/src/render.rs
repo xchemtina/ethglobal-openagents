@@ -225,6 +225,12 @@ fn bounding_box(positions: &std::collections::BTreeMap<u32, (f64, f64)>) -> (f64
     (min_x, max_x, min_y, max_y)
 }
 
+/// CPK colour tuple `(fill, stroke, text)` for visualising an atom.
+///
+/// Hand-tuned values follow the conventional Jmol/RasMol palette for the
+/// elements that the demo molecules exercise; the wildcard arm returns a
+/// neutral grey for every other supported [`AtomicSymbol`] so renderers do
+/// not panic on the wider periodic table.
 fn cpk_colors(symbol: &AtomicSymbol) -> (&'static str, &'static str, &'static str) {
     match symbol {
         AtomicSymbol::H => ("#f7f7f7", "#999999", "#222222"),
@@ -240,6 +246,7 @@ fn cpk_colors(symbol: &AtomicSymbol) -> (&'static str, &'static str, &'static st
         AtomicSymbol::Fe => ("#e06633", "#7e3517", "#ffffff"),
         AtomicSymbol::Br => ("#a62929", "#601515", "#ffffff"),
         AtomicSymbol::I => ("#940094", "#480048", "#ffffff"),
+        _ => ("#b0b0b0", "#606060", "#222222"),
     }
 }
 

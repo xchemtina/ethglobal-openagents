@@ -1,0 +1,377 @@
+{
+  "query": "industrial ammonia synthesis",
+  "sector": "industrial-catalysis",
+  "summary": "Open-access reviews of the Haber-Bosch process describe the catalytic combination of molecular nitrogen and hydrogen over iron-based catalysts at elevated temperature and pressure to give ammonia, the foundational reaction of industrial nitrogen fixation.",
+  "citations": [
+    {
+      "title": "The Haber-Bosch process: a centennial review",
+      "authors": [
+        "Doe, J.",
+        "Smith, A."
+      ],
+      "year": 2018,
+      "doi": "10.1000/example.haber-bosch",
+      "source_url": "https://arxiv.org/abs/example.haber",
+      "license": "cc-by",
+      "retrieved_at_unix": 1700000000
+    }
+  ],
+  "extracted_claims": [
+    {
+      "claim": "The Haber-Bosch synthesis combines N2 and H2 over an iron catalyst at high temperature and pressure to produce NH3.",
+      "evidence_span": "nitrogen and hydrogen are combined over a promoted iron catalyst at 400-500 deg C and 150-300 bar to yield ammonia",
+      "source_citation_index": 0
+    }
+  ],
+  "conflicts": [],
+  "molecule_candidates": [
+    {
+      "name": "dinitrogen",
+      "molecule": {
+        "atoms": [
+          {
+            "atom_id": 0,
+            "symbol": "N",
+            "coordinate": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "formal_charge": 0
+          },
+          {
+            "atom_id": 1,
+            "symbol": "N",
+            "coordinate": {
+              "x": 1.1,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "formal_charge": 0
+          }
+        ],
+        "local_bonds": [
+          [
+            0,
+            1
+          ]
+        ],
+        "systems": [
+          {
+            "system_id": 0,
+            "shared_electrons": 2,
+            "member_edges": [
+              [
+                0,
+                1
+              ]
+            ],
+            "tag": "pi_x"
+          },
+          {
+            "system_id": 1,
+            "shared_electrons": 2,
+            "member_edges": [
+              [
+                0,
+                1
+              ]
+            ],
+            "tag": "pi_y"
+          }
+        ]
+      },
+      "role": "precursor",
+      "source_citation_index": 0,
+      "evidence_span": "N2 was combined with H2"
+    },
+    {
+      "name": "dihydrogen",
+      "molecule": {
+        "atoms": [
+          {
+            "atom_id": 0,
+            "symbol": "H",
+            "coordinate": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "formal_charge": 0
+          },
+          {
+            "atom_id": 1,
+            "symbol": "H",
+            "coordinate": {
+              "x": 0.74,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "formal_charge": 0
+          }
+        ],
+        "local_bonds": [
+          [
+            0,
+            1
+          ]
+        ],
+        "systems": []
+      },
+      "role": "precursor",
+      "source_citation_index": 0,
+      "evidence_span": "H2 was combined with N2"
+    },
+    {
+      "name": "ammonia",
+      "molecule": {
+        "atoms": [
+          {
+            "atom_id": 0,
+            "symbol": "N",
+            "coordinate": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.116
+            },
+            "formal_charge": 0
+          },
+          {
+            "atom_id": 1,
+            "symbol": "H",
+            "coordinate": {
+              "x": 0.937,
+              "y": 0.0,
+              "z": -0.27
+            },
+            "formal_charge": 0
+          },
+          {
+            "atom_id": 2,
+            "symbol": "H",
+            "coordinate": {
+              "x": -0.469,
+              "y": 0.812,
+              "z": -0.27
+            },
+            "formal_charge": 0
+          },
+          {
+            "atom_id": 3,
+            "symbol": "H",
+            "coordinate": {
+              "x": -0.469,
+              "y": -0.812,
+              "z": -0.27
+            },
+            "formal_charge": 0
+          }
+        ],
+        "local_bonds": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            0,
+            3
+          ]
+        ],
+        "systems": []
+      },
+      "role": "target",
+      "source_citation_index": 0,
+      "evidence_span": "to yield ammonia"
+    }
+  ],
+  "reaction_candidates": [
+    {
+      "reaction": {
+        "reactants": [
+          {
+            "coefficient": 1.0,
+            "molecule": {
+              "atoms": [
+                {
+                  "atom_id": 0,
+                  "symbol": "N",
+                  "coordinate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "formal_charge": 0
+                },
+                {
+                  "atom_id": 1,
+                  "symbol": "N",
+                  "coordinate": {
+                    "x": 1.1,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "formal_charge": 0
+                }
+              ],
+              "local_bonds": [
+                [
+                  0,
+                  1
+                ]
+              ],
+              "systems": [
+                {
+                  "system_id": 0,
+                  "shared_electrons": 2,
+                  "member_edges": [
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "tag": "pi_x"
+                },
+                {
+                  "system_id": 1,
+                  "shared_electrons": 2,
+                  "member_edges": [
+                    [
+                      0,
+                      1
+                    ]
+                  ],
+                  "tag": "pi_y"
+                }
+              ]
+            }
+          },
+          {
+            "coefficient": 3.0,
+            "molecule": {
+              "atoms": [
+                {
+                  "atom_id": 0,
+                  "symbol": "H",
+                  "coordinate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "formal_charge": 0
+                },
+                {
+                  "atom_id": 1,
+                  "symbol": "H",
+                  "coordinate": {
+                    "x": 0.74,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  "formal_charge": 0
+                }
+              ],
+              "local_bonds": [
+                [
+                  0,
+                  1
+                ]
+              ],
+              "systems": []
+            }
+          }
+        ],
+        "products": [
+          {
+            "coefficient": 2.0,
+            "molecule": {
+              "atoms": [
+                {
+                  "atom_id": 0,
+                  "symbol": "N",
+                  "coordinate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.116
+                  },
+                  "formal_charge": 0
+                },
+                {
+                  "atom_id": 1,
+                  "symbol": "H",
+                  "coordinate": {
+                    "x": 0.937,
+                    "y": 0.0,
+                    "z": -0.27
+                  },
+                  "formal_charge": 0
+                },
+                {
+                  "atom_id": 2,
+                  "symbol": "H",
+                  "coordinate": {
+                    "x": -0.469,
+                    "y": 0.812,
+                    "z": -0.27
+                  },
+                  "formal_charge": 0
+                },
+                {
+                  "atom_id": 3,
+                  "symbol": "H",
+                  "coordinate": {
+                    "x": -0.469,
+                    "y": -0.812,
+                    "z": -0.27
+                  },
+                  "formal_charge": 0
+                }
+              ],
+              "local_bonds": [
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              "systems": []
+            }
+          }
+        ],
+        "conditions": [
+          {
+            "kind": "temperature",
+            "kelvin": 773.15
+          },
+          {
+            "kind": "pressure",
+            "bar": 200.0
+          }
+        ],
+        "rate": 0.0
+      },
+      "confidence": 0.95,
+      "evidence_span": "nitrogen and hydrogen are combined over a promoted iron catalyst at 400-500 deg C and 150-300 bar to yield ammonia",
+      "source_citation_index": 0
+    }
+  ],
+  "model_provenance": {
+    "runtime": "mlx-local",
+    "model_id": "fixture",
+    "model_version": null,
+    "model_path": null,
+    "temperature": 0.0,
+    "prompt_hash": "blake3:fixture-deterministic-prompt",
+    "deterministic": true
+  }
+}

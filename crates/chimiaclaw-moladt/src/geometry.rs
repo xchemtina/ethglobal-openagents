@@ -18,6 +18,13 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use crate::{AtomicSymbol, Coordinate, Edge, MolAdtError, MoleculeAdt};
 
 /// Cordero 2008 single-bond covalent radii in Angstrom.
+///
+/// Hand-tuned values cover the elements most common in the demo molecules.
+/// Every other supported [`AtomicSymbol`] falls through to a conservative
+/// 1.40 Å default, which keeps geometry guessers from crashing on
+/// transition-metal or lanthanide atoms while still producing a usable bond
+/// estimate. Replace the default with literature values per element as
+/// chemistry demand grows.
 #[must_use]
 pub fn covalent_radius_angstrom(symbol: &AtomicSymbol) -> f64 {
     match symbol {
@@ -34,6 +41,7 @@ pub fn covalent_radius_angstrom(symbol: &AtomicSymbol) -> f64 {
         AtomicSymbol::Fe => 1.32,
         AtomicSymbol::Br => 1.20,
         AtomicSymbol::I => 1.39,
+        _ => 1.40,
     }
 }
 
