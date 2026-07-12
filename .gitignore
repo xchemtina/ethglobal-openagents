@@ -23,6 +23,13 @@ services/api-gateway/.tunnel-url
 web/.env
 web/.env.local
 
+# Stripe Projects CLI (local provisioning state + env dumps)
+.projects/
+**/.projects/
+# never commit pulled provider secrets from `stripe projects env --pull`
+.env.stripe
+**/.env.stripe
+
 # ChimeraX sidecars from xyz conversion
 **/*.chimerax.pdb
 **/*.chimerax.cxs

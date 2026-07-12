@@ -59,6 +59,17 @@ Direct human pay: [buy.stripe.com/5kQ28sahM1zR3mO3gB5Rm00](https://buy.stripe.co
 2. **Publishable key** → optional `STRIPE_PUBLISHABLE_KEY`  
 3. **Secret key** → `STRIPE_SECRET_KEY` **only on Olympus** (never Vercel public env)
 
+## Stripe CLI + Projects (operator tooling)
+
+Installed on the dev Mac: Stripe CLI `1.43.7` + agent skill `stripe-projects`.  
+See **[`docs/STRIPE_CLI.md`](./STRIPE_CLI.md)** for:
+
+- `stripe login`  
+- Projects plugin / catalog (optional infra provisioning)  
+- `scripts/stripe-webhook-dev.sh` → forward events to the gateway for auto-fulfill  
+
+Payment Links remain the human checkout path; CLI is for webhooks and optional Projects.
+
 ---
 
 ## Revolut payment link
