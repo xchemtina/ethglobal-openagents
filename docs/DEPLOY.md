@@ -7,13 +7,17 @@ Goal: something you can put on the public internet **without lying about money o
 ```text
 Browser / agents
     │
-    ├─ web (Vercel)  ── NEXT_PUBLIC_API_BASE ──► api gateway (Fly/Railway/VPS)
-    │                                              │
+    ├─ web (Vercel)  ── NEXT_PUBLIC_API_BASE ──► api gateway (Olympus + Cloudflare Tunnel preferred)
+    │                                              │  optional: Fly / Railway / small VPS
     │                                              ├─ stub x402 (agents)
-    │                                              ├─ Stripe Checkout (humans, optional)
-    │                                              └─ Revolut instructions (humans, optional)
+    │                                              ├─ Stripe Payment Links (humans)
+    │                                              └─ Revolut instructions (humans)
     │
     └─ static orbital PNGs on Vercel (public/orbitals)
+
+Live DFT compute (not the HTTP host):
+    Olympus PySCF  ·  Modal H100  ·  Arkhai Simple Compute Market (GPU lease)
+    See docs/ARKHAI.md — Arkhai is a compute market, not a Fly replacement.
 ```
 
 ## 1. Frontend (Vercel) — ship this first
@@ -32,7 +36,13 @@ vercel --prod
 - Builds offline with real orbital gallery assets under `public/orbitals/`.
 - Without API, cashier shows errors but marketing + orbitals still work.
 
-## 2. API gateway (Fly / Railway / small VPS)
+## 2. API gateway (Olympus + Tunnel first; Fly optional)
+
+**Preferred:** `duck@olympus.local` port 4021 + Cloudflare Tunnel → `api.chimiadao.io`.  
+**Arkhai.io is not an alternative host** for this process — see [`ARKHAI.md`](./ARKHAI.md).  
+**Fly** remains optional if we need always-on cloud Node without Olympus.
+
+### 2a. Olympus / any VPS
 
 ```bash
 cd services/api-gateway

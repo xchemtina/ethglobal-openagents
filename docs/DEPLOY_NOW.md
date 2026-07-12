@@ -53,7 +53,9 @@ cloudflared tunnel --url http://127.0.0.1:4021
 
 Paste the tunnel URL into Vercel env `NEXT_PUBLIC_API_BASE`, redeploy web.
 
-### Option B2 — Docker / Fly.io
+### Option B2 — Docker / Fly.io (optional only)
+
+Prefer Olympus + Cloudflare Tunnel. Fly is a fallback if Olympus is offline.
 
 ```bash
 cd services/api-gateway
@@ -63,7 +65,9 @@ fly secrets set X402_MODE=stub REVOLUT_PAY_TO=... PUBLIC_BASE_URL=https://chimia
 fly deploy
 ```
 
-Mount DFT cache volume or bake a subset of `demo/dft` into the image later.
+### Option B3 — Arkhai.io (compute market, not gateway host)
+
+[Arkhai SCM](https://www.arkhai.io/products/simple-compute-market) buys/sells **GPU VMs** via negotiation + escrow. Use it for **live DFT capacity**, not for running `api-gateway`. Full note: [`docs/ARKHAI.md`](./ARKHAI.md).
 
 ---
 

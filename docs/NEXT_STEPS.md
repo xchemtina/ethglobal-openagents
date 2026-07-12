@@ -33,9 +33,12 @@ Companion snapshot: [`docs/SUMMARY.md`](./SUMMARY.md).
 3. 🟡 Point Vercel `NEXT_PUBLIC_API_BASE=https://api.chimiadao.io` once DNS is stable.
 4. 🟡 Real Revolut link (replace placeholder); optional second Stripe link per SKU.
 5. 🟡 Stripe webhook → fulfillment token (auto-deliver stub MolADT / cached DFT).
-6. 🟡 Modal account link + smoke water SCF; keep live DFT operator-gated.
+6. 🟡 Elastic DFT: **Arkhai SCM** (preferred market-shaped path) and/or Modal  
+   — join pilot, buy GPU hour, run same worker; **not** a Fly replacement for the cashier.  
+   See [`docs/ARKHAI.md`](./ARKHAI.md).
 7. 🟡 Seal remaining Sn worker JSON into signed `chem.dft.result` when convenient.
 8. 🟡 Live x402 facilitator + real `CHIMIA_X402_PAY_TO` (micro prices only).
+9. ⬜ Skip Fly deploy unless Olympus+tunnel is unavailable.
 
 ### Explicitly not doing
 

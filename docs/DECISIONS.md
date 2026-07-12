@@ -181,3 +181,11 @@ Olympus PySCF, Modal H100 jobs, and the Vercel UI may compute or display. They d
 ## D26. Orbital gallery is a projection of signed cubes
 
 Browser 3D fields (`web/public/orbitals/3d/*.json`) are **projections** of Olympus cube samples for UX. Source of truth remains signed `chem.dft.result` + cube SHA-256. The UI must never claim the canvas is the artifact.
+
+## D27. Arkhai for compute markets; Fly only optional for HTTP
+
+**Arkhai** ([arkhai.io](https://www.arkhai.io), Simple Compute Market) is agent-driven **discovery / negotiation / escrow / GPU provisioning**. It is the right abstraction for **buying elastic DFT capacity** (alongside Modal), not for hosting the Node cashier.
+
+**Fly.io** remains an optional always-on host for `services/api-gateway` only. Preferred HTTP path: Olympus + Cloudflare Tunnel → `api.chimiadao.io`.
+
+Rejected: treating Arkhai as a drop-in “instead of Fly” deploy target — that would misread the product and stall the real gateway.
