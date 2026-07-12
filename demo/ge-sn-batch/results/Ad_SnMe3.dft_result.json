@@ -1,0 +1,48 @@
+{
+  "schema_tag": "chem.dft.result",
+  "request_id": "REQ.GE_SN.Ad_SnMe3",
+  "molecule_id": "MOLADT.GE_SN.Ad_SnMe3",
+  "functional": "pbe",
+  "basis_set": "def2-svp",
+  "backend": "PyScf",
+  "total_charge": 0,
+  "multiplicity": 1,
+  "energy_hartree": -2169.96954365323,
+  "orbitals": {
+    "homo_hartree": -0.21454054204585127,
+    "lumo_hartree": -0.04510858678557323,
+    "gap_hartree": 0.16943195526027804,
+    "gap_ev": 4.610478377000384
+  },
+  "dipole": {
+    "x_debye": 1.9086741367652538,
+    "y_debye": -0.560090725406292,
+    "z_debye": 5.506179422332993,
+    "magnitude_debye": 5.854464143879098
+  },
+  "convergence": {
+    "converged": true,
+    "n_cycles": 0,
+    "final_gradient_norm": null,
+    "scf_threshold": 1e-09
+  },
+  "timings": {
+    "wall_seconds": 557.5479769706726,
+    "cpu_seconds": 573.925892
+  },
+  "requested_properties": [
+    "total_energy",
+    "homo_lumo_gap",
+    "dipole"
+  ],
+  "provenance": {
+    "source_kind": "pyscf-classical-functional",
+    "source_ref": "pyscf=2.13.0 xc=pbe basis=def2-svp",
+    "host": "Olympus.local",
+    "pyscf_version": "2.13.0",
+    "skala_version": null,
+    "dispersion": null,
+    "notes": []
+  },
+  "orbital_cubes": []
+}

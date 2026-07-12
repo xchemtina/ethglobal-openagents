@@ -63,6 +63,12 @@ cargo run -p chimiaclaw-cli --features live-sponsors -- \
   --out-dir demo/dft/
 ```
 
+## Elastic GPUs (Modal)
+
+For H100 / swarm throughput, use the sibling package
+[`../dft_modal`](../dft_modal) as `CHIMIACLAW_DFT_COMMAND` instead of
+ssh-to-Olympus. Same stdin/stdout contract; see `docs/MODAL_DFT.md`.
+
 ## Schema reference
 
 `chem.dft.result` (canonical):

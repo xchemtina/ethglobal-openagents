@@ -30,6 +30,7 @@ chimiaclaw-literature = { path = "../chimiaclaw-literature" }
 chimiaclaw-market = { path = "../chimiaclaw-market" }
 chimiaclaw-moladt = { path = "../chimiaclaw-moladt" }
 chimiaclaw-node = { path = "../chimiaclaw-node" }
+chimiaclaw-x402 = { path = "../chimiaclaw-x402" }
 chimiaclaw-ord-adt = { path = "../chimiaclaw-ord-adt" }
 chimiaclaw-schema = { path = "../chimiaclaw-schema" }
 chimiaclaw-storage-0g = { path = "../chimiaclaw-storage-0g", optional = true }

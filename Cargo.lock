@@ -134,6 +134,7 @@ dependencies = [
  "chimiaclaw-ord-adt",
  "chimiaclaw-schema",
  "chimiaclaw-storage-0g",
+ "chimiaclaw-x402",
  "retroquoter",
  "serde_json",
 ]
@@ -364,6 +365,16 @@ version = "0.1.0"
 dependencies = [
  "chimiaclaw-artifact",
  "chimiaclaw-schema",
+]
+
+[[package]]
+name = "chimiaclaw-x402"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-schema",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

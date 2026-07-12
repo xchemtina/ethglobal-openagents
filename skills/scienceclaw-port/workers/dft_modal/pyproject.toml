@@ -1,0 +1,37 @@
+[project]
+name = "chimiaclaw-dft-modal"
+version = "0.1.0"
+description = "ChimiaClaw DFT worker on Modal (same stdin/stdout chem.dft.* contract as chimiaclaw-dft)."
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+# Local real SCF (same family as skills/.../workers/dft).
+pyscf = [
+  "scipy>=1.12",
+  "h5py>=3.10",
+  "pyscf>=2.7",
+]
+# Deploy / remote invoke. Install when linking the Modal account.
+modal = [
+  "modal>=0.73",
+]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+chimiaclaw-dft-modal = "chimiaclaw_dft_modal.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chimiaclaw_dft_modal"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

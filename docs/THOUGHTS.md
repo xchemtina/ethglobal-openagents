@@ -124,6 +124,18 @@ That sequence is important because every sponsor proof now answers the same five
 
 The answer is now concrete. ENS consumed operator-controlled text records and produced publication/resolution/verification artifacts for `chimiaclaw.eth` on Sepolia. 0G consumed the ferrocene MolADT/XYZ payload and produced `storage.zerog.upload` artifact `art_06b4ba819c6222bc` with a Galileo Turbo root hash. The dashboard consumes all of that plus CASP/DFT artifacts and produces a projection, not a new source of truth.
 
+## 2026-07-12 — commerce path pressure
+
+The session that closed the gap between “hackathon substrate” and “something you can charge for” had three non-negotiables:
+
+1. **Primary customer is a machine.** Curl + catalog + 402 beats a beautiful draw UI. Every hour spent on draw→structure is an hour not spent on fulfillment, honesty, and stable API names.
+2. **Payment rails must match the buyer.** Agents get x402; humans get Stripe Payment Links and Revolut. Pretending Base USDC is the only door collapses the human funnel and overclaims crypto readiness.
+3. **DNS honesty.** Quick Cloudflare tunnels are fine for demos and catastrophic for “production” marketing. Porkbun owns `chimiadao.io` NS; `dft` and `api` subdomains are the right stable story.
+
+The orbital viewer taught a smaller lesson: static 2D PNG slices look like marketing slides; auto-rotating soft isosurfaces look like matter. Depth cues (perspective, ground plane, spin) are not decoration — they are how a non-specialist believes the cubes are real.
+
+Stripe Payment Links were the correct first money path: zero secret key in the browser, Dashboard-native, one URL in gateway env. The cost is deferred automation (webhook → fulfillment). That trade is good at this stage: **charge first, automate fulfillment second**.
+
 ## What still must not be overclaimed
 
 The demo is strong precisely because its limits are visible:

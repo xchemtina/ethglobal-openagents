@@ -1,7 +1,7 @@
 {
   "schema_version": "chimiaclaw.world-model.v1",
   "fixture_id": "WM.CHIMIACLAW.TRI_AGENT_LAB_SWARM.001",
-  "generated_at": "2026-05-28T07:40:27Z",
+  "generated_at": "2026-05-28T07:48:28Z",
   "maturity": "three-agent-pipeline-live-refresh",
   "title": "ChimiaClaw Tri-Agent Lab Swarm",
   "subtitle": "Live auto-refresh projection of the Literature \u2192 Retrosynthesis \u2192 DFT dashboard. The static model remains the fallback; this live layer scans overnight DFT, Uniswap, 0G, and ENS artifacts emitted by demo/overnight-full-pipeline.sh.",
@@ -1077,7 +1077,7 @@
       },
       {
         "label": "Live model",
-        "value": "refreshed 2026-05-28T07:40:27Z",
+        "value": "refreshed 2026-05-28T07:48:28Z",
         "status": "active"
       },
       {
@@ -1366,7 +1366,7 @@
         },
         {
           "key": "last scan",
-          "value": "2026-05-28T07:40:27Z"
+          "value": "2026-05-28T07:48:28Z"
         },
         {
           "key": "DFT",
@@ -1671,7 +1671,7 @@
     ],
     "schema_tag": "chimiaclaw.live_dashboard.scan.v1",
     "source_dir": "demo/overnight-full-out",
-    "generated_at": "2026-05-28T07:40:27Z",
+    "generated_at": "2026-05-28T07:48:28Z",
     "log_path": "demo/overnight-full-out/overnight-full.log",
     "latest_log_line": null,
     "artifact_ids": [

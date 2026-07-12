@@ -1,0 +1,52 @@
+{
+  "molecules": [
+    {
+      "id": "benzene",
+      "label": "benzene",
+      "url": "/orbitals/3d/benzene.json",
+      "artifactId": "art_87a648cd3b5f6490",
+      "energyHa": -232.0187951231247,
+      "gapEv": 5.128756517387317
+    },
+    {
+      "id": "water",
+      "label": "water",
+      "url": "/orbitals/3d/water.json",
+      "artifactId": "art_3d5c1283b1a8f79f",
+      "energyHa": -76.37642100138632,
+      "gapEv": 6.964369127615638
+    },
+    {
+      "id": "methanol",
+      "label": "methanol",
+      "url": "/orbitals/3d/methanol.json",
+      "artifactId": "art_563825a02d8ea8a3",
+      "energyHa": -115.62629063032298,
+      "gapEv": 6.0248351714965835
+    },
+    {
+      "id": "propylene-glycol",
+      "label": "propylene glycol",
+      "url": "/orbitals/3d/propylene-glycol.json",
+      "artifactId": "art_c1d9cf319fc537e2",
+      "energyHa": -269.3515838526657,
+      "gapEv": 6.226366083312119
+    },
+    {
+      "id": "caprylic-acid",
+      "label": "caprylic acid (C8)",
+      "url": "/orbitals/3d/caprylic-acid.json",
+      "artifactId": "art_b4002fedd3e69f20",
+      "energyHa": -464.5449634325273,
+      "gapEv": 5.257254946460999
+    },
+    {
+      "id": "capric-acid",
+      "label": "capric acid (C10)",
+      "url": "/orbitals/3d/capric-acid.json",
+      "artifactId": "art_5d1b8812735b2611",
+      "energyHa": -543.0841093152991,
+      "gapEv": 5.38858723399055
+    }
+  ]
+}

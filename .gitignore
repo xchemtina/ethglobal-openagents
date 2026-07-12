@@ -15,3 +15,14 @@ __pycache__/
 **/.DS_Store
 **/tsconfig.tsbuildinfo
 /world-map-demo.zip
+
+# x402 gateway / website local state
+services/api-gateway/data/
+services/api-gateway/.env
+web/.env
+web/.env.local
+
+# ChimeraX sidecars from xyz conversion
+**/*.chimerax.pdb
+**/*.chimerax.cxs
+services/api-gateway/.tunnel-url

@@ -143,3 +143,41 @@ The local LabNodes UI already reads Filecoin Calibration experiment metadata and
 The dashboard-level swarm model is now site-first: diester pharmaceutical ingredients, cannabis/cannabinoid analytics, and Ge/Sn APM are lab sites, not replacements for the core agents. Every lab site must expose the same Literature, Retrosynthesis, and DFT lanes, then specialize through evidence bindings, chemistry constraints, and proof adapters.
 
 `world-model verify` now checks this site layer: each `swarm_sites[]` entry must contain exactly the three core agent ids, site coordinates must be bounded, evidence bindings must be shaped, and `swarm_site_links[]` must reference declared sites with data/concept channels. Rendering a site is no longer enough; broken site topology fails the verifier.
+
+## D22. Agents are the primary customers (no draw→structure product)
+
+The science-market UI and gateway are built for **machines first**: HTTP catalog, x402 `PAYMENT-SIGNATURE`, SMILES/labels in JSON, signed artifacts out. A human draw-to-structure canvas is explicitly **out of product scope**. Humans may use the same cashier and Stripe/Revolut rails for discovery and payment; they do not redefine the interface.
+
+Rejected alternative: investing in 2D draw / image-OCR → MolADT as the flagship path. That optimizes for the wrong buyer.
+
+## D23. Human rails are Stripe Payment Links + Revolut; agents stay on x402
+
+Fiat checkout for humans is **not** Base-only. Default human path:
+
+1. Stripe **Payment Links** (`buy.stripe.com/...`) configured per SKU via env  
+2. Optional Stripe Checkout Sessions when `STRIPE_SECRET_KEY` is set  
+3. Revolut personal payment link / wallet for manual settlement  
+
+Agents keep HTTP 402 / x402 (stub → live). Rippling is **not** a customer checkout rail.
+
+Auto-fulfillment after Stripe charge requires a webhook later; until then operator fulfillment is honest and explicit.
+
+## D24. Trust stays in Rust; workers and web never mint it
+
+Olympus PySCF, Modal H100 jobs, and the Vercel UI may compute or display. They do **not** issue `chem.dft.result` trust. The Rust CLI / market adapters re-hash cubes, refuse unconverged SCF, and seal artifacts. The gateway returns signed bytes; it does not invent science.
+
+## D25. Brand DNS stays on Porkbun; product hosts are subdomains
+
+`chimiadao.io` nameservers remain Porkbun. We do **not** move NS to Vercel.
+
+| Host | Role |
+|------|------|
+| `dft.chimiadao.io` | Science market UI → Vercel |
+| `api.chimiadao.io` | Cashier → named Cloudflare Tunnel → Olympus |
+| apex / `www` | Brand site (unchanged) |
+
+`dft.xyz` is already registered by others; subdomains of `chimiadao.io` are the free, controlled path.
+
+## D26. Orbital gallery is a projection of signed cubes
+
+Browser 3D fields (`web/public/orbitals/3d/*.json`) are **projections** of Olympus cube samples for UX. Source of truth remains signed `chem.dft.result` + cube SHA-256. The UI must never claim the canvas is the artifact.

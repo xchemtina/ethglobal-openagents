@@ -1,0 +1,162 @@
+{
+  "schema_tag": "chem.dft.ge_sn_batch.v1",
+  "title": "Ge\u2192Sn starting-point batch for Olympus PySCF",
+  "created_at_utc": "2026-07-12T18:18:58.284962+00:00",
+  "scaling": {
+    "factor": 1.1583333333333332,
+    "neighbor_cutoff_angstrom": 2.85
+  },
+  "molecules": [
+    {
+      "label": "NC3Sn_H",
+      "xyz": "demo/ge-sn-batch/xyz/NC3Sn_H.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/NC3Ge_H_opt.xyz",
+      "description": "tricarbastannatrane hydride from NC3Ge_H_opt",
+      "n_atoms": 30,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "NC3Sn_Cl",
+      "xyz": "demo/ge-sn-batch/xyz/NC3Sn_Cl.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/focused_atrane_precursors/NC3Ge_Cl_parent_initial.xyz",
+      "description": "tricarbastannatrane chloride",
+      "n_atoms": 30,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "C3_NC3Sn_H",
+      "xyz": "demo/ge-sn-batch/xyz/C3_NC3Sn_H.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/focused_atrane_precursors/c3_idealized/C3_NC3Ge_H_parent.xyz",
+      "description": "idealized C3 NC3Sn-H",
+      "n_atoms": 30,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "C3_NC3Sn_Cl",
+      "xyz": "demo/ge-sn-batch/xyz/C3_NC3Sn_Cl.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/focused_atrane_precursors/c3_idealized/C3_NC3Ge_Cl_parent.xyz",
+      "description": "idealized C3 NC3Sn-Cl",
+      "n_atoms": 30,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "beta_OH_NC3Sn_H",
+      "xyz": "demo/ge-sn-batch/xyz/beta_OH_NC3Sn_H.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/focused_atrane_precursors/c3_idealized/C3_beta_3x_CH2OH_NC3Ge_H.xyz",
+      "description": "beta-CH2OH NC3Sn-H",
+      "n_atoms": 42,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "beta_SH_NC3Sn_H",
+      "xyz": "demo/ge-sn-batch/xyz/beta_SH_NC3Sn_H.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/focused_atrane_precursors/c3_idealized/C3_beta_3x_CH2SH_NC3Ge_H.xyz",
+      "description": "beta-CH2SH NC3Sn-H",
+      "n_atoms": 42,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "Ad_stannatrane",
+      "xyz": "demo/ge-sn-batch/xyz/Ad_stannatrane.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/Ad_germatrane_opt.xyz",
+      "description": "1-adamantylstannatrane from germatrane_opt",
+      "n_atoms": 48,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "Ad_SnH3",
+      "xyz": "demo/ge-sn-batch/xyz/Ad_SnH3.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/Ad_GeH3_opt.xyz",
+      "description": "1-adamantyl-SnH3",
+      "n_atoms": 29,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "Ad_SnCl3",
+      "xyz": "demo/ge-sn-batch/xyz/Ad_SnCl3.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/Ad_GeCl3_opt.xyz",
+      "description": "1-adamantyl-SnCl3",
+      "n_atoms": 29,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    },
+    {
+      "label": "Ad_SnMe3",
+      "xyz": "demo/ge-sn-batch/xyz/Ad_SnMe3.xyz",
+      "source_ge_xyz": "/Users/crischimiadao/Documents/ChimiaDAO-MNT/calculations/structures/Ad_GeMe3_opt.xyz",
+      "description": "1-adamantyl-SnMe3",
+      "n_atoms": 38,
+      "n_sn": 1,
+      "charge": 0,
+      "multiplicity": 1,
+      "method": {
+        "functional": "pbe",
+        "basis_set": "def2-svp",
+        "backend": "pyscf-classical"
+      }
+    }
+  ],
+  "count": 10
+}

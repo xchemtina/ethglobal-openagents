@@ -1,6 +1,59 @@
 # Next steps
 
-This is the near-term build order after the current scaffold.
+This is the near-term build order after the current scaffold.  
+Companion snapshot: [`docs/SUMMARY.md`](./SUMMARY.md).
+
+## 0. Deployable science market (2026-07-12 evening)
+
+### Done
+
+1. ✅ Olympus inventory + Ge→Sn batch (`demo/olympus-dft-inventory.*`, `demo/ge-sn-batch/`).
+2. ✅ Sn SCFs on Olympus (majority converged; β-OH explicit fail — do not block product).
+3. ✅ ChimeraX MCP (`tools/chimerax_mcp`).
+4. ✅ Agents-first `web/` (no draw UI): cashier, catalog, 3D orbitals, payment rails, working API badge.
+5. ✅ Gateway: x402 stub, cached DFT SKU, Stripe **Payment Link** wired  
+   (`https://buy.stripe.com/5kQ28sahM1zR3mO3gB5Rm00` for both SKUs until split).
+6. ✅ Vercel production deploy of `web/`.
+7. ✅ Domain plan locked: Porkbun DNS for `chimiadao.io`; `dft` → Vercel; `api` → tunnel.
+8. ✅ Docs: `SUMMARY`, `DEPLOY*`, `PAYMENTS`, `DNS_PORKBUN`, `X402`, `MODAL_DFT`.
+
+### Next (ordered)
+
+1. 🟡 **Porkbun:** add `A` record `dft` → `76.76.21.21` (domain already on Vercel project).
+2. 🟡 **Olympus:** install `cloudflared`, named tunnel, `CNAME api` → `*.cfargotunnel.com`.
+3. 🟡 Set Vercel `NEXT_PUBLIC_API_BASE=https://api.chimiadao.io` + gateway  
+   `PUBLIC_BASE_URL` / `CORS_ORIGIN` including `https://dft.chimiadao.io`.
+4. 🟡 Real Revolut link (replace placeholder); optional second Stripe link per SKU.
+5. 🟡 Stripe webhook → fulfillment token (auto-deliver stub MolADT / cached DFT).
+6. 🟡 Modal account link + smoke water SCF; keep live DFT operator-gated.
+7. 🟡 Seal remaining Sn worker JSON into signed `chem.dft.result` when convenient.
+8. 🟡 Live x402 facilitator + real `CHIMIA_X402_PAY_TO` (micro prices only).
+
+### Explicitly not doing
+
+- Draw→structure / image OCR product path  
+- Moving Porkbun nameservers to Vercel  
+- Claiming live USDC without facilitator  
+- Rippling as customer checkout
+
+## 0. Current checkpoint — x402 + website revenue path (2026-07-11)
+
+Parallel track for the agentic economy:
+
+1. ✅ `chimiaclaw-x402` crate: catalog SKUs, challenge/payment/receipt types, signed demo bundle, unit tests.
+2. ✅ `ScienceSettlementMethod::X402HttpPayment` + market sponsor binding hint.
+3. ✅ CLI: `x402-demo`, `x402-catalog`, `moladt-api` (signed MolADT JSON for the cashier).
+4. ✅ `services/api-gateway`: HTTP catalog + 402 gate + paid `POST /v1/moladt` (free/stub/live modes).
+5. ✅ `web/` drop-in contract for the Vercel frontend design (awaiting design download). Brand decision: fold into [chimiadao.io](https://www.chimiadao.io) as `/agents` + `api.chimiadao.io`, not a second site.
+6. ✅ Cached DFT SKU live: free `GET /v1/dft/index` + paid `GET /v1/dft/cached?label=…` from `DFT_CACHE_DIR` (`demo/dft` signed `chem.dft.result`).
+7. ✅ Modal elastic DFT worker scaffold: `skills/scienceclaw-port/workers/dft_modal` (stub/local/modal modes, atom/electron/wall/spend/operator guards, `run_dft_batch` map for H100 swarms). Docs: `docs/MODAL_DFT.md`. Gateway `dft.live_small` remains 501 until Modal account is linked and operator flag is set.
+8. 🟡 Link DAO Modal account (`modal setup` + deploy `chimiaclaw-dft`); smoke remote water SCF; set `CHIMIACLAW_DFT_COMMAND` to `chimiaclaw-dft-modal --mode modal`.
+9. 🟡 Land chimiadao.io `/agents` (Vercel UI into `web/` or site repo) and wire `NEXT_PUBLIC_API_BASE`.
+10. 🟡 Wire official `@x402/express` facilitator verification for `X402_MODE=live`.
+11. 🟡 Seal `market.x402.payment` / `receipt` artifacts from the gateway (not only revenue JSONL).
+12. 🟡 Set real DAO `CHIMIA_X402_PAY_TO` on Base; graduate stub → live with micro prices.
+
+See `docs/X402.md`.
 
 ## 0. Current checkpoint from the 2026-05-12 tri-agent lab-swarm repair
 

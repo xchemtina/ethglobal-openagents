@@ -12,6 +12,10 @@ use chimiaclaw_moladt::{
     DftMethodSpec, DftMoleculeRef, DftRequest, Edge, MoleculeAdt, MoleculeProjections,
     MoleculeProvenance,
 };
+use chimiaclaw_x402::{
+    catalog_artifact, default_catalog, demo_x402_bundle, micros_to_price_display, CATALOG_AGENT,
+    MOLADT_AGENT, NETWORK_BASE_SEPOLIA,
+};
 use chimiaclaw_node::{NodeProfile, NodeRuntime, RunCycleReport};
 use chimiaclaw_ord_adt::{
     adt_experiment_hash, demo_suzuki_ord_like, translate_reaction, OrdLikeReaction, OrdToAdtSkill,
@@ -73,6 +77,27 @@ fn main() -> ExitCode {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => {
                 eprintln!("science-market-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "x402-demo", ..] => match run_x402_demo() {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("x402-demo failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "x402-catalog", rest @ ..] => match run_x402_catalog(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("x402-catalog failed: {error}");
+                ExitCode::FAILURE
+            }
+        },
+        [_, "moladt-api", rest @ ..] => match run_moladt_api(rest) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("moladt-api failed: {error}");
                 ExitCode::FAILURE
             }
         },
@@ -229,6 +254,127 @@ fn run_science_market_demo() -> Result<(), String> {
         "{}",
         serde_json::to_string_pretty(&demo)
             .map_err(|error| format!("serialize science market demo: {error}"))?
+    );
+    Ok(())
+}
+
+fn run_x402_demo() -> Result<(), String> {
+    let signer = NodeProfile::dev_signer_from_seed_label("x402-demo");
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("system time: {error}"))?
+        .as_secs();
+    let bundle =
+        demo_x402_bundle(&signer, now).map_err(|error| format!("build x402 demo: {error}"))?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&bundle)
+            .map_err(|error| format!("serialize x402 demo: {error}"))?
+    );
+    Ok(())
+}
+
+fn run_x402_catalog(args: &[&str]) -> Result<(), String> {
+    let pay_to = parse_kv(args, "--pay-to")
+        .unwrap_or("0xChimiaDAOTreasuryPlaceholder0000000000")
+        .to_string();
+    let network = parse_kv(args, "--network")
+        .unwrap_or(NETWORK_BASE_SEPOLIA)
+        .to_string();
+    let catalog = default_catalog(&pay_to, &network);
+    let sign = args.iter().any(|a| *a == "--sign");
+    if sign {
+        let signer = NodeProfile::dev_signer_from_seed_label("x402-catalog");
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|error| format!("system time: {error}"))?
+            .as_secs();
+        let artifact = catalog_artifact(
+            &catalog,
+            AgentId(CATALOG_AGENT.to_string()),
+            &signer,
+            now,
+        )
+        .map_err(|error| format!("seal catalog artifact: {error}"))?;
+        let out = serde_json::json!({
+            "catalog": catalog,
+            "artifact": artifact,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&out)
+                .map_err(|error| format!("serialize signed catalog: {error}"))?
+        );
+    } else {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&catalog)
+                .map_err(|error| format!("serialize catalog: {error}"))?
+        );
+    }
+    Ok(())
+}
+
+/// Paid-path helper for `services/api-gateway`: SMILES → signed MolADT JSON.
+///
+/// Resolves curated library first, then optional RDKit worker unless `--no-worker`.
+fn run_moladt_api(args: &[&str]) -> Result<(), String> {
+    let smiles = parse_kv(args, "--smiles")
+        .ok_or_else(|| "moladt-api requires --smiles <smi>".to_string())?
+        .to_string();
+    let no_worker = args.iter().any(|a| *a == "--no-worker");
+    let molecule = if let Some(mol) = library::resolve_smiles(&smiles) {
+        mol
+    } else if no_worker {
+        return Err(format!(
+            "SMILES not in curated library and --no-worker set: {smiles}"
+        ));
+    } else {
+        match moladt_worker::resolve_with_worker(&smiles) {
+            Ok(Some(mol)) => mol,
+            Ok(None) => {
+                return Err(format!(
+                    "SMILES not resolved (set {} for RDKit worker): {smiles}",
+                    moladt_worker::SMILES_WORKER_ENV
+                ));
+            }
+            Err(error) => return Err(format!("moladt worker error: {error}")),
+        }
+    };
+
+    let signer = NodeProfile::dev_signer_from_seed_label("moladt-api");
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("system time: {error}"))?
+        .as_secs();
+    let artifact = molecule_artifact(
+        &molecule,
+        AgentId(MOLADT_AGENT.to_string()),
+        &signer,
+        now,
+    )
+    .map_err(|error| format!("seal molecule artifact: {error}"))?;
+
+    let price_usdc_micros = 10_000_u64;
+    let out = serde_json::json!({
+        "sku_id": "moladt.geometry",
+        "service_kind": "moladt",
+        "price_usdc_micros": price_usdc_micros,
+        "price_display": micros_to_price_display(price_usdc_micros),
+        "settlement_method": "X402HttpPayment",
+        "smiles": smiles,
+        "molecule": molecule,
+        "artifact": artifact,
+        "provider_agent": MOLADT_AGENT,
+        "notes": [
+            "Signed chem.molecule.adt for x402-paid delivery.",
+            "Payment verification is owned by services/api-gateway.",
+        ],
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&out)
+            .map_err(|error| format!("serialize moladt-api response: {error}"))?
     );
     Ok(())
 }
@@ -605,6 +751,18 @@ fn print_help() {
     println!("  chimiaclaw-cli science-market-demo");
     println!(
         "      Print deterministic signed ENS-shaped service transactions for DFT, retrosynthesis, and literature."
+    );
+    println!("  chimiaclaw-cli x402-demo");
+    println!(
+        "      Print signed x402 catalog/challenge/payment/receipt demo bundle (stub; no funds moved)."
+    );
+    println!("  chimiaclaw-cli x402-catalog [--pay-to <addr>] [--network <caip2>] [--sign]");
+    println!(
+        "      Print the default x402 science service catalog; --sign seals a market.x402.catalog artifact."
+    );
+    println!("  chimiaclaw-cli moladt-api --smiles <smi> [--no-worker]");
+    println!(
+        "      Resolve SMILES to a signed chem.molecule.adt JSON payload for the x402 API gateway."
     );
     println!("  chimiaclaw-cli moladt-dft-demo [--library <name>|--smiles <smi>] [--functional <xc>] [--basis <name>] [--dispersion <name>] [--multiplicity <n>] [--out-dir <dir>]");
     println!(

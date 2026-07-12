@@ -1,0 +1,44 @@
+[
+  {
+    "name": "NC3Sn_H",
+    "artifactId": "NC3Sn_H",
+    "energyHa": -2066.4163528383924,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "NC3Sn_Cl",
+    "artifactId": "NC3Sn_Cl",
+    "energyHa": -2525.525087256852,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "C3_NC3Sn_H",
+    "artifactId": "C3_NC3Sn_H",
+    "energyHa": -2065.504249031782,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "C3_NC3Sn_Cl",
+    "artifactId": "C3_NC3Sn_Cl",
+    "energyHa": -2524.6287029371015,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "Ad_SnH3",
+    "artifactId": "Ad_SnH3",
+    "energyHa": -2047.5339079421938,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "Ad_SnCl3",
+    "artifactId": "Ad_SnCl3",
+    "energyHa": -3425.198749758831,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  },
+  {
+    "name": "Ad_SnMe3",
+    "artifactId": "Ad_SnMe3",
+    "energyHa": -2169.96954365323,
+    "method": "PBE/def2-svp \u00b7 Ge\u2192Sn start"
+  }
+]

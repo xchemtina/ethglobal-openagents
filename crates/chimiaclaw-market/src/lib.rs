@@ -113,6 +113,9 @@ pub struct SponsorBindings {
     pub zero_g_storage_hint: Option<String>,
     pub uniswap_settlement_hint: Option<String>,
     pub keeperhub_execution_hint: Option<String>,
+    /// Optional x402 payTo / facilitator attachment point for agentic HTTP settlement.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub x402_settlement_hint: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -189,6 +192,12 @@ pub enum ScienceSettlementMethod {
     SimulatedArtifactLedger,
     UniswapPreparedTransfer,
     OnChainEscrow,
+    /// HTTP 402 Payment Required (x402) stablecoin micropayment.
+    ///
+    /// Live verification is performed by `services/api-gateway` via a
+    /// facilitator; this enum marks market quotes that settle through that path.
+    /// Payload shapes live in `chimiaclaw-x402` (`market.x402.*` artifacts).
+    X402HttpPayment,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -1269,6 +1278,10 @@ fn service_offer(
             ),
             keeperhub_execution_hint: Some(
                 "KeeperHub schedules execution artifact in live mode".to_string(),
+            ),
+            x402_settlement_hint: Some(
+                "x402 HTTP 402 micropayment via services/api-gateway; see chimiaclaw-x402"
+                    .to_string(),
             ),
         },
     }

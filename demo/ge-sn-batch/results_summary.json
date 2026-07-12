@@ -1,0 +1,117 @@
+{
+  "schema_tag": "chem.dft.ge_sn_batch.results.v1",
+  "generated_at_utc": "2026-07-12T20:08:35.378412+00:00",
+  "method": "PBE/def2-svp single-point on Ge\u2192Sn scaled starting geometries",
+  "host": "Olympus.local",
+  "completed_converged": 7,
+  "failed_unconverged": [
+    "beta_OH_NC3Sn_H"
+  ],
+  "pending": [
+    "beta_SH_NC3Sn_H",
+    "Ad_stannatrane"
+  ],
+  "total_planned": 10,
+  "results": [
+    {
+      "label": "NC3Sn_H",
+      "energy_hartree": -2066.4163528383924,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 3.288842549426863,
+      "dipole_debye": 5.770448500758347,
+      "wall_seconds": 241.16790914535522,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "NC3Sn_Cl",
+      "energy_hartree": -2525.525087256852,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 3.979444617459434,
+      "dipole_debye": 8.411301462415029,
+      "wall_seconds": 240.22392296791077,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "C3_NC3Sn_H",
+      "energy_hartree": -2065.504249031782,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 3.2595195436151685,
+      "dipole_debye": 6.330215813678801,
+      "wall_seconds": 230.9944589138031,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "C3_NC3Sn_Cl",
+      "energy_hartree": -2524.6287029371015,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 3.589342279825486,
+      "dipole_debye": 9.002488750157962,
+      "wall_seconds": 228.32601308822632,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "Ad_SnH3",
+      "energy_hartree": -2047.5339079421938,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 3.5568291481755274,
+      "dipole_debye": 6.438734012869095,
+      "wall_seconds": 243.0799059867859,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "Ad_SnCl3",
+      "energy_hartree": -3425.198749758831,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 5.2107243149279725,
+      "dipole_debye": 10.491149248093471,
+      "wall_seconds": 328.8185589313507,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "Ad_SnMe3",
+      "energy_hartree": -2169.96954365323,
+      "converged": true,
+      "n_cycles": 0,
+      "gap_ev": 4.610478377000384,
+      "dipole_debye": 5.854464143879098,
+      "wall_seconds": 557.5479769706726,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    },
+    {
+      "label": "beta_OH_NC3Sn_H",
+      "energy_hartree": -2409.9068365975013,
+      "converged": false,
+      "n_cycles": 0,
+      "gap_ev": 0.014524308298318698,
+      "dipole_debye": 3.0312179540308106,
+      "wall_seconds": 1597.9701550006866,
+      "functional": "pbe",
+      "basis_set": "def2-svp",
+      "host": "Olympus.local"
+    }
+  ],
+  "notes": [
+    "Raw worker JSON \u2014 not sealed ChimiaClaw chem.dft.result artifacts.",
+    "beta_* jobs may fail SCF on crude scaled geometries; re-opt first."
+  ]
+}

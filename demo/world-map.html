@@ -7,7 +7,7 @@
   <style>
     :root {
       color-scheme: dark;
-      --renderer-revision: "orbital-render-v2.4-dense-orbitals";
+      --renderer-revision: "orbital-render-v2.6-canvas-fallback";
       --bg: oklch(0.07 0 0);
       --panel: oklch(0.105 0 0);
       --panel-2: oklch(0.13 0 0);
@@ -1165,13 +1165,14 @@
 
   <script>
     if (window.location.protocol === "file:") {
-      window.location.replace("http://localhost:8787/world-map.html?v=tri-agent-lab-swarm-v2.4");
+      window.location.replace("http://localhost:8787/world-map.html?v=orbital-canvas-fallback-v2.6");
     }
 
     const $ = (id) => document.getElementById(id);
     const MODEL_SOURCES = ["world-model.live.json", "world-model.json"];
     const MODEL_REFRESH_MS = 5000;
     let currentOrbitalAssetPath = null;
+    let orbitalRenderState = "idle";
     let refreshInFlight = false;
 
     function esc(value) {
@@ -1341,25 +1342,314 @@
       }).join("");
     }
 
+    function startCanvasOrbitalFallback(root, viewer, orbitalData, molecules, reason) {
+      const stage = root.querySelector(".orbital-stage");
+      const tabsNode = $("orbital-tabs");
+      const factsNode = $("orbital-active-facts");
+      const titleNode = $("orbital-active-title");
+      const metaNode = $("orbital-meta");
+      if (!stage || !tabsNode || !factsNode || !titleNode || !metaNode) return false;
+
+      stage.innerHTML = `
+        <canvas id="orbital-canvas-2d" class="orbital-canvas" data-renderer="canvas2d" aria-label="Canvas fallback HOMO/LUMO orbital gallery with bond skeletons"></canvas>
+        <div class="orbital-hud mono">
+          <span id="orbital-renderer" class="tag real">Canvas 2D fallback</span>
+          <span id="orbital-status" class="tag">${esc(reason)}</span>
+        </div>
+        <div class="orbital-overlay mono">
+          <div class="orbital-legend">
+            <span class="tag"><span class="phase-dot positive"></span>positive phase</span>
+            <span class="tag"><span class="phase-dot negative"></span>negative phase</span>
+            <span class="tag"><span class="phase-dot atom"></span>atom cores</span>
+            <span class="tag">bond skeleton</span>
+          </div>
+          <span class="tag real">drag to rotate</span>
+        </div>
+      `;
+
+      const canvas = stage.querySelector("canvas");
+      const ctx = canvas?.getContext("2d");
+      const statusNode = $("orbital-status");
+      if (!canvas || !ctx) {
+        stage.innerHTML = `<p class="small orbital-stage-message">${esc(reason)} Canvas fallback could not initialize.</p>`;
+        return false;
+      }
+
+      let activeIndex = Math.max(0, molecules.findIndex((molecule) => molecule.molecule_id === viewer.default_molecule_id));
+      let mode = "both";
+      let showAtoms = true;
+      let densityGain = 1.72;
+      let yaw = 0.28;
+      let pitch = -0.42;
+      let userZoom = 1.0;
+      let paused = false;
+      let dragging = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+      const activeMolecule = () => molecules[activeIndex] ?? molecules[0];
+      const activeOrbitalsByLabel = () => Object.fromEntries((activeMolecule().orbitals ?? []).map((orbital) => [orbital.label, orbital]));
+      const selectedOrbitals = () => {
+        const orbitals = activeOrbitalsByLabel();
+        if (mode === "HOMO") return [orbitals.HOMO].filter(Boolean);
+        if (mode === "LUMO") return [orbitals.LUMO].filter(Boolean);
+        return [orbitals.HOMO, orbitals.LUMO].filter(Boolean);
+      };
+
+      function sceneRadius(molecule) {
+        let radius = 0.85;
+        for (const atom of molecule.atoms ?? []) {
+          const p = atom.position ?? [0, 0, 0];
+          radius = Math.max(radius, Math.hypot(p[0] ?? 0, p[1] ?? 0, p[2] ?? 0));
+        }
+        for (const orbital of molecule.orbitals ?? []) {
+          const points = orbital.points ?? [];
+          const stride = Math.max(1, Math.floor(points.length / 700));
+          for (let i = 0; i < points.length; i += stride) {
+            const p = points[i];
+            radius = Math.max(radius, Math.hypot(p[0] ?? 0, p[1] ?? 0, p[2] ?? 0));
+          }
+        }
+        return radius;
+      }
+
+      function atomColor(element) {
+        const colors = {
+          H: [235, 245, 255],
+          C: [132, 150, 160],
+          N: [80, 128, 255],
+          O: [255, 72, 54],
+          P: [255, 148, 46],
+          S: [255, 214, 62],
+          Cl: [108, 235, 108],
+        };
+        return colors[element] ?? [205, 220, 232];
+      }
+
+      function atomRadius(element, atomicNumber) {
+        const radii = { H: 0.070, C: 0.112, N: 0.106, O: 0.108, P: 0.136, S: 0.140, Cl: 0.144 };
+        return radii[element] ?? clampNumber(0.078 + Math.sqrt(Math.max(atomicNumber ?? 6, 1)) * 0.012, 0.082, 0.170);
+      }
+
+      function sizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.floor(rect.width * ratio));
+        const height = Math.max(1, Math.floor(rect.height * ratio));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        return { width, height, ratio };
+      }
+
+      function project(position, width, height) {
+        const radius = sceneRadius(activeMolecule());
+        const fitScale = clampNumber(1.18 / Math.max(radius, 0.85), 0.52, 1.20) * userZoom;
+        const cy = Math.cos(yaw);
+        const sy = Math.sin(yaw);
+        const cp = Math.cos(pitch);
+        const sp = Math.sin(pitch);
+        const x = position[0] ?? 0;
+        const y = position[1] ?? 0;
+        const z = position[2] ?? 0;
+        const x1 = x * cy - z * sy;
+        const z1 = x * sy + z * cy;
+        const y1 = y * cp - z1 * sp;
+        const z2 = y * sp + z1 * cp;
+        const depth = Math.max(0.75, 3.1 - z2);
+        return {
+          x: width * 0.5 + (x1 / depth) * fitScale * width * 0.70,
+          y: height * 0.5 - (y1 / depth) * fitScale * height * 0.70,
+          z: z2,
+          depth,
+        };
+      }
+
+      function renderTabs() {
+        tabsNode.innerHTML = molecules.map((molecule, index) => `
+          <button type="button" data-orbital-molecule="${index}" class="${index === activeIndex ? "active" : ""}">${esc(molecule.molecule_label ?? molecule.molecule_id)}</button>
+        `).join("");
+        tabsNode.querySelectorAll("[data-orbital-molecule]").forEach((button) => {
+          button.addEventListener("click", () => {
+            activeIndex = Number(button.dataset.orbitalMolecule ?? 0);
+            tabsNode.querySelectorAll("[data-orbital-molecule]").forEach((b) => b.classList.toggle("active", b === button));
+            renderMeta();
+          });
+        });
+      }
+
+      function renderMeta() {
+        const molecule = activeMolecule();
+        const selectedPointCount = selectedOrbitals().reduce((sum, orbital) => sum + (orbital.points?.length ?? 0), 0);
+        const gap = Number(molecule.gap_ev ?? 0);
+        titleNode.textContent = `${molecule.molecule_label ?? molecule.molecule_id} HOMO/LUMO`;
+        factsNode.innerHTML = `
+          <span class="tag real">${molecule.atoms?.length ?? 0} atoms</span>
+          <span class="tag good">${molecule.bonds?.length ?? 0} bonds</span>
+          <span class="tag">${selectedPointCount.toLocaleString()} points</span>
+          <span class="tag">Canvas fallback</span>
+        `;
+        metaNode.innerHTML = `
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <span class="stamp">${esc(molecule.molecule_id)}</span>
+            ${statusTag(viewer.status)}
+          </div>
+          <h3>${esc(molecule.molecule_label ?? molecule.molecule_id)} · signed cube-derived orbital render</h3>
+          <div class="orbital-meta-grid mono" style="margin-top: 10px;">
+            <div class="evidence-line"><span>renderer</span><strong>Canvas 2D fallback from the same signed gallery asset</strong></div>
+            <div class="evidence-line"><span>reason</span><strong>${esc(reason)}</strong></div>
+            <div class="evidence-line"><span>method</span><strong>${esc(molecule.method)} · gap ${Number.isFinite(gap) ? gap.toFixed(3) : "-"} eV</strong></div>
+            <div class="evidence-line"><span>asset</span><strong>${esc(viewer.gallery_asset_path ?? viewer.asset_path ?? orbitalData.source?.path ?? "orbital gallery")}</strong></div>
+          </div>
+          <p class="small" style="margin-top: 8px;">WebGPU is preferred; this fallback keeps the molecular structure and density clouds visible when the browser blocks WebGPU.</p>
+        `;
+      }
+
+      function draw() {
+        if (!canvas.isConnected) return;
+        const { width, height, ratio } = sizeCanvas();
+        if (!paused && !dragging) yaw += 0.0045;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "rgba(0, 8, 14, 0.08)";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        for (const orbital of selectedOrbitals()) {
+          const points = orbital.points ?? [];
+          const stride = densityGain > 1.6 ? 1 : Math.max(1, Math.ceil(points.length / 3600));
+          for (let i = 0; i < points.length; i += stride) {
+            const point = points[i];
+            const projected = project(point, width, height);
+            const phase = Number(point[3] ?? 1);
+            const magnitude = clampNumber(Number(point[4] ?? 0), 0, 1);
+            const shaped = Math.max(0.04, Math.min(1, (magnitude - 0.03) / 0.70));
+            const alpha = clampNumber((0.025 + shaped * 0.135) * densityGain, 0.028, 0.24);
+            const radius = ratio * (1.0 + shaped * 5.2 + densityGain * 1.3) / Math.max(0.78, projected.depth * 0.55);
+            ctx.beginPath();
+            ctx.fillStyle = phase >= 0 ? `rgba(38, 224, 255, ${alpha})` : `rgba(255, 176, 54, ${alpha})`;
+            ctx.arc(projected.x, projected.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+
+        const molecule = activeMolecule();
+        ctx.save();
+        ctx.lineCap = "round";
+        for (const bond of molecule.bonds ?? []) {
+          const atoms = molecule.atoms ?? [];
+          const start = bond.start ?? atoms[bond.from]?.position;
+          const end = bond.end ?? atoms[bond.to]?.position;
+          if (!start || !end) continue;
+          const a = project(start, width, height);
+          const b = project(end, width, height);
+          ctx.strokeStyle = "rgba(219, 248, 255, 0.76)";
+          ctx.lineWidth = Math.max(1.5, ratio * 2.3 / Math.max(0.9, (a.depth + b.depth) * 0.30));
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+        if (showAtoms) {
+          const projectedAtoms = (molecule.atoms ?? []).map((atom) => ({ atom, projected: project(atom.position ?? [0, 0, 0], width, height) })).sort((a, b) => b.projected.z - a.projected.z);
+          for (const { atom, projected } of projectedAtoms) {
+            const [r, g, b] = atomColor(atom.element ?? "");
+            const radius = ratio * atomRadius(atom.element ?? "", atom.atomic_number) * 92 / Math.max(0.78, projected.depth * 0.72);
+            const gradient = ctx.createRadialGradient(projected.x - radius * 0.35, projected.y - radius * 0.35, radius * 0.12, projected.x, projected.y, radius);
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${atom.element === "H" ? 0.82 : 0.95})`);
+            gradient.addColorStop(0.22, `rgba(${r}, ${g}, ${b}, ${atom.element === "H" ? 0.70 : 0.86})`);
+            gradient.addColorStop(1, `rgba(${Math.round(r * 0.42)}, ${Math.round(g * 0.42)}, ${Math.round(b * 0.42)}, 0.72)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(projected.x, projected.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+
+        if (statusNode) {
+          const selectedPointCount = selectedOrbitals().reduce((sum, orbital) => sum + (orbital.points?.length ?? 0), 0);
+          statusNode.textContent = `${activeMolecule().molecule_label ?? activeMolecule().molecule_id} · ${mode} · ${selectedPointCount.toLocaleString()} density points · Canvas fallback`;
+        }
+        requestAnimationFrame(draw);
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        yaw += (event.clientX - lastX) * 0.012;
+        pitch = clampNumber(pitch + (event.clientY - lastY) * 0.012, -1.35, 1.35);
+        lastX = event.clientX;
+        lastY = event.clientY;
+      });
+      canvas.addEventListener("pointerup", () => { dragging = false; });
+      canvas.addEventListener("pointercancel", () => { dragging = false; });
+      canvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        userZoom = clampNumber(userZoom * (event.deltaY > 0 ? 0.92 : 1.08), 0.62, 1.55);
+      }, { passive: false });
+
+      root.querySelectorAll("[data-orbital-mode]").forEach((button) => {
+        button.addEventListener("click", () => {
+          mode = button.dataset.orbitalMode;
+          root.querySelectorAll("[data-orbital-mode]").forEach((b) => b.classList.toggle("active", b === button));
+          renderMeta();
+        });
+      });
+      root.querySelector("[data-orbital-pause]")?.addEventListener("click", (event) => {
+        paused = !paused;
+        event.currentTarget.classList.toggle("active", paused);
+        event.currentTarget.textContent = paused ? "Resume" : "Pause";
+      });
+      root.querySelector("[data-orbital-atoms]")?.addEventListener("click", (event) => {
+        showAtoms = !showAtoms;
+        event.currentTarget.classList.toggle("active", showAtoms);
+        renderMeta();
+      });
+      root.querySelector("[data-orbital-density]")?.addEventListener("click", (event) => {
+        densityGain = densityGain > 1.6 ? 1.25 : 1.72;
+        event.currentTarget.classList.toggle("active", densityGain > 1.6);
+        renderMeta();
+      });
+      root.querySelector("[data-orbital-reset]")?.addEventListener("click", () => {
+        yaw = 0.28;
+        pitch = -0.42;
+        userZoom = 1.0;
+      });
+
+      renderTabs();
+      renderMeta();
+      draw();
+      return true;
+    }
+
     async function renderOrbitalViewer(model) {
       const root = $("orbital-viewer");
-      if (!root) return;
+      if (!root) return false;
       const viewer = model.orbital_viewer;
       if (!viewer) {
         root.innerHTML = `<p class="small">No WebGPU orbital gallery asset attached.</p>`;
-        return;
+        return false;
       }
 
       root.innerHTML = `
         <div class="orbital-title-line">
           <h2 id="orbital-active-title">WebGPU orbital gallery</h2>
-          <p class="small">Renderer v2.4: dense cube-derived orbital fields with an explicit atom-and-bond structure layer. Signed cube hashes remain source truth.</p>
+          <p class="small">Renderer v2.6: dense cube-derived orbital fields with WebGPU first and Canvas fallback when the browser blocks GPU access. Signed cube hashes remain source truth.</p>
         </div>
         <div id="orbital-tabs" class="orbital-tabs mono"></div>
         <div class="orbital-stage">
           <canvas id="orbital-canvas" class="orbital-canvas" data-renderer="webgpu" aria-label="Interactive WebGPU HOMO/LUMO orbital gallery with bond skeletons"></canvas>
           <div class="orbital-hud mono">
-            <span id="orbital-renderer" class="tag real">WebGPU v2.4 dense orbitals</span>
+            <span id="orbital-renderer" class="tag real">WebGPU v2.6 dense orbitals</span>
             <span id="orbital-status" class="tag">loading signed cube gallery</span>
           </div>
           <div class="orbital-overlay mono">
@@ -1395,13 +1685,13 @@
         orbitalData = await response.json();
       } catch (error) {
         root.querySelector(".orbital-stage").innerHTML = `<p class="small orbital-stage-message">Could not load WebGPU orbital gallery asset: ${esc(error.message)}</p>`;
-        return;
+        return false;
       }
 
       const molecules = (orbitalData.molecules?.length ? orbitalData.molecules : [orbitalData]).filter((molecule) => molecule?.orbitals?.length);
       if (!molecules.length) {
         root.querySelector(".orbital-stage").innerHTML = `<p class="small orbital-stage-message">The orbital gallery asset contains no molecule orbitals.</p>`;
-        return;
+        return false;
       }
 
       const canvas = $("orbital-canvas");
@@ -1423,17 +1713,16 @@
             </p>
           `;
         }
+        orbitalRenderState = "failed";
       };
 
       if (!navigator.gpu) {
-        failWebGpu("WebGPU is unavailable in this browser.");
-        return;
+        return startCanvasOrbitalFallback(root, viewer, orbitalData, molecules, "WebGPU unavailable in this browser");
       }
 
       const context = canvas.getContext("webgpu");
       if (!context) {
-        failWebGpu("The browser could not create a WebGPU canvas context.");
-        return;
+        return startCanvasOrbitalFallback(root, viewer, orbitalData, molecules, "WebGPU canvas context unavailable");
       }
 
       let adapter;
@@ -1443,11 +1732,10 @@
         if (!adapter) throw new Error("No WebGPU adapter returned");
         device = await adapter.requestDevice();
       } catch (error) {
-        failWebGpu(`WebGPU initialization failed: ${error.message}`);
-        return;
+        return startCanvasOrbitalFallback(root, viewer, orbitalData, molecules, `WebGPU initialization failed: ${error.message}`);
       }
 
-      if (rendererNode) rendererNode.textContent = "WebGPU v2.4 dense orbital density + atom-core renderer";
+      if (rendererNode) rendererNode.textContent = "WebGPU v2.6 dense orbital density + atom-core renderer";
       device.lost.then((info) => {
         setStatus(`WebGPU device lost: ${info.reason || "unknown"}`);
       });
@@ -1860,8 +2148,7 @@ fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
         const validationError = await device.popErrorScope();
         if (validationError) throw new Error(validationError.message);
       } catch (error) {
-        failWebGpu(`WebGPU pipeline creation failed: ${error.message}`);
-        return;
+        return startCanvasOrbitalFallback(root, viewer, orbitalData, molecules, `WebGPU pipeline creation failed: ${error.message}`);
       }
 
       function activeMolecule() {
@@ -2231,6 +2518,7 @@ fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
       renderMoleculeTabs();
       refreshActiveMolecule();
       draw();
+      return true;
     }
 
     function txCountByLab(model) {
@@ -3004,7 +3292,7 @@ fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
       return viewer.gallery_asset_path ?? viewer.asset_path ?? "";
     }
 
-    function renderDashboard(model, source) {
+    async function renderDashboard(model, source) {
       $("title").textContent = model.title;
       $("subtitle").textContent = model.subtitle;
       $("schema").textContent = model.schema_version;
@@ -3016,9 +3304,15 @@ fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
       renderSubmissionSnapshot(model);
       renderLiveSponsorEvidence(model);
       const nextOrbitalAssetPath = orbitalAssetPath(model);
-      if (nextOrbitalAssetPath !== currentOrbitalAssetPath) {
-        currentOrbitalAssetPath = nextOrbitalAssetPath;
-        renderOrbitalViewer(model);
+      if (nextOrbitalAssetPath !== currentOrbitalAssetPath || orbitalRenderState === "failed") {
+        orbitalRenderState = "loading";
+        const rendered = await renderOrbitalViewer(model);
+        if (rendered) {
+          currentOrbitalAssetPath = nextOrbitalAssetPath;
+          orbitalRenderState = "ready";
+        } else {
+          orbitalRenderState = "failed";
+        }
       }
       renderMap(model);
       renderScienceTransactions(model);
@@ -3031,7 +3325,7 @@ fn fsMain(in : AtomOut) -> @location(0) vec4<f32> {
       refreshInFlight = true;
       try {
         const { model, source } = await loadModel();
-        renderDashboard(model, source);
+        await renderDashboard(model, source);
       } catch (error) {
         $("title").textContent = "Could not load world model";
         $("subtitle").textContent = `Serve this directory first: python3 -m http.server 8787 --directory demo. Error: ${error.message}`;

@@ -1,0 +1,2175 @@
+{
+  "demo_id": "SCIENCE.MARKET.DEMO.001",
+  "maturity": "deterministic-local-fixture",
+  "current_truth": [
+    "Artifacts are signed and payload-bound.",
+    "ENS records are shaped as text-record fixtures; live ENS resolution is the next integration step.",
+    "Settlement lifecycle artifacts are non-custodial and do not move funds.",
+    "Quote acceptance, escrow authorization, result acknowledgement, and release are signed audit records.",
+    "DFT and literature outputs are deterministic fixtures until live workers are attached."
+  ],
+  "flows": [
+    {
+      "flow": {
+        "service_kind": "Retrosynthesis",
+        "profile": {
+          "agent": "retro.service.chimiaclaw.eth",
+          "ens_name": "retro.service.chimiaclaw.eth",
+          "address": "0x0000000000000000000000000000000000000a11",
+          "signing_public_key_hint": "ed25519:demo-key-bound-in-artifact-signature",
+          "axl_peer_id": "axl-retro-demo-peer",
+          "service_catalog_cid": "0g://service-catalog/retro.service.chimiaclaw.eth",
+          "head_artifact_cid": "0g://artifact-head/retro.service.chimiaclaw.eth",
+          "active_strategy_sets": [
+            "strategy.science-market.v1"
+          ],
+          "text_records": [
+            {
+              "key": "chimiaclaw.agent",
+              "value": "retro.service.chimiaclaw.eth",
+              "live_status": "Fixture"
+            },
+            {
+              "key": "chimiaclaw.axl.peer",
+              "value": "axl-retro-demo-peer",
+              "live_status": "PlannedLive"
+            },
+            {
+              "key": "chimiaclaw.service.catalog",
+              "value": "0g://service-catalog/retro.service.chimiaclaw.eth",
+              "live_status": "PlannedLive"
+            }
+          ],
+          "capabilities": [
+            {
+              "id": "cap.retrosynthesis.quote",
+              "kind": "Chemistry",
+              "produces": [
+                "chem.retrosynth.route_proposal",
+                "chem.procurement.route_quote"
+              ],
+              "consumes": [
+                "chem.retrosynth.service_request"
+              ]
+            }
+          ],
+          "live_status": "Fixture"
+        },
+        "offer": {
+          "offer_id": "OFFER.RETRO.001",
+          "service_kind": "Retrosynthesis",
+          "provider_agent": "retro.service.chimiaclaw.eth",
+          "provider_ens": "retro.service.chimiaclaw.eth",
+          "title": "Retrosynthesis route quote",
+          "description": "Propose and price a synthesis route with custody warnings.",
+          "consumes_schema_tags": [
+            "chem.retrosynth.service_request"
+          ],
+          "produces_schema_tags": [
+            "chem.retrosynth.route_proposal",
+            "chem.procurement.route_quote"
+          ],
+          "base_price_usdc_micros": 2500000,
+          "estimated_latency_seconds": 45,
+          "custody_policy": "virtual planning only; wetlab execution requires safety and human custody gates",
+          "settlement_assets": [
+            "USDC",
+            "testnet-USDC"
+          ],
+          "sponsor_bindings": {
+            "ens_identity": "retro.service.chimiaclaw.eth",
+            "axl_peer_id": "axl-retro-demo-peer",
+            "zero_g_storage_hint": "0g://service-catalog/retro.service.chimiaclaw.eth",
+            "uniswap_settlement_hint": "Uniswap API quote replaces artifact-ledger route hint",
+            "keeperhub_execution_hint": "KeeperHub schedules execution artifact in live mode"
+          }
+        },
+        "request": {
+          "request_id": "REQ.RETRO.ASPIRIN.001",
+          "service_kind": "Retrosynthesis",
+          "requester_agent": "operator.chimiaclaw.eth",
+          "target_lab_id": "LAB.CHIMIA.01",
+          "input": {
+            "Retrosynthesis": {
+              "target_smiles": "CC(=O)Oc1ccccc1C(=O)O",
+              "scale_milligrams": 5000,
+              "constraints": [
+                "prefer commodity reagents",
+                "block wetlab execution until safety artifact exists"
+              ]
+            }
+          },
+          "max_price_usdc_micros": 5000000,
+          "settlement_asset": "USDC",
+          "required_outputs": [
+            "route proposal",
+            "supplier quote",
+            "custody warnings"
+          ]
+        },
+        "quote": {
+          "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+          "request_id": "REQ.RETRO.ASPIRIN.001",
+          "service_kind": "Retrosynthesis",
+          "provider_agent": "retro.service.chimiaclaw.eth",
+          "price_usdc_micros": 3100000,
+          "asset": "USDC",
+          "payment_terms": {
+            "escrow_required": true,
+            "payer_confirmation_required": true,
+            "release_trigger": "ResultAcknowledged",
+            "dispute_window_seconds": 86400,
+            "refund_window_seconds": 604800
+          },
+          "settlement_method": "UniswapPreparedTransfer",
+          "estimated_latency_seconds": 60,
+          "expires_at_unix": 1777777777,
+          "assumptions": [
+            "deterministic local fixture",
+            "live sponsor integrations not invoked",
+            "operator confirmation required before real settlement"
+          ],
+          "settlement_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated"
+        },
+        "economic_settlement": {
+          "quote_acceptance": {
+            "acceptance_id": "ACCEPT.RETRO.ASPIRIN.001",
+            "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+            "request_id": "REQ.RETRO.ASPIRIN.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "retro.service.chimiaclaw.eth",
+            "accepted_amount_usdc_micros": 3100000,
+            "asset": "USDC",
+            "accepted_at_unix": 1700000010,
+            "quote_expires_at_unix": 1777777777,
+            "conditions": [
+              "escrow authorization must be signed before result release",
+              "release requires requester acknowledgement of the result artifact",
+              "live token transfer remains disabled in fixture mode"
+            ],
+            "operator_confirmation_required": true
+          },
+          "escrow_authorization": {
+            "escrow_id": "ESCROW.RETRO.ASPIRIN.001",
+            "acceptance_id": "ACCEPT.RETRO.ASPIRIN.001",
+            "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "retro.service.chimiaclaw.eth",
+            "amount_usdc_micros": 3100000,
+            "asset": "USDC",
+            "settlement_method": "UniswapPreparedTransfer",
+            "route_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated",
+            "live_transfer_prepared": false,
+            "live_transfer_executed": false,
+            "release_conditions": [
+              "provider result artifact verifies",
+              "result request_id matches the accepted request",
+              "requester acknowledgement status is accepted"
+            ],
+            "refund_policy": {
+              "refund_to_agent": "operator.chimiaclaw.eth",
+              "refundable_amount_usdc_micros": 3100000,
+              "refund_asset": "USDC",
+              "allowed_reasons": [
+                "QuoteExpired",
+                "ResultRejected",
+                "ProviderFailed",
+                "OperatorCancelledBeforeExecution"
+              ]
+            }
+          },
+          "result_acknowledgement": {
+            "acknowledgement_id": "ACK.RETRO.ASPIRIN.001",
+            "result_id": "RESULT.RETRO.ASPIRIN.001",
+            "request_id": "REQ.RETRO.ASPIRIN.001",
+            "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+            "escrow_id": "ESCROW.RETRO.ASPIRIN.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "retro.service.chimiaclaw.eth",
+            "status": "Accepted",
+            "acknowledged_at_unix": 1700000020,
+            "notes": [
+              "result artifact payload and signature verified",
+              "fixture acknowledgement authorizes simulated release"
+            ]
+          },
+          "settlement_release": {
+            "release_id": "RELEASE.RETRO.ASPIRIN.001",
+            "escrow_id": "ESCROW.RETRO.ASPIRIN.001",
+            "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+            "result_id": "RESULT.RETRO.ASPIRIN.001",
+            "acknowledgement_id": "ACK.RETRO.ASPIRIN.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "retro.service.chimiaclaw.eth",
+            "amount_usdc_micros": 3100000,
+            "asset": "USDC",
+            "release_status": "SimulatedReleased",
+            "released_at_unix": 1700000030,
+            "transaction_ref": "artifact-ledger://release/RETRO.ASPIRIN.001",
+            "audit_notes": [
+              "no live funds moved",
+              "release is an auditable signed artifact for later adapter execution"
+            ]
+          }
+        },
+        "settlement_intent": {
+          "settlement_id": "SETTLE.RETRO.ASPIRIN.001",
+          "escrow_id": "ESCROW.RETRO.ASPIRIN.001",
+          "quote_id": "QUOTE.RETRO.ASPIRIN.001",
+          "payer_agent": "operator.chimiaclaw.eth",
+          "payee_agent": "retro.service.chimiaclaw.eth",
+          "amount_usdc_micros": 3100000,
+          "asset": "USDC",
+          "route_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated",
+          "settlement_method": "UniswapPreparedTransfer",
+          "live_execution_required": false,
+          "operator_confirmation_required": true
+        },
+        "result": {
+          "result_id": "RESULT.RETRO.ASPIRIN.001",
+          "request_id": "REQ.RETRO.ASPIRIN.001",
+          "service_kind": "Retrosynthesis",
+          "provider_agent": "retro.service.chimiaclaw.eth",
+          "outputs": {
+            "Retrosynthesis": {
+              "route_summary": "Acetylate salicylic acid with acetic anhydride; route remains virtual until safety gate passes.",
+              "target_smiles": "CC(=O)Oc1ccccc1C(=O)O",
+              "steps": [
+                "salicylic acid + acetic anhydride -> aspirin"
+              ],
+              "safety_notes": [
+                "acetic anhydride is corrosive",
+                "operator approval required before procurement or wetlab execution"
+              ]
+            }
+          },
+          "citations": [
+            {
+              "title": "Open Reaction Database style route record",
+              "doi": null,
+              "url": "https://open-reaction-database.org",
+              "year": 2024
+            }
+          ],
+          "world_avatar_projection_hints": [
+            "ontoreaction:hasReactant salicylic-acid",
+            "prov:wasGeneratedBy retrosynthesis service"
+          ],
+          "execution_trace": [
+            "resolved ENS-shaped provider profile",
+            "priced deterministic route proposal",
+            "emitted settlement lifecycle requiring operator acknowledgement"
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "id": "art_4e8597e5b13af4ca",
+          "content_hash": "4e8597e5b13af4ca1d0c322e7f87adad316db623af1d84e9b0ed8dcbfb8d8ca8",
+          "skill": "market.ens.profile.v1",
+          "agent": "retro.service.chimiaclaw.eth",
+          "topic": "ENS-shaped profile for retro.service.chimiaclaw.eth",
+          "input_fingerprint": "ens-profile:retro.service.chimiaclaw.eth",
+          "output_cid": null,
+          "parent_artifact_ids": [],
+          "schema_tags": [
+            "market.ens.agent_profile"
+          ],
+          "payload": {
+            "hash": "e1561de883e3125e752a95fa7e86196a573bbe9272041b1b685cf84c2f0523de",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c22656e735f6e616d65223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c2261646472657373223a22307830303030303030303030303030303030303030303030303030303030303030303030303030613131222c227369676e696e675f7075626c69635f6b65795f68696e74223a22656432353531393a64656d6f2d6b65792d626f756e642d696e2d61727469666163742d7369676e6174757265222c2261786c5f706565725f6964223a2261786c2d726574726f2d64656d6f2d70656572222c22736572766963655f636174616c6f675f636964223a2230673a2f2f736572766963652d636174616c6f672f726574726f2e736572766963652e6368696d6961636c61772e657468222c22686561645f61727469666163745f636964223a2230673a2f2f61727469666163742d686561642f726574726f2e736572766963652e6368696d6961636c61772e657468222c226163746976655f73747261746567795f73657473223a5b2273747261746567792e736369656e63652d6d61726b65742e7631225d2c22746578745f7265636f726473223a5b7b226b6579223a226368696d6961636c61772e6167656e74222c2276616c7565223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a2246697874757265227d2c7b226b6579223a226368696d6961636c61772e61786c2e70656572222c2276616c7565223a2261786c2d726574726f2d64656d6f2d70656572222c226c6976655f737461747573223a22506c616e6e65644c697665227d2c7b226b6579223a226368696d6961636c61772e736572766963652e636174616c6f67222c2276616c7565223a2230673a2f2f736572766963652d636174616c6f672f726574726f2e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a22506c616e6e65644c697665227d5d2c226361706162696c6974696573223a5b7b226964223a226361702e726574726f73796e7468657369732e71756f7465222c226b696e64223a224368656d6973747279222c2270726f6475636573223a5b226368656d2e726574726f73796e74682e726f7574655f70726f706f73616c222c226368656d2e70726f637572656d656e742e726f7574655f71756f7465225d2c22636f6e73756d6573223a5b226368656d2e726574726f73796e74682e736572766963655f72657175657374225d7d5d2c226c6976655f737461747573223a2246697874757265227d"
+              }
+            }
+          },
+          "created_at_unix": 10,
+          "signing_public_key": "43a72e714401762df66b68c26dfbdf2682aaec9f2474eca4613e424a0fbafd3c",
+          "signature": "62e4f8d0868f1ef1fd80a9e70a4f1c8212bd7cc7b0b243a72ec2a74668e7856b2e8c726518df5ed3773a1afa204fd1fcd3e20eee723f23e7ec649245f78afa07"
+        },
+        {
+          "id": "art_3ef4b79780f02896",
+          "content_hash": "3ef4b79780f02896657bfcafa50e4e9e61231c747e6217156e2ed3c5f1cdaf25",
+          "skill": "market.service.offer.v1",
+          "agent": "retro.service.chimiaclaw.eth",
+          "topic": "science service offer OFFER.RETRO.001",
+          "input_fingerprint": "OFFER.RETRO.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_4e8597e5b13af4ca"
+          ],
+          "schema_tags": [
+            "market.service.offer"
+          ],
+          "payload": {
+            "hash": "aee03aaab807d371a96866451ce204fdd605e1ce8945305e356a2a35ba760ae0",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226f666665725f6964223a224f464645522e524554524f2e303031222c22736572766963655f6b696e64223a22526574726f73796e746865736973222c2270726f76696465725f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c2270726f76696465725f656e73223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c227469746c65223a22526574726f73796e74686573697320726f7574652071756f7465222c226465736372697074696f6e223a2250726f706f736520616e6420707269636520612073796e74686573697320726f757465207769746820637573746f6479207761726e696e67732e222c22636f6e73756d65735f736368656d615f74616773223a5b226368656d2e726574726f73796e74682e736572766963655f72657175657374225d2c2270726f64756365735f736368656d615f74616773223a5b226368656d2e726574726f73796e74682e726f7574655f70726f706f73616c222c226368656d2e70726f637572656d656e742e726f7574655f71756f7465225d2c22626173655f70726963655f757364635f6d6963726f73223a323530303030302c22657374696d617465645f6c6174656e63795f7365636f6e6473223a34352c22637573746f64795f706f6c696379223a227669727475616c20706c616e6e696e67206f6e6c793b207765746c616220657865637574696f6e2072657175697265732073616665747920616e642068756d616e20637573746f6479206761746573222c22736574746c656d656e745f617373657473223a5b2255534443222c22746573746e65742d55534443225d2c2273706f6e736f725f62696e64696e6773223a7b22656e735f6964656e74697479223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c2261786c5f706565725f6964223a2261786c2d726574726f2d64656d6f2d70656572222c227a65726f5f675f73746f726167655f68696e74223a2230673a2f2f736572766963652d636174616c6f672f726574726f2e736572766963652e6368696d6961636c61772e657468222c22756e69737761705f736574746c656d656e745f68696e74223a22556e6973776170204150492071756f7465207265706c616365732061727469666163742d6c656467657220726f7574652068696e74222c226b65657065726875625f657865637574696f6e5f68696e74223a224b6565706572487562207363686564756c657320657865637574696f6e20617274696661637420696e206c697665206d6f6465227d7d"
+              }
+            }
+          },
+          "created_at_unix": 11,
+          "signing_public_key": "43a72e714401762df66b68c26dfbdf2682aaec9f2474eca4613e424a0fbafd3c",
+          "signature": "78f0eab3a667afb592a9efa43c24ae190076c933e16c7bb7c43d1f5622e005a42c03a323a04b00abd1ae3ac919672e6642b6973bece9b393632a860e572c3c0b"
+        },
+        {
+          "id": "art_0e1cbb42208a9655",
+          "content_hash": "0e1cbb42208a9655923b07c4cd8b59ba7390b4570e6e4a9576123c234ac93c89",
+          "skill": "market.service.request.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "science service request REQ.RETRO.ASPIRIN.001",
+          "input_fingerprint": "REQ.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_3ef4b79780f02896"
+          ],
+          "schema_tags": [
+            "chem.retrosynth.service_request",
+            "market.service.request"
+          ],
+          "payload": {
+            "hash": "bb15733680b68011eabb95472a8fcf8fd9ecaf5a9cda8a8b4743e17fd5f2f589",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726571756573745f6964223a225245512e524554524f2e4153504952494e2e303031222c22736572766963655f6b696e64223a22526574726f73796e746865736973222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c227461726765745f6c61625f6964223a224c41422e4348494d49412e3031222c22696e707574223a7b22526574726f73796e746865736973223a7b227461726765745f736d696c6573223a224343283d4f294f633163636363633143283d4f294f222c227363616c655f6d696c6c696772616d73223a353030302c22636f6e73747261696e7473223a5b2270726566657220636f6d6d6f646974792072656167656e7473222c22626c6f636b207765746c616220657865637574696f6e20756e74696c2073616665747920617274696661637420657869737473225d7d7d2c226d61785f70726963655f757364635f6d6963726f73223a353030303030302c22736574746c656d656e745f6173736574223a2255534443222c2272657175697265645f6f757470757473223a5b22726f7574652070726f706f73616c222c22737570706c6965722071756f7465222c22637573746f6479207761726e696e6773225d7d"
+              }
+            }
+          },
+          "created_at_unix": 12,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "ebbedf05624d5fef2f3be81df13838d60daf9b164a565be8f55a729c0c4f6ce2f47a51c174347d882c9ff5fd78d00b031fd203f0196e2b816e725032f86c9209"
+        },
+        {
+          "id": "art_aef6a7cda044a0bb",
+          "content_hash": "aef6a7cda044a0bbf7c10fa745353c0f34bf54fcf21af3ee3c2ad460c56d39e6",
+          "skill": "market.service.quote.v1",
+          "agent": "retro.service.chimiaclaw.eth",
+          "topic": "science service quote QUOTE.RETRO.ASPIRIN.001",
+          "input_fingerprint": "QUOTE.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_0e1cbb42208a9655"
+          ],
+          "schema_tags": [
+            "market.service.quote"
+          ],
+          "payload": {
+            "hash": "48c526d9a0a631cdcf8633193450aa55aaee7e1b3fe3f3527affa4bc04ace8d4",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c22726571756573745f6964223a225245512e524554524f2e4153504952494e2e303031222c22736572766963655f6b696e64223a22526574726f73796e746865736973222c2270726f76696465725f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c2270726963655f757364635f6d6963726f73223a333130303030302c226173736574223a2255534443222c227061796d656e745f7465726d73223a7b22657363726f775f7265717569726564223a747275652c2270617965725f636f6e6669726d6174696f6e5f7265717569726564223a747275652c2272656c656173655f74726967676572223a22526573756c7441636b6e6f776c6564676564222c22646973707574655f77696e646f775f7365636f6e6473223a38363430302c22726566756e645f77696e646f775f7365636f6e6473223a3630343830307d2c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c22657374696d617465645f6c6174656e63795f7365636f6e6473223a36302c22657870697265735f61745f756e6978223a313737373737373737372c22617373756d7074696f6e73223a5b2264657465726d696e6973746963206c6f63616c2066697874757265222c226c6976652073706f6e736f7220696e746567726174696f6e73206e6f7420696e766f6b6564222c226f70657261746f7220636f6e6669726d6174696f6e207265717569726564206265666f7265207265616c20736574746c656d656e74225d2c22736574746c656d656e745f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564227d"
+              }
+            }
+          },
+          "created_at_unix": 13,
+          "signing_public_key": "43a72e714401762df66b68c26dfbdf2682aaec9f2474eca4613e424a0fbafd3c",
+          "signature": "f73d775c836706d57632b521a0eeedbcc5f8b63681cc5cebfb08ea1668aa438238946ee8bee30682bf3f7df580034764dd14dd35183abcf9a43fd97e40e71609"
+        },
+        {
+          "id": "art_25eda2b7a19b2e85",
+          "content_hash": "25eda2b7a19b2e85c3a621399d86780ece9a74e7f4f96513e53a22690a6a984c",
+          "skill": "market.quote.acceptance.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "quote acceptance ACCEPT.RETRO.ASPIRIN.001",
+          "input_fingerprint": "ACCEPT.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_aef6a7cda044a0bb"
+          ],
+          "schema_tags": [
+            "market.quote.acceptance"
+          ],
+          "payload": {
+            "hash": "a109ca27e246463bbd3e20fc78917b71fed9294b49cc2b1c26a9e091fd3f2372",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22616363657074616e63655f6964223a224143434550542e524554524f2e4153504952494e2e303031222c2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c22726571756573745f6964223a225245512e524554524f2e4153504952494e2e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c2261636365707465645f616d6f756e745f757364635f6d6963726f73223a333130303030302c226173736574223a2255534443222c2261636365707465645f61745f756e6978223a313730303030303031302c2271756f74655f657870697265735f61745f756e6978223a313737373737373737372c22636f6e646974696f6e73223a5b22657363726f7720617574686f72697a6174696f6e206d757374206265207369676e6564206265666f726520726573756c742072656c65617365222c2272656c65617365207265717569726573207265717565737465722061636b6e6f776c656467656d656e74206f662074686520726573756c74206172746966616374222c226c69766520746f6b656e207472616e736665722072656d61696e732064697361626c656420696e2066697874757265206d6f6465225d2c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 14,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "d098678fc3fb935683ec93f7eb33cae005351bdf5ca249eea2b881c1bed148262cbea44acb68f81f649349bb5cd2c63f0f5bf02fd3a23114fa7cef18f4f0800b"
+        },
+        {
+          "id": "art_2734b19ac505161d",
+          "content_hash": "2734b19ac505161ddbe9b2a266cdf61bd075f5763edb07ecb4a3bc9298336a86",
+          "skill": "market.escrow.authorization.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "escrow authorization ESCROW.RETRO.ASPIRIN.001",
+          "input_fingerprint": "ESCROW.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_25eda2b7a19b2e85"
+          ],
+          "schema_tags": [
+            "market.escrow.authorization"
+          ],
+          "payload": {
+            "hash": "9273710b027afeee253564dc7a958563366dd7395c739002ed26873468b36985",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22657363726f775f6964223a22455343524f572e524554524f2e4153504952494e2e303031222c22616363657074616e63655f6964223a224143434550542e524554524f2e4153504952494e2e303031222c2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a333130303030302c226173736574223a2255534443222c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c22726f7574655f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564222c226c6976655f7472616e736665725f7072657061726564223a66616c73652c226c6976655f7472616e736665725f6578656375746564223a66616c73652c2272656c656173655f636f6e646974696f6e73223a5b2270726f766964657220726573756c74206172746966616374207665726966696573222c22726573756c7420726571756573745f6964206d617463686573207468652061636365707465642072657175657374222c227265717565737465722061636b6e6f776c656467656d656e7420737461747573206973206163636570746564225d2c22726566756e645f706f6c696379223a7b22726566756e645f746f5f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c22726566756e6461626c655f616d6f756e745f757364635f6d6963726f73223a333130303030302c22726566756e645f6173736574223a2255534443222c22616c6c6f7765645f726561736f6e73223a5b2251756f746545787069726564222c22526573756c7452656a6563746564222c2250726f76696465724661696c6564222c224f70657261746f7243616e63656c6c65644265666f7265457865637574696f6e225d7d7d"
+              }
+            }
+          },
+          "created_at_unix": 15,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "71f7f864cf26dcb396a39fdb90bb2288becf3dd4695fcac1a335f5746396a3815fb5ed5570f43eb2c13838e1642320607208b01663b7289e540b0e142a541d07"
+        },
+        {
+          "id": "art_f2232d4cc4a1ec20",
+          "content_hash": "f2232d4cc4a1ec203f7ca572c587d9691511d860e3c5692bad62a01c1f8963c2",
+          "skill": "market.settlement.intent.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement intent SETTLE.RETRO.ASPIRIN.001",
+          "input_fingerprint": "SETTLE.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_2734b19ac505161d"
+          ],
+          "schema_tags": [
+            "market.settlement.intent"
+          ],
+          "payload": {
+            "hash": "73df452d3916b44e14420594593c865ae57d3b58c845b63f9a134c4f1e7c6a23",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22736574746c656d656e745f6964223a22534554544c452e524554524f2e4153504952494e2e303031222c22657363726f775f6964223a22455343524f572e524554524f2e4153504952494e2e303031222c2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a333130303030302c226173736574223a2255534443222c22726f7574655f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564222c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c226c6976655f657865637574696f6e5f7265717569726564223a66616c73652c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 16,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "04e1814935a7bc40622bfca0f3700ad31029dba6296e35a9628e85cf80805641211edaa23b1837016707bc51265599788d365b94f830a2fae31fc6bdd74afb08"
+        },
+        {
+          "id": "art_d5ec41492390e17c",
+          "content_hash": "d5ec41492390e17c7c77f15c524d56ecc5f9370bbf5f3d1c013c66fb6c4321b0",
+          "skill": "market.service.result.v1",
+          "agent": "retro.service.chimiaclaw.eth",
+          "topic": "science service result RESULT.RETRO.ASPIRIN.001",
+          "input_fingerprint": "RESULT.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_0e1cbb42208a9655",
+            "art_f2232d4cc4a1ec20"
+          ],
+          "schema_tags": [
+            "market.service.result"
+          ],
+          "payload": {
+            "hash": "1117032fb75bf9b492e98dd37e09da8f732adde42d8f1eb51555a8f169335712",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726573756c745f6964223a22524553554c542e524554524f2e4153504952494e2e303031222c22726571756573745f6964223a225245512e524554524f2e4153504952494e2e303031222c22736572766963655f6b696e64223a22526574726f73796e746865736973222c2270726f76696465725f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c226f757470757473223a7b22526574726f73796e746865736973223a7b22726f7574655f73756d6d617279223a2241636574796c6174652073616c6963796c6963206163696420776974682061636574696320616e687964726964653b20726f7574652072656d61696e73207669727475616c20756e74696c207361666574792067617465207061737365732e222c227461726765745f736d696c6573223a224343283d4f294f633163636363633143283d4f294f222c227374657073223a5b2273616c6963796c69632061636964202b2061636574696320616e68796472696465202d3e206173706972696e225d2c227361666574795f6e6f746573223a5b2261636574696320616e6879647269646520697320636f72726f73697665222c226f70657261746f7220617070726f76616c207265717569726564206265666f72652070726f637572656d656e74206f72207765746c616220657865637574696f6e225d7d7d2c226369746174696f6e73223a5b7b227469746c65223a224f70656e205265616374696f6e204461746162617365207374796c6520726f757465207265636f7264222c22646f69223a6e756c6c2c2275726c223a2268747470733a2f2f6f70656e2d7265616374696f6e2d64617461626173652e6f7267222c2279656172223a323032347d5d2c22776f726c645f6176617461725f70726f6a656374696f6e5f68696e7473223a5b226f6e746f7265616374696f6e3a6861735265616374616e742073616c6963796c69632d61636964222c2270726f763a77617347656e657261746564427920726574726f73796e7468657369732073657276696365225d2c22657865637574696f6e5f7472616365223a5b227265736f6c76656420454e532d7368617065642070726f76696465722070726f66696c65222c227072696365642064657465726d696e697374696320726f7574652070726f706f73616c222c22656d697474656420736574746c656d656e74206c6966656379636c6520726571756972696e67206f70657261746f722061636b6e6f776c656467656d656e74225d7d"
+              }
+            }
+          },
+          "created_at_unix": 17,
+          "signing_public_key": "43a72e714401762df66b68c26dfbdf2682aaec9f2474eca4613e424a0fbafd3c",
+          "signature": "e186d76e9472feb77da3cef3930d57d2f9198f0ebe37aa1230452e44d2b0aedcc7ec5c9a126c73934ef1b4cbf9ede1a978e01b24dcade268c26732c64ec7b602"
+        },
+        {
+          "id": "art_9f25a159b4e2c6be",
+          "content_hash": "9f25a159b4e2c6be0194f873e105e760b3599c59c5ceab2b97d72e359fc3de1c",
+          "skill": "market.result.acknowledgement.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "result acknowledgement ACK.RETRO.ASPIRIN.001",
+          "input_fingerprint": "ACK.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_d5ec41492390e17c",
+            "art_2734b19ac505161d"
+          ],
+          "schema_tags": [
+            "market.result.acknowledgement"
+          ],
+          "payload": {
+            "hash": "0ed2d5754d7a040812c3f8627045b84703fbfe79b706491256c79f0d4a812b82",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2261636b6e6f776c656467656d656e745f6964223a2241434b2e524554524f2e4153504952494e2e303031222c22726573756c745f6964223a22524553554c542e524554524f2e4153504952494e2e303031222c22726571756573745f6964223a225245512e524554524f2e4153504952494e2e303031222c2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c22657363726f775f6964223a22455343524f572e524554524f2e4153504952494e2e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c22737461747573223a224163636570746564222c2261636b6e6f776c65646765645f61745f756e6978223a313730303030303032302c226e6f746573223a5b22726573756c74206172746966616374207061796c6f616420616e64207369676e6174757265207665726966696564222c22666978747572652061636b6e6f776c656467656d656e7420617574686f72697a65732073696d756c617465642072656c65617365225d7d"
+              }
+            }
+          },
+          "created_at_unix": 18,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "25750762eac1dd0b80799b0c2a62dd0fdd30c01df221c1280d5bd6bcfdf5fb4e20beee0f07abe929cc0d6af473192b0698d78a6638f2f19827aa3e705ca2ca0a"
+        },
+        {
+          "id": "art_59aa124fac3b11bc",
+          "content_hash": "59aa124fac3b11bc98eb4e2a6da310c14f430a3fc800467f8ab4a4ceb29ef62e",
+          "skill": "market.settlement.release.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement release RELEASE.RETRO.ASPIRIN.001",
+          "input_fingerprint": "RELEASE.RETRO.ASPIRIN.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_9f25a159b4e2c6be",
+            "art_f2232d4cc4a1ec20"
+          ],
+          "schema_tags": [
+            "market.settlement.release"
+          ],
+          "payload": {
+            "hash": "5371685803938099cfe5eebcc2c0ea82531f7575b787c675977a56cec2f54102",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2272656c656173655f6964223a2252454c454153452e524554524f2e4153504952494e2e303031222c22657363726f775f6964223a22455343524f572e524554524f2e4153504952494e2e303031222c2271756f74655f6964223a2251554f54452e524554524f2e4153504952494e2e303031222c22726573756c745f6964223a22524553554c542e524554524f2e4153504952494e2e303031222c2261636b6e6f776c656467656d656e745f6964223a2241434b2e524554524f2e4153504952494e2e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a22726574726f2e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a333130303030302c226173736574223a2255534443222c2272656c656173655f737461747573223a2253696d756c6174656452656c6561736564222c2272656c65617365645f61745f756e6978223a313730303030303033302c227472616e73616374696f6e5f726566223a2261727469666163742d6c65646765723a2f2f72656c656173652f524554524f2e4153504952494e2e303031222c2261756469745f6e6f746573223a5b226e6f206c6976652066756e6473206d6f766564222c2272656c6561736520697320616e20617564697461626c65207369676e656420617274696661637420666f72206c61746572206164617074657220657865637574696f6e225d7d"
+              }
+            }
+          },
+          "created_at_unix": 19,
+          "signing_public_key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+          "signature": "eb77b76ae38628b360e8bea6ffd7bb3d37386cdbce9ed965e1ebb6e0a23488956bca8d7158c45fba05c5d701d1d2f6f1a07d10e98d0530ccd7f68d12cccead06"
+        }
+      ]
+    },
+    {
+      "flow": {
+        "service_kind": "Dft",
+        "profile": {
+          "agent": "dft.service.chimiaclaw.eth",
+          "ens_name": "dft.service.chimiaclaw.eth",
+          "address": "0x0000000000000000000000000000000000000d47",
+          "signing_public_key_hint": "ed25519:demo-key-bound-in-artifact-signature",
+          "axl_peer_id": "axl-dft-demo-peer",
+          "service_catalog_cid": "0g://service-catalog/dft.service.chimiaclaw.eth",
+          "head_artifact_cid": "0g://artifact-head/dft.service.chimiaclaw.eth",
+          "active_strategy_sets": [
+            "strategy.science-market.v1"
+          ],
+          "text_records": [
+            {
+              "key": "chimiaclaw.agent",
+              "value": "dft.service.chimiaclaw.eth",
+              "live_status": "Fixture"
+            },
+            {
+              "key": "chimiaclaw.axl.peer",
+              "value": "axl-dft-demo-peer",
+              "live_status": "PlannedLive"
+            },
+            {
+              "key": "chimiaclaw.service.catalog",
+              "value": "0g://service-catalog/dft.service.chimiaclaw.eth",
+              "live_status": "PlannedLive"
+            }
+          ],
+          "capabilities": [
+            {
+              "id": "cap.dft.single_point",
+              "kind": "Execution",
+              "produces": [
+                "chem.dft.result"
+              ],
+              "consumes": [
+                "chem.dft.service_request"
+              ]
+            }
+          ],
+          "live_status": "Fixture"
+        },
+        "offer": {
+          "offer_id": "OFFER.DFT.001",
+          "service_kind": "Dft",
+          "provider_agent": "dft.service.chimiaclaw.eth",
+          "provider_ens": "dft.service.chimiaclaw.eth",
+          "title": "DFT single-point calculation",
+          "description": "Return deterministic fixture properties for a molecule; live compute will attach through KeeperHub/0G.",
+          "consumes_schema_tags": [
+            "chem.dft.service_request"
+          ],
+          "produces_schema_tags": [
+            "chem.dft.result"
+          ],
+          "base_price_usdc_micros": 7500000,
+          "estimated_latency_seconds": 900,
+          "custody_policy": "compute-only; no physical custody",
+          "settlement_assets": [
+            "USDC",
+            "testnet-USDC"
+          ],
+          "sponsor_bindings": {
+            "ens_identity": "dft.service.chimiaclaw.eth",
+            "axl_peer_id": "axl-dft-demo-peer",
+            "zero_g_storage_hint": "0g://service-catalog/dft.service.chimiaclaw.eth",
+            "uniswap_settlement_hint": "Uniswap API quote replaces artifact-ledger route hint",
+            "keeperhub_execution_hint": "KeeperHub schedules execution artifact in live mode"
+          }
+        },
+        "request": {
+          "request_id": "REQ.DFT.FERROCENE.001",
+          "service_kind": "Dft",
+          "requester_agent": "operator.chimiaclaw.eth",
+          "target_lab_id": "LAB.VIRTUAL.01",
+          "input": {
+            "Dft": {
+              "molecule": {
+                "molecule_id": "MOLADT.FERROCENE.001",
+                "molecule_name": "ferrocene schematic MolADT",
+                "molecular_formula": "C10H10Fe",
+                "molecule_artifact_id": "art_369d1d24885d700d",
+                "molecule_payload_hash": "3ecc1816c437f25739db581dd5c528b99081e757b3b5e985a1b97b77f751a955",
+                "canonical_smiles": "[Fe]12(C=CC=C1)(C=CC=C2)"
+              },
+              "total_charge": 0,
+              "multiplicity": 1,
+              "method": {
+                "functional": "skala-1.1",
+                "basis_set": "def2-tzvp",
+                "backend": "PyScf",
+                "dispersion": "dftd3",
+                "grid_level": 3
+              },
+              "job_kind": "SinglePoint",
+              "requested_properties": [
+                "total_energy",
+                "homo_lumo_gap",
+                "dipole"
+              ]
+            }
+          },
+          "max_price_usdc_micros": 10000000,
+          "settlement_asset": "USDC",
+          "required_outputs": [
+            "energy",
+            "frontier orbital gap",
+            "World Avatar projection hints"
+          ]
+        },
+        "quote": {
+          "quote_id": "QUOTE.DFT.FERROCENE.001",
+          "request_id": "REQ.DFT.FERROCENE.001",
+          "service_kind": "Dft",
+          "provider_agent": "dft.service.chimiaclaw.eth",
+          "price_usdc_micros": 8250000,
+          "asset": "USDC",
+          "payment_terms": {
+            "escrow_required": true,
+            "payer_confirmation_required": true,
+            "release_trigger": "ResultAcknowledged",
+            "dispute_window_seconds": 86400,
+            "refund_window_seconds": 604800
+          },
+          "settlement_method": "UniswapPreparedTransfer",
+          "estimated_latency_seconds": 1200,
+          "expires_at_unix": 1777777777,
+          "assumptions": [
+            "deterministic local fixture",
+            "live sponsor integrations not invoked",
+            "operator confirmation required before real settlement"
+          ],
+          "settlement_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated"
+        },
+        "economic_settlement": {
+          "quote_acceptance": {
+            "acceptance_id": "ACCEPT.DFT.FERROCENE.001",
+            "quote_id": "QUOTE.DFT.FERROCENE.001",
+            "request_id": "REQ.DFT.FERROCENE.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "dft.service.chimiaclaw.eth",
+            "accepted_amount_usdc_micros": 8250000,
+            "asset": "USDC",
+            "accepted_at_unix": 1700000010,
+            "quote_expires_at_unix": 1777777777,
+            "conditions": [
+              "escrow authorization must be signed before result release",
+              "release requires requester acknowledgement of the result artifact",
+              "live token transfer remains disabled in fixture mode"
+            ],
+            "operator_confirmation_required": true
+          },
+          "escrow_authorization": {
+            "escrow_id": "ESCROW.DFT.FERROCENE.001",
+            "acceptance_id": "ACCEPT.DFT.FERROCENE.001",
+            "quote_id": "QUOTE.DFT.FERROCENE.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "dft.service.chimiaclaw.eth",
+            "amount_usdc_micros": 8250000,
+            "asset": "USDC",
+            "settlement_method": "UniswapPreparedTransfer",
+            "route_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated",
+            "live_transfer_prepared": false,
+            "live_transfer_executed": false,
+            "release_conditions": [
+              "provider result artifact verifies",
+              "result request_id matches the accepted request",
+              "requester acknowledgement status is accepted"
+            ],
+            "refund_policy": {
+              "refund_to_agent": "operator.chimiaclaw.eth",
+              "refundable_amount_usdc_micros": 8250000,
+              "refund_asset": "USDC",
+              "allowed_reasons": [
+                "QuoteExpired",
+                "ResultRejected",
+                "ProviderFailed",
+                "OperatorCancelledBeforeExecution"
+              ]
+            }
+          },
+          "result_acknowledgement": {
+            "acknowledgement_id": "ACK.DFT.FERROCENE.001",
+            "result_id": "RESULT.DFT.FERROCENE.001",
+            "request_id": "REQ.DFT.FERROCENE.001",
+            "quote_id": "QUOTE.DFT.FERROCENE.001",
+            "escrow_id": "ESCROW.DFT.FERROCENE.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "dft.service.chimiaclaw.eth",
+            "status": "Accepted",
+            "acknowledged_at_unix": 1700000020,
+            "notes": [
+              "result artifact payload and signature verified",
+              "fixture acknowledgement authorizes simulated release"
+            ]
+          },
+          "settlement_release": {
+            "release_id": "RELEASE.DFT.FERROCENE.001",
+            "escrow_id": "ESCROW.DFT.FERROCENE.001",
+            "quote_id": "QUOTE.DFT.FERROCENE.001",
+            "result_id": "RESULT.DFT.FERROCENE.001",
+            "acknowledgement_id": "ACK.DFT.FERROCENE.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "dft.service.chimiaclaw.eth",
+            "amount_usdc_micros": 8250000,
+            "asset": "USDC",
+            "release_status": "SimulatedReleased",
+            "released_at_unix": 1700000030,
+            "transaction_ref": "artifact-ledger://release/DFT.FERROCENE.001",
+            "audit_notes": [
+              "no live funds moved",
+              "release is an auditable signed artifact for later adapter execution"
+            ]
+          }
+        },
+        "settlement_intent": {
+          "settlement_id": "SETTLE.DFT.FERROCENE.001",
+          "escrow_id": "ESCROW.DFT.FERROCENE.001",
+          "quote_id": "QUOTE.DFT.FERROCENE.001",
+          "payer_agent": "operator.chimiaclaw.eth",
+          "payee_agent": "dft.service.chimiaclaw.eth",
+          "amount_usdc_micros": 8250000,
+          "asset": "USDC",
+          "route_hint": "uniswap-trade-api:POST /v1/quote:CLASSIC:V2+V3+V4:operator-gated",
+          "settlement_method": "UniswapPreparedTransfer",
+          "live_execution_required": false,
+          "operator_confirmation_required": true
+        },
+        "result": {
+          "result_id": "RESULT.DFT.FERROCENE.001",
+          "request_id": "REQ.DFT.FERROCENE.001",
+          "service_kind": "Dft",
+          "provider_agent": "dft.service.chimiaclaw.eth",
+          "outputs": {
+            "Dft": {
+              "molecule": "ferrocene",
+              "method": "r2SCAN-3c/def2-mTZVPP fixture",
+              "total_energy_hartree": -1650.248731,
+              "homo_lumo_gap_ev": 5.42,
+              "dipole_debye": 0.0
+            }
+          },
+          "citations": [
+            {
+              "title": "r2SCAN-3c composite electronic-structure method",
+              "doi": "10.1063/5.0040021",
+              "url": null,
+              "year": 2021
+            }
+          ],
+          "world_avatar_projection_hints": [
+            "ontospecies:hasMolecularComputation RESULT.DFT.FERROCENE.001",
+            "prov:wasAssociatedWith dft.service.chimiaclaw.eth"
+          ],
+          "execution_trace": [
+            "quoted DFT job artifact",
+            "would schedule through KeeperHub in live mode",
+            "would store raw output bundle on 0G Storage in live mode"
+          ]
+        },
+        "dft_molecule": {
+          "molecule_id": "MOLADT.FERROCENE.001",
+          "name": "ferrocene schematic MolADT",
+          "atoms": {
+            "1": {
+              "atom_id": 1,
+              "attributes": {
+                "symbol": "Fe",
+                "atomic_number": 26,
+                "atomic_weight": 55.845
+              },
+              "coordinate": {
+                "x_angstrom": 0.0,
+                "y_angstrom": 0.0,
+                "z_angstrom": 0.0
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "2": {
+              "atom_id": 2,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": 8.694992273946207e-17,
+                "y_angstrom": 1.42,
+                "z_angstrom": 1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "3": {
+              "atom_id": 3,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": -1.350500253139118,
+                "y_angstrom": 0.43880413201242546,
+                "z_angstrom": 1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "4": {
+              "atom_id": 4,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": -0.8346550582553119,
+                "y_angstrom": -1.1488041320124251,
+                "z_angstrom": 1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "5": {
+              "atom_id": 5,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": 0.8346550582553115,
+                "y_angstrom": -1.1488041320124254,
+                "z_angstrom": 1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "6": {
+              "atom_id": 6,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": 1.3505002531391181,
+                "y_angstrom": 0.43880413201242496,
+                "z_angstrom": 1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "7": {
+              "atom_id": 7,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": 1.518562030942718e-16,
+                "y_angstrom": 2.48,
+                "z_angstrom": 1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "8": {
+              "atom_id": 8,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": -2.3586201604119807,
+                "y_angstrom": 0.7663621460498699,
+                "z_angstrom": 1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "9": {
+              "atom_id": 9,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": -1.4577074256853337,
+                "y_angstrom": -2.0063621460498693,
+                "z_angstrom": 1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "10": {
+              "atom_id": 10,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": 1.4577074256853328,
+                "y_angstrom": -2.0063621460498697,
+                "z_angstrom": 1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "11": {
+              "atom_id": 11,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": 2.358620160411981,
+                "y_angstrom": 0.766362146049869,
+                "z_angstrom": 1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "12": {
+              "atom_id": 12,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": -0.8346550582553116,
+                "y_angstrom": 1.1488041320124254,
+                "z_angstrom": -1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "13": {
+              "atom_id": 13,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": -1.3505002531391181,
+                "y_angstrom": -0.43880413201242513,
+                "z_angstrom": -1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "14": {
+              "atom_id": 14,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": -2.608497682183862e-16,
+                "y_angstrom": -1.42,
+                "z_angstrom": -1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "15": {
+              "atom_id": 15,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": 1.350500253139118,
+                "y_angstrom": -0.4388041320124257,
+                "z_angstrom": -1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "16": {
+              "atom_id": 16,
+              "attributes": {
+                "symbol": "C",
+                "atomic_number": 6,
+                "atomic_weight": 12.011
+              },
+              "coordinate": {
+                "x_angstrom": 0.8346550582553122,
+                "y_angstrom": 1.148804132012425,
+                "z_angstrom": -1.67
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "17": {
+              "atom_id": 17,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": -1.457707425685333,
+                "y_angstrom": 2.0063621460498697,
+                "z_angstrom": -1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "18": {
+              "atom_id": 18,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": -2.358620160411981,
+                "y_angstrom": -0.7663621460498693,
+                "z_angstrom": -1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "19": {
+              "atom_id": 19,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": -4.555686092828154e-16,
+                "y_angstrom": -2.48,
+                "z_angstrom": -1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "20": {
+              "atom_id": 20,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": 2.3586201604119807,
+                "y_angstrom": -0.7663621460498702,
+                "z_angstrom": -1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            },
+            "21": {
+              "atom_id": 21,
+              "attributes": {
+                "symbol": "H",
+                "atomic_number": 1,
+                "atomic_weight": 1.008
+              },
+              "coordinate": {
+                "x_angstrom": 1.457707425685334,
+                "y_angstrom": 2.0063621460498693,
+                "z_angstrom": -1.92
+              },
+              "formal_charge": 0,
+              "shells": []
+            }
+          },
+          "local_bonds": [
+            {
+              "a": 2,
+              "b": 3
+            },
+            {
+              "a": 2,
+              "b": 6
+            },
+            {
+              "a": 2,
+              "b": 7
+            },
+            {
+              "a": 3,
+              "b": 4
+            },
+            {
+              "a": 3,
+              "b": 8
+            },
+            {
+              "a": 4,
+              "b": 5
+            },
+            {
+              "a": 4,
+              "b": 9
+            },
+            {
+              "a": 5,
+              "b": 6
+            },
+            {
+              "a": 5,
+              "b": 10
+            },
+            {
+              "a": 6,
+              "b": 11
+            },
+            {
+              "a": 12,
+              "b": 13
+            },
+            {
+              "a": 12,
+              "b": 16
+            },
+            {
+              "a": 12,
+              "b": 17
+            },
+            {
+              "a": 13,
+              "b": 14
+            },
+            {
+              "a": 13,
+              "b": 18
+            },
+            {
+              "a": 14,
+              "b": 15
+            },
+            {
+              "a": 14,
+              "b": 19
+            },
+            {
+              "a": 15,
+              "b": 16
+            },
+            {
+              "a": 15,
+              "b": 20
+            },
+            {
+              "a": 16,
+              "b": 21
+            }
+          ],
+          "systems": [
+            {
+              "system_id": 1,
+              "shared_electrons": 6,
+              "member_edges": [
+                {
+                  "a": 2,
+                  "b": 3
+                },
+                {
+                  "a": 2,
+                  "b": 6
+                },
+                {
+                  "a": 3,
+                  "b": 4
+                },
+                {
+                  "a": 4,
+                  "b": 5
+                },
+                {
+                  "a": 5,
+                  "b": 6
+                }
+              ],
+              "tag": "top_cp_pi_ring"
+            },
+            {
+              "system_id": 2,
+              "shared_electrons": 6,
+              "member_edges": [
+                {
+                  "a": 12,
+                  "b": 13
+                },
+                {
+                  "a": 12,
+                  "b": 16
+                },
+                {
+                  "a": 13,
+                  "b": 14
+                },
+                {
+                  "a": 14,
+                  "b": 15
+                },
+                {
+                  "a": 15,
+                  "b": 16
+                }
+              ],
+              "tag": "bottom_cp_pi_ring"
+            },
+            {
+              "system_id": 3,
+              "shared_electrons": 6,
+              "member_edges": [
+                {
+                  "a": 1,
+                  "b": 2
+                },
+                {
+                  "a": 1,
+                  "b": 3
+                },
+                {
+                  "a": 1,
+                  "b": 4
+                },
+                {
+                  "a": 1,
+                  "b": 5
+                },
+                {
+                  "a": 1,
+                  "b": 6
+                }
+              ],
+              "tag": "eta5_top_cp_fe"
+            },
+            {
+              "system_id": 4,
+              "shared_electrons": 6,
+              "member_edges": [
+                {
+                  "a": 1,
+                  "b": 12
+                },
+                {
+                  "a": 1,
+                  "b": 13
+                },
+                {
+                  "a": 1,
+                  "b": 14
+                },
+                {
+                  "a": 1,
+                  "b": 15
+                },
+                {
+                  "a": 1,
+                  "b": 16
+                }
+              ],
+              "tag": "eta5_bottom_cp_fe"
+            }
+          ],
+          "provenance": {
+            "source_kind": "deterministic-fixture",
+            "source_ref": "MolADT-Bayes-inspired ferrocene schematic",
+            "notes": [
+              "Coordinates are a deterministic unoptimized sandwich geometry for artifact demos",
+              "A live DFT worker should replace this with conformer/geometry provenance before trusting energies"
+            ]
+          },
+          "projections": {
+            "canonical_smiles": "[Fe]12(C=CC=C1)(C=CC=C2)",
+            "inchi": null,
+            "inchikey": null
+          }
+        }
+      },
+      "artifacts": [
+        {
+          "id": "art_679226ad12061514",
+          "content_hash": "679226ad12061514787dc11daa4a8049b6fd2e51db92a7cd025cfdd2b55eaefb",
+          "skill": "market.ens.profile.v1",
+          "agent": "dft.service.chimiaclaw.eth",
+          "topic": "ENS-shaped profile for dft.service.chimiaclaw.eth",
+          "input_fingerprint": "ens-profile:dft.service.chimiaclaw.eth",
+          "output_cid": null,
+          "parent_artifact_ids": [],
+          "schema_tags": [
+            "market.ens.agent_profile"
+          ],
+          "payload": {
+            "hash": "897f4dc6674b2843ef8b8da7860efc4cc79e68424f763bca4c3ed49b68cc677f",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c22656e735f6e616d65223a226466742e736572766963652e6368696d6961636c61772e657468222c2261646472657373223a22307830303030303030303030303030303030303030303030303030303030303030303030303030643437222c227369676e696e675f7075626c69635f6b65795f68696e74223a22656432353531393a64656d6f2d6b65792d626f756e642d696e2d61727469666163742d7369676e6174757265222c2261786c5f706565725f6964223a2261786c2d6466742d64656d6f2d70656572222c22736572766963655f636174616c6f675f636964223a2230673a2f2f736572766963652d636174616c6f672f6466742e736572766963652e6368696d6961636c61772e657468222c22686561645f61727469666163745f636964223a2230673a2f2f61727469666163742d686561642f6466742e736572766963652e6368696d6961636c61772e657468222c226163746976655f73747261746567795f73657473223a5b2273747261746567792e736369656e63652d6d61726b65742e7631225d2c22746578745f7265636f726473223a5b7b226b6579223a226368696d6961636c61772e6167656e74222c2276616c7565223a226466742e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a2246697874757265227d2c7b226b6579223a226368696d6961636c61772e61786c2e70656572222c2276616c7565223a2261786c2d6466742d64656d6f2d70656572222c226c6976655f737461747573223a22506c616e6e65644c697665227d2c7b226b6579223a226368696d6961636c61772e736572766963652e636174616c6f67222c2276616c7565223a2230673a2f2f736572766963652d636174616c6f672f6466742e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a22506c616e6e65644c697665227d5d2c226361706162696c6974696573223a5b7b226964223a226361702e6466742e73696e676c655f706f696e74222c226b696e64223a22457865637574696f6e222c2270726f6475636573223a5b226368656d2e6466742e726573756c74225d2c22636f6e73756d6573223a5b226368656d2e6466742e736572766963655f72657175657374225d7d5d2c226c6976655f737461747573223a2246697874757265227d"
+              }
+            }
+          },
+          "created_at_unix": 100,
+          "signing_public_key": "2bc2800b3316e009209ffd757dab19ccf0ae84bc7ae90654e1e81712d270f653",
+          "signature": "b5a3642e75cd859cc64d43748c31fd08911e941524bb577eedddc29aae712db9b990c1fba5d6e053dabb9376c66e927bacd2e08de6a1afa322921b706f7a300f"
+        },
+        {
+          "id": "art_4f67ea95f19f58f9",
+          "content_hash": "4f67ea95f19f58f90673cc9e20fb4ec5c7c05b09ab8d7c4063250c6b6e6984db",
+          "skill": "market.service.offer.v1",
+          "agent": "dft.service.chimiaclaw.eth",
+          "topic": "science service offer OFFER.DFT.001",
+          "input_fingerprint": "OFFER.DFT.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_679226ad12061514"
+          ],
+          "schema_tags": [
+            "market.service.offer"
+          ],
+          "payload": {
+            "hash": "ada1872427f3486b66918477701efb111c0c6b663b8df8048cb2d8616e75556c",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226f666665725f6964223a224f464645522e4446542e303031222c22736572766963655f6b696e64223a22446674222c2270726f76696465725f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c2270726f76696465725f656e73223a226466742e736572766963652e6368696d6961636c61772e657468222c227469746c65223a224446542073696e676c652d706f696e742063616c63756c6174696f6e222c226465736372697074696f6e223a2252657475726e2064657465726d696e697374696320666978747572652070726f7065727469657320666f722061206d6f6c6563756c653b206c69766520636f6d707574652077696c6c20617474616368207468726f756768204b65657065724875622f30472e222c22636f6e73756d65735f736368656d615f74616773223a5b226368656d2e6466742e736572766963655f72657175657374225d2c2270726f64756365735f736368656d615f74616773223a5b226368656d2e6466742e726573756c74225d2c22626173655f70726963655f757364635f6d6963726f73223a373530303030302c22657374696d617465645f6c6174656e63795f7365636f6e6473223a3930302c22637573746f64795f706f6c696379223a22636f6d707574652d6f6e6c793b206e6f20706879736963616c20637573746f6479222c22736574746c656d656e745f617373657473223a5b2255534443222c22746573746e65742d55534443225d2c2273706f6e736f725f62696e64696e6773223a7b22656e735f6964656e74697479223a226466742e736572766963652e6368696d6961636c61772e657468222c2261786c5f706565725f6964223a2261786c2d6466742d64656d6f2d70656572222c227a65726f5f675f73746f726167655f68696e74223a2230673a2f2f736572766963652d636174616c6f672f6466742e736572766963652e6368696d6961636c61772e657468222c22756e69737761705f736574746c656d656e745f68696e74223a22556e6973776170204150492071756f7465207265706c616365732061727469666163742d6c656467657220726f7574652068696e74222c226b65657065726875625f657865637574696f6e5f68696e74223a224b6565706572487562207363686564756c657320657865637574696f6e20617274696661637420696e206c697665206d6f6465227d7d"
+              }
+            }
+          },
+          "created_at_unix": 101,
+          "signing_public_key": "2bc2800b3316e009209ffd757dab19ccf0ae84bc7ae90654e1e81712d270f653",
+          "signature": "8499a960727670d095c2fefcbb4237dbd5fc00ff778748ad64207c6c9a37d6f19cd6fa605b882409ce3261f2eb5b5e2985419401f1e1a1a7680c8f328d54420a"
+        },
+        {
+          "id": "art_369d1d24885d700d",
+          "content_hash": "369d1d24885d700d31d70b8fff44245904dab4d2eb036684d86830f47f346037",
+          "skill": "chem.molecule.adt.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "MolADT molecule ferrocene schematic MolADT",
+          "input_fingerprint": "moladt:MOLADT.FERROCENE.001:C10H10Fe",
+          "output_cid": null,
+          "parent_artifact_ids": [],
+          "schema_tags": [
+            "chem.molecule.adt"
+          ],
+          "payload": {
+            "hash": "3ecc1816c437f25739db581dd5c528b99081e757b3b5e985a1b97b77f751a955",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226d6f6c6563756c655f6964223a224d4f4c4144542e464552524f43454e452e303031222c226e616d65223a22666572726f63656e6520736368656d61746963204d6f6c414454222c2261746f6d73223a7b2231223a7b2261746f6d5f6964223a312c2261747472696275746573223a7b2273796d626f6c223a224665222c2261746f6d69635f6e756d626572223a32362c2261746f6d69635f776569676874223a35352e3834357d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a302e302c22795f616e677374726f6d223a302e302c227a5f616e677374726f6d223a302e307d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2232223a7b2261746f6d5f6964223a322c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a382e363934393932323733393436323037652d31372c22795f616e677374726f6d223a312e34322c227a5f616e677374726f6d223a312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2233223a7b2261746f6d5f6964223a332c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d312e3335303530303235333133393131382c22795f616e677374726f6d223a302e34333838303431333230313234323534362c227a5f616e677374726f6d223a312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2234223a7b2261746f6d5f6964223a342c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d302e383334363535303538323535333131392c22795f616e677374726f6d223a2d312e313438383034313332303132343235312c227a5f616e677374726f6d223a312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2235223a7b2261746f6d5f6964223a352c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a302e383334363535303538323535333131352c22795f616e677374726f6d223a2d312e313438383034313332303132343235342c227a5f616e677374726f6d223a312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2236223a7b2261746f6d5f6964223a362c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a312e333530353030323533313339313138312c22795f616e677374726f6d223a302e34333838303431333230313234323439362c227a5f616e677374726f6d223a312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2237223a7b2261746f6d5f6964223a372c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a312e353138353632303330393432373138652d31362c22795f616e677374726f6d223a322e34382c227a5f616e677374726f6d223a312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2238223a7b2261746f6d5f6964223a382c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d322e333538363230313630343131393830372c22795f616e677374726f6d223a302e373636333632313436303439383639392c227a5f616e677374726f6d223a312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c2239223a7b2261746f6d5f6964223a392c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d312e343537373037343235363835333333372c22795f616e677374726f6d223a2d322e303036333632313436303439383639332c227a5f616e677374726f6d223a312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223130223a7b2261746f6d5f6964223a31302c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a312e343537373037343235363835333332382c22795f616e677374726f6d223a2d322e303036333632313436303439383639372c227a5f616e677374726f6d223a312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223131223a7b2261746f6d5f6964223a31312c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a322e3335383632303136303431313938312c22795f616e677374726f6d223a302e3736363336323134363034393836392c227a5f616e677374726f6d223a312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223132223a7b2261746f6d5f6964223a31322c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d302e383334363535303538323535333131362c22795f616e677374726f6d223a312e313438383034313332303132343235342c227a5f616e677374726f6d223a2d312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223133223a7b2261746f6d5f6964223a31332c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d312e333530353030323533313339313138312c22795f616e677374726f6d223a2d302e34333838303431333230313234323531332c227a5f616e677374726f6d223a2d312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223134223a7b2261746f6d5f6964223a31342c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d322e363038343937363832313833383632652d31362c22795f616e677374726f6d223a2d312e34322c227a5f616e677374726f6d223a2d312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223135223a7b2261746f6d5f6964223a31352c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a312e3335303530303235333133393131382c22795f616e677374726f6d223a2d302e343338383034313332303132343235372c227a5f616e677374726f6d223a2d312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223136223a7b2261746f6d5f6964223a31362c2261747472696275746573223a7b2273796d626f6c223a2243222c2261746f6d69635f6e756d626572223a362c2261746f6d69635f776569676874223a31322e3031317d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a302e383334363535303538323535333132322c22795f616e677374726f6d223a312e3134383830343133323031323432352c227a5f616e677374726f6d223a2d312e36377d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223137223a7b2261746f6d5f6964223a31372c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d312e3435373730373432353638353333332c22795f616e677374726f6d223a322e303036333632313436303439383639372c227a5f616e677374726f6d223a2d312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223138223a7b2261746f6d5f6964223a31382c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d322e3335383632303136303431313938312c22795f616e677374726f6d223a2d302e373636333632313436303439383639332c227a5f616e677374726f6d223a2d312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223139223a7b2261746f6d5f6964223a31392c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a2d342e353535363836303932383238313534652d31362c22795f616e677374726f6d223a2d322e34382c227a5f616e677374726f6d223a2d312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223230223a7b2261746f6d5f6964223a32302c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a322e333538363230313630343131393830372c22795f616e677374726f6d223a2d302e373636333632313436303439383730322c227a5f616e677374726f6d223a2d312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d2c223231223a7b2261746f6d5f6964223a32312c2261747472696275746573223a7b2273796d626f6c223a2248222c2261746f6d69635f6e756d626572223a312c2261746f6d69635f776569676874223a312e3030387d2c22636f6f7264696e617465223a7b22785f616e677374726f6d223a312e3435373730373432353638353333342c22795f616e677374726f6d223a322e303036333632313436303439383639332c227a5f616e677374726f6d223a2d312e39327d2c22666f726d616c5f636861726765223a302c227368656c6c73223a5b5d7d7d2c226c6f63616c5f626f6e6473223a5b7b2261223a322c2262223a337d2c7b2261223a322c2262223a367d2c7b2261223a322c2262223a377d2c7b2261223a332c2262223a347d2c7b2261223a332c2262223a387d2c7b2261223a342c2262223a357d2c7b2261223a342c2262223a397d2c7b2261223a352c2262223a367d2c7b2261223a352c2262223a31307d2c7b2261223a362c2262223a31317d2c7b2261223a31322c2262223a31337d2c7b2261223a31322c2262223a31367d2c7b2261223a31322c2262223a31377d2c7b2261223a31332c2262223a31347d2c7b2261223a31332c2262223a31387d2c7b2261223a31342c2262223a31357d2c7b2261223a31342c2262223a31397d2c7b2261223a31352c2262223a31367d2c7b2261223a31352c2262223a32307d2c7b2261223a31362c2262223a32317d5d2c2273797374656d73223a5b7b2273797374656d5f6964223a312c227368617265645f656c656374726f6e73223a362c226d656d6265725f6564676573223a5b7b2261223a322c2262223a337d2c7b2261223a322c2262223a367d2c7b2261223a332c2262223a347d2c7b2261223a342c2262223a357d2c7b2261223a352c2262223a367d5d2c22746167223a22746f705f63705f70695f72696e67227d2c7b2273797374656d5f6964223a322c227368617265645f656c656374726f6e73223a362c226d656d6265725f6564676573223a5b7b2261223a31322c2262223a31337d2c7b2261223a31322c2262223a31367d2c7b2261223a31332c2262223a31347d2c7b2261223a31342c2262223a31357d2c7b2261223a31352c2262223a31367d5d2c22746167223a22626f74746f6d5f63705f70695f72696e67227d2c7b2273797374656d5f6964223a332c227368617265645f656c656374726f6e73223a362c226d656d6265725f6564676573223a5b7b2261223a312c2262223a327d2c7b2261223a312c2262223a337d2c7b2261223a312c2262223a347d2c7b2261223a312c2262223a357d2c7b2261223a312c2262223a367d5d2c22746167223a22657461355f746f705f63705f6665227d2c7b2273797374656d5f6964223a342c227368617265645f656c656374726f6e73223a362c226d656d6265725f6564676573223a5b7b2261223a312c2262223a31327d2c7b2261223a312c2262223a31337d2c7b2261223a312c2262223a31347d2c7b2261223a312c2262223a31357d2c7b2261223a312c2262223a31367d5d2c22746167223a22657461355f626f74746f6d5f63705f6665227d5d2c2270726f76656e616e6365223a7b22736f757263655f6b696e64223a2264657465726d696e69737469632d66697874757265222c22736f757263655f726566223a224d6f6c4144542d42617965732d696e73706972656420666572726f63656e6520736368656d61746963222c226e6f746573223a5b22436f6f7264696e617465732061726520612064657465726d696e697374696320756e6f7074696d697a65642073616e64776963682067656f6d6574727920666f722061727469666163742064656d6f73222c2241206c6976652044465420776f726b65722073686f756c64207265706c6163652074686973207769746820636f6e666f726d65722f67656f6d657472792070726f76656e616e6365206265666f7265207472757374696e6720656e657267696573225d7d2c2270726f6a656374696f6e73223a7b2263616e6f6e6963616c5f736d696c6573223a225b46655d313228433d43433d43312928433d43433d433229222c22696e636869223a6e756c6c2c22696e6368696b6579223a6e756c6c7d7d"
+              }
+            }
+          },
+          "created_at_unix": 200,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "7e00bc433b47c38a41b71280f5da5e04c75f12cfcf5cbbef02f49565b504816d7f9e0eb92b61a77263898f52ac772a19ef5b1cae9f32871bc57d2cefbc5fe90e"
+        },
+        {
+          "id": "art_a417576afc6d8633",
+          "content_hash": "a417576afc6d8633184fe4a0b489efd58454317dfd62d773e40eae54644c3599",
+          "skill": "market.service.request.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "science service request REQ.DFT.FERROCENE.001",
+          "input_fingerprint": "REQ.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_4f67ea95f19f58f9",
+            "art_369d1d24885d700d"
+          ],
+          "schema_tags": [
+            "chem.dft.service_request",
+            "market.service.request"
+          ],
+          "payload": {
+            "hash": "b712af6865bda9a532b6caf528ade5b1a4f6995bce0cd88928217aad7b0bfb30",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726571756573745f6964223a225245512e4446542e464552524f43454e452e303031222c22736572766963655f6b696e64223a22446674222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c227461726765745f6c61625f6964223a224c41422e5649525455414c2e3031222c22696e707574223a7b22446674223a7b226d6f6c6563756c65223a7b226d6f6c6563756c655f6964223a224d4f4c4144542e464552524f43454e452e303031222c226d6f6c6563756c655f6e616d65223a22666572726f63656e6520736368656d61746963204d6f6c414454222c226d6f6c6563756c61725f666f726d756c61223a224331304831304665222c226d6f6c6563756c655f61727469666163745f6964223a226172745f33363964316432343838356437303064222c226d6f6c6563756c655f7061796c6f61645f68617368223a2233656363313831366334333766323537333964623538316464356335323862393930383165373537623362356539383561316239376237376637353161393535222c2263616e6f6e6963616c5f736d696c6573223a225b46655d313228433d43433d43312928433d43433d433229227d2c22746f74616c5f636861726765223a302c226d756c7469706c6963697479223a312c226d6574686f64223a7b2266756e6374696f6e616c223a22736b616c612d312e31222c2262617369735f736574223a22646566322d747a7670222c226261636b656e64223a225079536366222c2264697370657273696f6e223a226466746433222c22677269645f6c6576656c223a337d2c226a6f625f6b696e64223a2253696e676c65506f696e74222c227265717565737465645f70726f70657274696573223a5b22746f74616c5f656e65726779222c22686f6d6f5f6c756d6f5f676170222c226469706f6c65225d7d7d2c226d61785f70726963655f757364635f6d6963726f73223a31303030303030302c22736574746c656d656e745f6173736574223a2255534443222c2272657175697265645f6f757470757473223a5b22656e65726779222c2266726f6e74696572206f72626974616c20676170222c22576f726c64204176617461722070726f6a656374696f6e2068696e7473225d7d"
+              }
+            }
+          },
+          "created_at_unix": 102,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "7a43d06e8aa8325b296dc2f72c583ed35e213c54170573a090672ce4643eac8c018c9f253af25b0d8e12cbd54286e41c3bc7451441c9aa6f832765cad60b630b"
+        },
+        {
+          "id": "art_9b6d9d7bcf8a19f3",
+          "content_hash": "9b6d9d7bcf8a19f322dfdf27022a40a066c2ed4aea3b52fba31b239df739c7c6",
+          "skill": "market.service.quote.v1",
+          "agent": "dft.service.chimiaclaw.eth",
+          "topic": "science service quote QUOTE.DFT.FERROCENE.001",
+          "input_fingerprint": "QUOTE.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_a417576afc6d8633"
+          ],
+          "schema_tags": [
+            "market.service.quote"
+          ],
+          "payload": {
+            "hash": "1b26a70921523c61f82f114d5d84c529c7a42a74ace269644e5d89ed8dc54d2e",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c22726571756573745f6964223a225245512e4446542e464552524f43454e452e303031222c22736572766963655f6b696e64223a22446674222c2270726f76696465725f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c2270726963655f757364635f6d6963726f73223a383235303030302c226173736574223a2255534443222c227061796d656e745f7465726d73223a7b22657363726f775f7265717569726564223a747275652c2270617965725f636f6e6669726d6174696f6e5f7265717569726564223a747275652c2272656c656173655f74726967676572223a22526573756c7441636b6e6f776c6564676564222c22646973707574655f77696e646f775f7365636f6e6473223a38363430302c22726566756e645f77696e646f775f7365636f6e6473223a3630343830307d2c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c22657374696d617465645f6c6174656e63795f7365636f6e6473223a313230302c22657870697265735f61745f756e6978223a313737373737373737372c22617373756d7074696f6e73223a5b2264657465726d696e6973746963206c6f63616c2066697874757265222c226c6976652073706f6e736f7220696e746567726174696f6e73206e6f7420696e766f6b6564222c226f70657261746f7220636f6e6669726d6174696f6e207265717569726564206265666f7265207265616c20736574746c656d656e74225d2c22736574746c656d656e745f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564227d"
+              }
+            }
+          },
+          "created_at_unix": 103,
+          "signing_public_key": "2bc2800b3316e009209ffd757dab19ccf0ae84bc7ae90654e1e81712d270f653",
+          "signature": "ac66ef80b8d9abda09c239640ffadd675d9afa9da5d8f693e951c55a1b99aeb6fd89c770c9bad489e6a1c6c3bd5719972fa8ec36cd5abe80ae82d5edf2581700"
+        },
+        {
+          "id": "art_8313446383a22750",
+          "content_hash": "8313446383a22750ad91a2edd4ff8f53b9e4f7fee0da4a68f71309361d4648e9",
+          "skill": "market.quote.acceptance.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "quote acceptance ACCEPT.DFT.FERROCENE.001",
+          "input_fingerprint": "ACCEPT.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_9b6d9d7bcf8a19f3"
+          ],
+          "schema_tags": [
+            "market.quote.acceptance"
+          ],
+          "payload": {
+            "hash": "d1e76b7a7907593cfeb1a1ef3cf81b2cb3f7f11de6ce4917f53520d234314114",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22616363657074616e63655f6964223a224143434550542e4446542e464552524f43454e452e303031222c2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c22726571756573745f6964223a225245512e4446542e464552524f43454e452e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c2261636365707465645f616d6f756e745f757364635f6d6963726f73223a383235303030302c226173736574223a2255534443222c2261636365707465645f61745f756e6978223a313730303030303031302c2271756f74655f657870697265735f61745f756e6978223a313737373737373737372c22636f6e646974696f6e73223a5b22657363726f7720617574686f72697a6174696f6e206d757374206265207369676e6564206265666f726520726573756c742072656c65617365222c2272656c65617365207265717569726573207265717565737465722061636b6e6f776c656467656d656e74206f662074686520726573756c74206172746966616374222c226c69766520746f6b656e207472616e736665722072656d61696e732064697361626c656420696e2066697874757265206d6f6465225d2c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 104,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "e854acde9fb3c6ef0c993ce3f8f63cc6ed511dee405a0349e709e8541dfd05596bdc71b962a2eaec77f481dc081db9e4058679d98b298580ae842eaee7dafb00"
+        },
+        {
+          "id": "art_5b6ffff450c5cb38",
+          "content_hash": "5b6ffff450c5cb3816b2a6e88dc570b4b74cc7d3a2e0222c7b1bed2441ecc27c",
+          "skill": "market.escrow.authorization.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "escrow authorization ESCROW.DFT.FERROCENE.001",
+          "input_fingerprint": "ESCROW.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_8313446383a22750"
+          ],
+          "schema_tags": [
+            "market.escrow.authorization"
+          ],
+          "payload": {
+            "hash": "a6a4b0ed9aa01185e4725286a6dc33b0b9b64fea58f7702f88e0bb737d50a39e",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22657363726f775f6964223a22455343524f572e4446542e464552524f43454e452e303031222c22616363657074616e63655f6964223a224143434550542e4446542e464552524f43454e452e303031222c2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a383235303030302c226173736574223a2255534443222c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c22726f7574655f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564222c226c6976655f7472616e736665725f7072657061726564223a66616c73652c226c6976655f7472616e736665725f6578656375746564223a66616c73652c2272656c656173655f636f6e646974696f6e73223a5b2270726f766964657220726573756c74206172746966616374207665726966696573222c22726573756c7420726571756573745f6964206d617463686573207468652061636365707465642072657175657374222c227265717565737465722061636b6e6f776c656467656d656e7420737461747573206973206163636570746564225d2c22726566756e645f706f6c696379223a7b22726566756e645f746f5f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c22726566756e6461626c655f616d6f756e745f757364635f6d6963726f73223a383235303030302c22726566756e645f6173736574223a2255534443222c22616c6c6f7765645f726561736f6e73223a5b2251756f746545787069726564222c22526573756c7452656a6563746564222c2250726f76696465724661696c6564222c224f70657261746f7243616e63656c6c65644265666f7265457865637574696f6e225d7d7d"
+              }
+            }
+          },
+          "created_at_unix": 105,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "96ea2755250c07a9ce53bde5972c11889a74779282a37a8f375fa9a5fb07000d9943f2102b35dc4861b45105a9bb42c0278c4a4454fd331a84a1d84509bfdb0b"
+        },
+        {
+          "id": "art_61231b644e3f4c06",
+          "content_hash": "61231b644e3f4c06ec21c4cefd574819837ab733b993c7fec405334c69d76db4",
+          "skill": "market.settlement.intent.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement intent SETTLE.DFT.FERROCENE.001",
+          "input_fingerprint": "SETTLE.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_5b6ffff450c5cb38"
+          ],
+          "schema_tags": [
+            "market.settlement.intent"
+          ],
+          "payload": {
+            "hash": "09fa27f4877dcb55df2537d34d49d3997c4fd3ecb6bf521355540190e1dfe6bb",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22736574746c656d656e745f6964223a22534554544c452e4446542e464552524f43454e452e303031222c22657363726f775f6964223a22455343524f572e4446542e464552524f43454e452e303031222c2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a383235303030302c226173736574223a2255534443222c22726f7574655f68696e74223a22756e69737761702d74726164652d6170693a504f5354202f76312f71756f74653a434c41535349433a56322b56332b56343a6f70657261746f722d6761746564222c22736574746c656d656e745f6d6574686f64223a22556e697377617050726570617265645472616e73666572222c226c6976655f657865637574696f6e5f7265717569726564223a66616c73652c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 106,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "8465c2c7d67a707e64672cbe5f82dc77bb58ca37f9941321def7d59c83d6dbd886a9924206a7dc2c8b75b2c77b8ab1b1944730d556cb4bdd555c1aefef44af00"
+        },
+        {
+          "id": "art_e8cabc6e44bdf97e",
+          "content_hash": "e8cabc6e44bdf97ed83d423bced90c58167384cb08b9c29370459b608755e54e",
+          "skill": "market.service.result.v1",
+          "agent": "dft.service.chimiaclaw.eth",
+          "topic": "science service result RESULT.DFT.FERROCENE.001",
+          "input_fingerprint": "RESULT.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_a417576afc6d8633",
+            "art_61231b644e3f4c06"
+          ],
+          "schema_tags": [
+            "market.service.result"
+          ],
+          "payload": {
+            "hash": "5de49293d2b77476130870e1e5a077fdb96974fc60f6fddedc18a1ee0addd79d",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726573756c745f6964223a22524553554c542e4446542e464552524f43454e452e303031222c22726571756573745f6964223a225245512e4446542e464552524f43454e452e303031222c22736572766963655f6b696e64223a22446674222c2270726f76696465725f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c226f757470757473223a7b22446674223a7b226d6f6c6563756c65223a22666572726f63656e65222c226d6574686f64223a2272325343414e2d33632f646566322d6d545a5650502066697874757265222c22746f74616c5f656e657267795f68617274726565223a2d313635302e3234383733312c22686f6d6f5f6c756d6f5f6761705f6576223a352e34322c226469706f6c655f6465627965223a302e307d7d2c226369746174696f6e73223a5b7b227469746c65223a2272325343414e2d336320636f6d706f7369746520656c656374726f6e69632d737472756374757265206d6574686f64222c22646f69223a2231302e313036332f352e30303430303231222c2275726c223a6e756c6c2c2279656172223a323032317d5d2c22776f726c645f6176617461725f70726f6a656374696f6e5f68696e7473223a5b226f6e746f737065636965733a6861734d6f6c6563756c6172436f6d7075746174696f6e20524553554c542e4446542e464552524f43454e452e303031222c2270726f763a7761734173736f63696174656457697468206466742e736572766963652e6368696d6961636c61772e657468225d2c22657865637574696f6e5f7472616365223a5b2271756f74656420444654206a6f62206172746966616374222c22776f756c64207363686564756c65207468726f756768204b656570657248756220696e206c697665206d6f6465222c22776f756c642073746f726520726177206f75747075742062756e646c65206f6e2030472053746f7261676520696e206c697665206d6f6465225d7d"
+              }
+            }
+          },
+          "created_at_unix": 107,
+          "signing_public_key": "2bc2800b3316e009209ffd757dab19ccf0ae84bc7ae90654e1e81712d270f653",
+          "signature": "e074407caf83034822a28226a2681e19e40937882786146c8c730c9bafc397db1a2b90f5f8475595a260d9771af3c8d39c74eb355429ab618b7d5b2f92b3380c"
+        },
+        {
+          "id": "art_fae5a5e6f80565db",
+          "content_hash": "fae5a5e6f80565db8a2f13add6b93a46a0f381ed45734b0b5f2ec217efa9133c",
+          "skill": "market.result.acknowledgement.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "result acknowledgement ACK.DFT.FERROCENE.001",
+          "input_fingerprint": "ACK.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_e8cabc6e44bdf97e",
+            "art_5b6ffff450c5cb38"
+          ],
+          "schema_tags": [
+            "market.result.acknowledgement"
+          ],
+          "payload": {
+            "hash": "a111c58520b965b2e1897c66ea92129a6f20ae5e961e76950ad8465056c7ac52",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2261636b6e6f776c656467656d656e745f6964223a2241434b2e4446542e464552524f43454e452e303031222c22726573756c745f6964223a22524553554c542e4446542e464552524f43454e452e303031222c22726571756573745f6964223a225245512e4446542e464552524f43454e452e303031222c2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c22657363726f775f6964223a22455343524f572e4446542e464552524f43454e452e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c22737461747573223a224163636570746564222c2261636b6e6f776c65646765645f61745f756e6978223a313730303030303032302c226e6f746573223a5b22726573756c74206172746966616374207061796c6f616420616e64207369676e6174757265207665726966696564222c22666978747572652061636b6e6f776c656467656d656e7420617574686f72697a65732073696d756c617465642072656c65617365225d7d"
+              }
+            }
+          },
+          "created_at_unix": 108,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "212d2cba228bcb03fffb75de8cb6cf1d75cf454bfae1a08e4d75bb1f34b912574880c1a3a6f1440a71356e69853a5572d50c1b4cae1ed863b71e6e5861920b05"
+        },
+        {
+          "id": "art_404a295660c4aab4",
+          "content_hash": "404a295660c4aab42756edd8717bfe76d7f2cf1f06fe16f6e908b9f91c9d832b",
+          "skill": "market.settlement.release.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement release RELEASE.DFT.FERROCENE.001",
+          "input_fingerprint": "RELEASE.DFT.FERROCENE.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_fae5a5e6f80565db",
+            "art_61231b644e3f4c06"
+          ],
+          "schema_tags": [
+            "market.settlement.release"
+          ],
+          "payload": {
+            "hash": "8ef0bbc7d2c34880e8c518148fbd9ef6fc3db65274ad29408a8697a4854276a6",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2272656c656173655f6964223a2252454c454153452e4446542e464552524f43454e452e303031222c22657363726f775f6964223a22455343524f572e4446542e464552524f43454e452e303031222c2271756f74655f6964223a2251554f54452e4446542e464552524f43454e452e303031222c22726573756c745f6964223a22524553554c542e4446542e464552524f43454e452e303031222c2261636b6e6f776c656467656d656e745f6964223a2241434b2e4446542e464552524f43454e452e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226466742e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a383235303030302c226173736574223a2255534443222c2272656c656173655f737461747573223a2253696d756c6174656452656c6561736564222c2272656c65617365645f61745f756e6978223a313730303030303033302c227472616e73616374696f6e5f726566223a2261727469666163742d6c65646765723a2f2f72656c656173652f4446542e464552524f43454e452e303031222c2261756469745f6e6f746573223a5b226e6f206c6976652066756e6473206d6f766564222c2272656c6561736520697320616e20617564697461626c65207369676e656420617274696661637420666f72206c61746572206164617074657220657865637574696f6e225d7d"
+              }
+            }
+          },
+          "created_at_unix": 109,
+          "signing_public_key": "d62f016a1efd1e4fdf793eb42cd84471e1ba9f0cf04d1287b5cc71f616287cb8",
+          "signature": "c8c622c3e243228cf3c0e470acc235e2196e78c808ced332dbf3fe37cbc3169715f256e980e989164172d81f61fa7df05b6a5ec26c97f649e166de91d7e77509"
+        }
+      ]
+    },
+    {
+      "flow": {
+        "service_kind": "Literature",
+        "profile": {
+          "agent": "literature.service.chimiaclaw.eth",
+          "ens_name": "literature.service.chimiaclaw.eth",
+          "address": "0x0000000000000000000000000000000000001147",
+          "signing_public_key_hint": "ed25519:demo-key-bound-in-artifact-signature",
+          "axl_peer_id": "axl-literature-demo-peer",
+          "service_catalog_cid": "0g://service-catalog/literature.service.chimiaclaw.eth",
+          "head_artifact_cid": "0g://artifact-head/literature.service.chimiaclaw.eth",
+          "active_strategy_sets": [
+            "strategy.science-market.v1"
+          ],
+          "text_records": [
+            {
+              "key": "chimiaclaw.agent",
+              "value": "literature.service.chimiaclaw.eth",
+              "live_status": "Fixture"
+            },
+            {
+              "key": "chimiaclaw.axl.peer",
+              "value": "axl-literature-demo-peer",
+              "live_status": "PlannedLive"
+            },
+            {
+              "key": "chimiaclaw.service.catalog",
+              "value": "0g://service-catalog/literature.service.chimiaclaw.eth",
+              "live_status": "PlannedLive"
+            }
+          ],
+          "capabilities": [
+            {
+              "id": "cap.literature.synthesis",
+              "kind": "Storage",
+              "produces": [
+                "science.literature.synthesis"
+              ],
+              "consumes": [
+                "science.literature.service_request"
+              ]
+            }
+          ],
+          "live_status": "Fixture"
+        },
+        "offer": {
+          "offer_id": "OFFER.LIT.001",
+          "service_kind": "Literature",
+          "provider_agent": "literature.service.chimiaclaw.eth",
+          "provider_ens": "literature.service.chimiaclaw.eth",
+          "title": "Literature synthesis and claim extraction",
+          "description": "Open-access-first literature synthesis with citations and conflict notes.",
+          "consumes_schema_tags": [
+            "science.literature.service_request"
+          ],
+          "produces_schema_tags": [
+            "science.literature.synthesis"
+          ],
+          "base_price_usdc_micros": 1250000,
+          "estimated_latency_seconds": 120,
+          "custody_policy": "data-only; source citations required",
+          "settlement_assets": [
+            "USDC",
+            "testnet-USDC"
+          ],
+          "sponsor_bindings": {
+            "ens_identity": "literature.service.chimiaclaw.eth",
+            "axl_peer_id": "axl-literature-demo-peer",
+            "zero_g_storage_hint": "0g://service-catalog/literature.service.chimiaclaw.eth",
+            "uniswap_settlement_hint": "Uniswap API quote replaces artifact-ledger route hint",
+            "keeperhub_execution_hint": "KeeperHub schedules execution artifact in live mode"
+          }
+        },
+        "request": {
+          "request_id": "REQ.LIT.FLOW.001",
+          "service_kind": "Literature",
+          "requester_agent": "operator.chimiaclaw.eth",
+          "target_lab_id": "LAB.CHIMIA.03",
+          "input": {
+            "Literature": {
+              "query": "continuous-flow Buchwald-Hartwig amination automation",
+              "sector": "automated-synthesis",
+              "sources": [
+                "ChemRxiv",
+                "Crossref",
+                "Unpaywall",
+                "arXiv chem-ph"
+              ],
+              "open_access_only": true,
+              "max_papers": 12
+            }
+          },
+          "max_price_usdc_micros": 2000000,
+          "settlement_asset": "USDC",
+          "required_outputs": [
+            "claim list",
+            "citation list",
+            "conflict notes"
+          ]
+        },
+        "quote": {
+          "quote_id": "QUOTE.LIT.FLOW.001",
+          "request_id": "REQ.LIT.FLOW.001",
+          "service_kind": "Literature",
+          "provider_agent": "literature.service.chimiaclaw.eth",
+          "price_usdc_micros": 1500000,
+          "asset": "USDC",
+          "payment_terms": {
+            "escrow_required": true,
+            "payer_confirmation_required": true,
+            "release_trigger": "ResultAcknowledged",
+            "dispute_window_seconds": 86400,
+            "refund_window_seconds": 604800
+          },
+          "settlement_method": "SimulatedArtifactLedger",
+          "estimated_latency_seconds": 180,
+          "expires_at_unix": 1777777777,
+          "assumptions": [
+            "deterministic local fixture",
+            "live sponsor integrations not invoked",
+            "operator confirmation required before real settlement"
+          ],
+          "settlement_hint": "artifact-ledger:simulated-release"
+        },
+        "economic_settlement": {
+          "quote_acceptance": {
+            "acceptance_id": "ACCEPT.LIT.FLOW.001",
+            "quote_id": "QUOTE.LIT.FLOW.001",
+            "request_id": "REQ.LIT.FLOW.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "literature.service.chimiaclaw.eth",
+            "accepted_amount_usdc_micros": 1500000,
+            "asset": "USDC",
+            "accepted_at_unix": 1700000010,
+            "quote_expires_at_unix": 1777777777,
+            "conditions": [
+              "escrow authorization must be signed before result release",
+              "release requires requester acknowledgement of the result artifact",
+              "live token transfer remains disabled in fixture mode"
+            ],
+            "operator_confirmation_required": true
+          },
+          "escrow_authorization": {
+            "escrow_id": "ESCROW.LIT.FLOW.001",
+            "acceptance_id": "ACCEPT.LIT.FLOW.001",
+            "quote_id": "QUOTE.LIT.FLOW.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "literature.service.chimiaclaw.eth",
+            "amount_usdc_micros": 1500000,
+            "asset": "USDC",
+            "settlement_method": "SimulatedArtifactLedger",
+            "route_hint": "artifact-ledger:simulated-release",
+            "live_transfer_prepared": false,
+            "live_transfer_executed": false,
+            "release_conditions": [
+              "provider result artifact verifies",
+              "result request_id matches the accepted request",
+              "requester acknowledgement status is accepted"
+            ],
+            "refund_policy": {
+              "refund_to_agent": "operator.chimiaclaw.eth",
+              "refundable_amount_usdc_micros": 1500000,
+              "refund_asset": "USDC",
+              "allowed_reasons": [
+                "QuoteExpired",
+                "ResultRejected",
+                "ProviderFailed",
+                "OperatorCancelledBeforeExecution"
+              ]
+            }
+          },
+          "result_acknowledgement": {
+            "acknowledgement_id": "ACK.LIT.FLOW.001",
+            "result_id": "RESULT.LIT.FLOW.001",
+            "request_id": "REQ.LIT.FLOW.001",
+            "quote_id": "QUOTE.LIT.FLOW.001",
+            "escrow_id": "ESCROW.LIT.FLOW.001",
+            "requester_agent": "operator.chimiaclaw.eth",
+            "provider_agent": "literature.service.chimiaclaw.eth",
+            "status": "Accepted",
+            "acknowledged_at_unix": 1700000020,
+            "notes": [
+              "result artifact payload and signature verified",
+              "fixture acknowledgement authorizes simulated release"
+            ]
+          },
+          "settlement_release": {
+            "release_id": "RELEASE.LIT.FLOW.001",
+            "escrow_id": "ESCROW.LIT.FLOW.001",
+            "quote_id": "QUOTE.LIT.FLOW.001",
+            "result_id": "RESULT.LIT.FLOW.001",
+            "acknowledgement_id": "ACK.LIT.FLOW.001",
+            "payer_agent": "operator.chimiaclaw.eth",
+            "payee_agent": "literature.service.chimiaclaw.eth",
+            "amount_usdc_micros": 1500000,
+            "asset": "USDC",
+            "release_status": "SimulatedReleased",
+            "released_at_unix": 1700000030,
+            "transaction_ref": "artifact-ledger://release/LIT.FLOW.001",
+            "audit_notes": [
+              "no live funds moved",
+              "release is an auditable signed artifact for later adapter execution"
+            ]
+          }
+        },
+        "settlement_intent": {
+          "settlement_id": "SETTLE.LIT.FLOW.001",
+          "escrow_id": "ESCROW.LIT.FLOW.001",
+          "quote_id": "QUOTE.LIT.FLOW.001",
+          "payer_agent": "operator.chimiaclaw.eth",
+          "payee_agent": "literature.service.chimiaclaw.eth",
+          "amount_usdc_micros": 1500000,
+          "asset": "USDC",
+          "route_hint": "artifact-ledger:simulated-release",
+          "settlement_method": "SimulatedArtifactLedger",
+          "live_execution_required": false,
+          "operator_confirmation_required": true
+        },
+        "result": {
+          "result_id": "RESULT.LIT.FLOW.001",
+          "request_id": "REQ.LIT.FLOW.001",
+          "service_kind": "Literature",
+          "provider_agent": "literature.service.chimiaclaw.eth",
+          "outputs": {
+            "Literature": {
+              "synthesis_summary": "Closed-loop flow chemistry literature supports inline analytics plus Bayesian optimization, but hardware portability remains the main unsolved boundary.",
+              "extracted_claims": [
+                "Inline FTIR/HPLC feedback can reduce optimization cycles versus random search.",
+                "XDL-style protocol portability requires explicit hardware abstraction.",
+                "Human review is still needed before wetlab transfer."
+              ],
+              "conflicts": [
+                "Yield comparisons across platforms often use non-identical residence-time conventions."
+              ]
+            }
+          },
+          "citations": [
+            {
+              "title": "Self-optimising reactions in flow chemistry",
+              "doi": "10.1039/C8RE00060H",
+              "url": null,
+              "year": 2018
+            },
+            {
+              "title": "Towards a Universal XDL Interpreter for Heterogeneous Chemputer Platforms",
+              "doi": null,
+              "url": "https://chemrxiv.org",
+              "year": 2025
+            }
+          ],
+          "world_avatar_projection_hints": [
+            "prov:wasDerivedFrom cited literature artifacts",
+            "ontochimia:hasExtractedClaim continuous-flow-automation"
+          ],
+          "execution_trace": [
+            "queried open-access-only source fixture",
+            "extracted citation-bound claims",
+            "flagged one cross-platform comparison conflict"
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "id": "art_11999301ec61d261",
+          "content_hash": "11999301ec61d2619dc32bb20f3fde753025a9373dc133be690d43e04665c51b",
+          "skill": "market.ens.profile.v1",
+          "agent": "literature.service.chimiaclaw.eth",
+          "topic": "ENS-shaped profile for literature.service.chimiaclaw.eth",
+          "input_fingerprint": "ens-profile:literature.service.chimiaclaw.eth",
+          "output_cid": null,
+          "parent_artifact_ids": [],
+          "schema_tags": [
+            "market.ens.agent_profile"
+          ],
+          "payload": {
+            "hash": "6a7b123df53b1db5084877fb6c5f50f928eb6bf9775ae4a375152f5a130509a9",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22656e735f6e616d65223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c2261646472657373223a22307830303030303030303030303030303030303030303030303030303030303030303030303031313437222c227369676e696e675f7075626c69635f6b65795f68696e74223a22656432353531393a64656d6f2d6b65792d626f756e642d696e2d61727469666163742d7369676e6174757265222c2261786c5f706565725f6964223a2261786c2d6c6974657261747572652d64656d6f2d70656572222c22736572766963655f636174616c6f675f636964223a2230673a2f2f736572766963652d636174616c6f672f6c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22686561645f61727469666163745f636964223a2230673a2f2f61727469666163742d686561642f6c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c226163746976655f73747261746567795f73657473223a5b2273747261746567792e736369656e63652d6d61726b65742e7631225d2c22746578745f7265636f726473223a5b7b226b6579223a226368696d6961636c61772e6167656e74222c2276616c7565223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a2246697874757265227d2c7b226b6579223a226368696d6961636c61772e61786c2e70656572222c2276616c7565223a2261786c2d6c6974657261747572652d64656d6f2d70656572222c226c6976655f737461747573223a22506c616e6e65644c697665227d2c7b226b6579223a226368696d6961636c61772e736572766963652e636174616c6f67222c2276616c7565223a2230673a2f2f736572766963652d636174616c6f672f6c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c226c6976655f737461747573223a22506c616e6e65644c697665227d5d2c226361706162696c6974696573223a5b7b226964223a226361702e6c6974657261747572652e73796e746865736973222c226b696e64223a2253746f72616765222c2270726f6475636573223a5b22736369656e63652e6c6974657261747572652e73796e746865736973225d2c22636f6e73756d6573223a5b22736369656e63652e6c6974657261747572652e736572766963655f72657175657374225d7d5d2c226c6976655f737461747573223a2246697874757265227d"
+              }
+            }
+          },
+          "created_at_unix": 200,
+          "signing_public_key": "97ffc883c80bee7237ef95d9b9b703d4ad63e60a21e605867682b75b8b3f4303",
+          "signature": "62890e6b3ef5dfcb1f5639c86d5d203f36568eeb29a2a91e183ba3091dbef073b736ab3c15d762af4371e97a14aab71341a3157f3d239eddc72198228b493a06"
+        },
+        {
+          "id": "art_2f1f8eca1f8eeb50",
+          "content_hash": "2f1f8eca1f8eeb50802a48b84a10e4122f135848554724359115d57dbfd2f612",
+          "skill": "market.service.offer.v1",
+          "agent": "literature.service.chimiaclaw.eth",
+          "topic": "science service offer OFFER.LIT.001",
+          "input_fingerprint": "OFFER.LIT.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_11999301ec61d261"
+          ],
+          "schema_tags": [
+            "market.service.offer"
+          ],
+          "payload": {
+            "hash": "a9a528216af5b6d38303b6ae7991d4d40c8762357d1ec6ebb45c1d71ac80ced8",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b226f666665725f6964223a224f464645522e4c49542e303031222c22736572766963655f6b696e64223a224c697465726174757265222c2270726f76696465725f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c2270726f76696465725f656e73223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c227469746c65223a224c6974657261747572652073796e74686573697320616e6420636c61696d2065787472616374696f6e222c226465736372697074696f6e223a224f70656e2d6163636573732d6669727374206c6974657261747572652073796e7468657369732077697468206369746174696f6e7320616e6420636f6e666c696374206e6f7465732e222c22636f6e73756d65735f736368656d615f74616773223a5b22736369656e63652e6c6974657261747572652e736572766963655f72657175657374225d2c2270726f64756365735f736368656d615f74616773223a5b22736369656e63652e6c6974657261747572652e73796e746865736973225d2c22626173655f70726963655f757364635f6d6963726f73223a313235303030302c22657374696d617465645f6c6174656e63795f7365636f6e6473223a3132302c22637573746f64795f706f6c696379223a22646174612d6f6e6c793b20736f75726365206369746174696f6e73207265717569726564222c22736574746c656d656e745f617373657473223a5b2255534443222c22746573746e65742d55534443225d2c2273706f6e736f725f62696e64696e6773223a7b22656e735f6964656e74697479223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c2261786c5f706565725f6964223a2261786c2d6c6974657261747572652d64656d6f2d70656572222c227a65726f5f675f73746f726167655f68696e74223a2230673a2f2f736572766963652d636174616c6f672f6c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22756e69737761705f736574746c656d656e745f68696e74223a22556e6973776170204150492071756f7465207265706c616365732061727469666163742d6c656467657220726f7574652068696e74222c226b65657065726875625f657865637574696f6e5f68696e74223a224b6565706572487562207363686564756c657320657865637574696f6e20617274696661637420696e206c697665206d6f6465227d7d"
+              }
+            }
+          },
+          "created_at_unix": 201,
+          "signing_public_key": "97ffc883c80bee7237ef95d9b9b703d4ad63e60a21e605867682b75b8b3f4303",
+          "signature": "19348ada608522e10c493b571c274dbc90a467a0b5bc7452bc9a126a0c722a294f6c77eb51f0ae1a316621928b68cce7d206c2dfb0a6f8b357fe9ca12bfb0b03"
+        },
+        {
+          "id": "art_442fddace9334d9e",
+          "content_hash": "442fddace9334d9ecd5d1175c6b305b445afb0974b316371d5deac615a0adb92",
+          "skill": "market.service.request.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "science service request REQ.LIT.FLOW.001",
+          "input_fingerprint": "REQ.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_2f1f8eca1f8eeb50"
+          ],
+          "schema_tags": [
+            "market.service.request",
+            "science.literature.service_request"
+          ],
+          "payload": {
+            "hash": "85ac69057c1bd00171c9f448f2704099d47882b72f9c6e7e58f66d25db0f7fb9",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726571756573745f6964223a225245512e4c49542e464c4f572e303031222c22736572766963655f6b696e64223a224c697465726174757265222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c227461726765745f6c61625f6964223a224c41422e4348494d49412e3033222c22696e707574223a7b224c697465726174757265223a7b227175657279223a22636f6e74696e756f75732d666c6f77204275636877616c642d4861727477696720616d696e6174696f6e206175746f6d6174696f6e222c22736563746f72223a226175746f6d617465642d73796e746865736973222c22736f7572636573223a5b224368656d52786976222c2243726f7373726566222c22556e70617977616c6c222c226172586976206368656d2d7068225d2c226f70656e5f6163636573735f6f6e6c79223a747275652c226d61785f706170657273223a31327d7d2c226d61785f70726963655f757364635f6d6963726f73223a323030303030302c22736574746c656d656e745f6173736574223a2255534443222c2272657175697265645f6f757470757473223a5b22636c61696d206c697374222c226369746174696f6e206c697374222c22636f6e666c696374206e6f746573225d7d"
+              }
+            }
+          },
+          "created_at_unix": 202,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "11465d264b5e81d1058b43e8e39a6cfae3b2ef0fe6f587910c6c284c544720962eed0f4571d21c35646f2045e12bcb915e06ef9778101c9d9680ed86b2901705"
+        },
+        {
+          "id": "art_64e5921d8bf8ea8f",
+          "content_hash": "64e5921d8bf8ea8fb62cb83d520faf498928b0dab3f37e5575bcc9cd7f81ea1b",
+          "skill": "market.service.quote.v1",
+          "agent": "literature.service.chimiaclaw.eth",
+          "topic": "science service quote QUOTE.LIT.FLOW.001",
+          "input_fingerprint": "QUOTE.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_442fddace9334d9e"
+          ],
+          "schema_tags": [
+            "market.service.quote"
+          ],
+          "payload": {
+            "hash": "9ada73852655494d30e8a5a4cc02309237a5c128f974b5765959f1b0a129e96c",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c22726571756573745f6964223a225245512e4c49542e464c4f572e303031222c22736572766963655f6b696e64223a224c697465726174757265222c2270726f76696465725f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c2270726963655f757364635f6d6963726f73223a313530303030302c226173736574223a2255534443222c227061796d656e745f7465726d73223a7b22657363726f775f7265717569726564223a747275652c2270617965725f636f6e6669726d6174696f6e5f7265717569726564223a747275652c2272656c656173655f74726967676572223a22526573756c7441636b6e6f776c6564676564222c22646973707574655f77696e646f775f7365636f6e6473223a38363430302c22726566756e645f77696e646f775f7365636f6e6473223a3630343830307d2c22736574746c656d656e745f6d6574686f64223a2253696d756c6174656441727469666163744c6564676572222c22657374696d617465645f6c6174656e63795f7365636f6e6473223a3138302c22657870697265735f61745f756e6978223a313737373737373737372c22617373756d7074696f6e73223a5b2264657465726d696e6973746963206c6f63616c2066697874757265222c226c6976652073706f6e736f7220696e746567726174696f6e73206e6f7420696e766f6b6564222c226f70657261746f7220636f6e6669726d6174696f6e207265717569726564206265666f7265207265616c20736574746c656d656e74225d2c22736574746c656d656e745f68696e74223a2261727469666163742d6c65646765723a73696d756c617465642d72656c65617365227d"
+              }
+            }
+          },
+          "created_at_unix": 203,
+          "signing_public_key": "97ffc883c80bee7237ef95d9b9b703d4ad63e60a21e605867682b75b8b3f4303",
+          "signature": "862d303537aa163a18d45268596b5e778d195ee21d6696d27766e1bd1316c1612f066a107643e564c9ed3eb6add61ba3b8c95d77ded714a5098f16b44926b408"
+        },
+        {
+          "id": "art_cd04b67622476cc1",
+          "content_hash": "cd04b67622476cc1f52a8aca0a4b4cedeaeb429c8f08a4a449af20cc18c3f46c",
+          "skill": "market.quote.acceptance.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "quote acceptance ACCEPT.LIT.FLOW.001",
+          "input_fingerprint": "ACCEPT.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_64e5921d8bf8ea8f"
+          ],
+          "schema_tags": [
+            "market.quote.acceptance"
+          ],
+          "payload": {
+            "hash": "5aa7438c36b5547084a04c1359267f2007d0c6c66b5398ba8a6f9883ca00014f",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22616363657074616e63655f6964223a224143434550542e4c49542e464c4f572e303031222c2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c22726571756573745f6964223a225245512e4c49542e464c4f572e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c2261636365707465645f616d6f756e745f757364635f6d6963726f73223a313530303030302c226173736574223a2255534443222c2261636365707465645f61745f756e6978223a313730303030303031302c2271756f74655f657870697265735f61745f756e6978223a313737373737373737372c22636f6e646974696f6e73223a5b22657363726f7720617574686f72697a6174696f6e206d757374206265207369676e6564206265666f726520726573756c742072656c65617365222c2272656c65617365207265717569726573207265717565737465722061636b6e6f776c656467656d656e74206f662074686520726573756c74206172746966616374222c226c69766520746f6b656e207472616e736665722072656d61696e732064697361626c656420696e2066697874757265206d6f6465225d2c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 204,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "6b050f1424f9b9d2d7d914eb267645c02d46b325b0b2c1ccf3e4c95aeaa9eb9bec4c5164525056ecc5cd9644889812682a48ce7921f7720d0e3ff4b22d26320b"
+        },
+        {
+          "id": "art_aa9f57297b3ac682",
+          "content_hash": "aa9f57297b3ac682a41f9a94adcd2a34ba0c8d149bf7d77893fbfd5deebedd18",
+          "skill": "market.escrow.authorization.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "escrow authorization ESCROW.LIT.FLOW.001",
+          "input_fingerprint": "ESCROW.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_cd04b67622476cc1"
+          ],
+          "schema_tags": [
+            "market.escrow.authorization"
+          ],
+          "payload": {
+            "hash": "101623a102252b1da8b05b3dc9f9e9fdbdbc9eee9035295c6f22f2552c32a275",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22657363726f775f6964223a22455343524f572e4c49542e464c4f572e303031222c22616363657074616e63655f6964223a224143434550542e4c49542e464c4f572e303031222c2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a313530303030302c226173736574223a2255534443222c22736574746c656d656e745f6d6574686f64223a2253696d756c6174656441727469666163744c6564676572222c22726f7574655f68696e74223a2261727469666163742d6c65646765723a73696d756c617465642d72656c65617365222c226c6976655f7472616e736665725f7072657061726564223a66616c73652c226c6976655f7472616e736665725f6578656375746564223a66616c73652c2272656c656173655f636f6e646974696f6e73223a5b2270726f766964657220726573756c74206172746966616374207665726966696573222c22726573756c7420726571756573745f6964206d617463686573207468652061636365707465642072657175657374222c227265717565737465722061636b6e6f776c656467656d656e7420737461747573206973206163636570746564225d2c22726566756e645f706f6c696379223a7b22726566756e645f746f5f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c22726566756e6461626c655f616d6f756e745f757364635f6d6963726f73223a313530303030302c22726566756e645f6173736574223a2255534443222c22616c6c6f7765645f726561736f6e73223a5b2251756f746545787069726564222c22526573756c7452656a6563746564222c2250726f76696465724661696c6564222c224f70657261746f7243616e63656c6c65644265666f7265457865637574696f6e225d7d7d"
+              }
+            }
+          },
+          "created_at_unix": 205,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "b1be2a421ef5143d4981e7f3920153287eb69ab89623c17abc7c3e4d588715a7d31f2e5d5388eaf5c3427eb99fa3c8891375c4eb8521642d8d40927646582f02"
+        },
+        {
+          "id": "art_17ae3d06eb69cada",
+          "content_hash": "17ae3d06eb69cadaecabdcedd54c5cf3bfc7dc41f8137ffb74a29187a506bfe6",
+          "skill": "market.settlement.intent.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement intent SETTLE.LIT.FLOW.001",
+          "input_fingerprint": "SETTLE.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_aa9f57297b3ac682"
+          ],
+          "schema_tags": [
+            "market.settlement.intent"
+          ],
+          "payload": {
+            "hash": "3291bae12734163fb2034cf6329c623120159c546c78ac2375af1a2a8e5d7766",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22736574746c656d656e745f6964223a22534554544c452e4c49542e464c4f572e303031222c22657363726f775f6964223a22455343524f572e4c49542e464c4f572e303031222c2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a313530303030302c226173736574223a2255534443222c22726f7574655f68696e74223a2261727469666163742d6c65646765723a73696d756c617465642d72656c65617365222c22736574746c656d656e745f6d6574686f64223a2253696d756c6174656441727469666163744c6564676572222c226c6976655f657865637574696f6e5f7265717569726564223a66616c73652c226f70657261746f725f636f6e6669726d6174696f6e5f7265717569726564223a747275657d"
+              }
+            }
+          },
+          "created_at_unix": 206,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "78122613e2b6badba7daa8c3b543f773e79321f2cb4e974cfa0315b7060faa2ee0835fa481e548e573ac597b743163acdd9f044b5b80f0eb8a233ed8a8f4b703"
+        },
+        {
+          "id": "art_31aea4a549ee0500",
+          "content_hash": "31aea4a549ee05007377d1b3b14e1b8490682805582cb4e47daa024ea43ebe8a",
+          "skill": "market.service.result.v1",
+          "agent": "literature.service.chimiaclaw.eth",
+          "topic": "science service result RESULT.LIT.FLOW.001",
+          "input_fingerprint": "RESULT.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_442fddace9334d9e",
+            "art_17ae3d06eb69cada"
+          ],
+          "schema_tags": [
+            "market.service.result"
+          ],
+          "payload": {
+            "hash": "e79605f8c15aafe77480d0aad399357e76fb0aba06635fef71426d42abb0a964",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b22726573756c745f6964223a22524553554c542e4c49542e464c4f572e303031222c22726571756573745f6964223a225245512e4c49542e464c4f572e303031222c22736572766963655f6b696e64223a224c697465726174757265222c2270726f76696465725f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c226f757470757473223a7b224c697465726174757265223a7b2273796e7468657369735f73756d6d617279223a22436c6f7365642d6c6f6f7020666c6f77206368656d6973747279206c69746572617475726520737570706f72747320696e6c696e6520616e616c797469637320706c757320426179657369616e206f7074696d697a6174696f6e2c2062757420686172647761726520706f72746162696c6974792072656d61696e7320746865206d61696e20756e736f6c76656420626f756e646172792e222c226578747261637465645f636c61696d73223a5b22496e6c696e6520465449522f48504c4320666565646261636b2063616e20726564756365206f7074696d697a6174696f6e206379636c6573207665727375732072616e646f6d207365617263682e222c2258444c2d7374796c652070726f746f636f6c20706f72746162696c697479207265717569726573206578706c69636974206861726477617265206162737472616374696f6e2e222c2248756d616e20726576696577206973207374696c6c206e6565646564206265666f7265207765746c6162207472616e736665722e225d2c22636f6e666c69637473223a5b225969656c6420636f6d70617269736f6e73206163726f737320706c6174666f726d73206f6674656e20757365206e6f6e2d6964656e746963616c207265736964656e63652d74696d6520636f6e76656e74696f6e732e225d7d7d2c226369746174696f6e73223a5b7b227469746c65223a2253656c662d6f7074696d6973696e67207265616374696f6e7320696e20666c6f77206368656d6973747279222c22646f69223a2231302e313033392f43385245303030363048222c2275726c223a6e756c6c2c2279656172223a323031387d2c7b227469746c65223a22546f7761726473206120556e6976657273616c2058444c20496e74657270726574657220666f722048657465726f67656e656f7573204368656d707574657220506c6174666f726d73222c22646f69223a6e756c6c2c2275726c223a2268747470733a2f2f6368656d727869762e6f7267222c2279656172223a323032357d5d2c22776f726c645f6176617461725f70726f6a656374696f6e5f68696e7473223a5b2270726f763a7761734465726976656446726f6d206369746564206c69746572617475726520617274696661637473222c226f6e746f6368696d69613a686173457874726163746564436c61696d20636f6e74696e756f75732d666c6f772d6175746f6d6174696f6e225d2c22657865637574696f6e5f7472616365223a5b2271756572696564206f70656e2d6163636573732d6f6e6c7920736f757263652066697874757265222c22657874726163746564206369746174696f6e2d626f756e6420636c61696d73222c22666c6167676564206f6e652063726f73732d706c6174666f726d20636f6d70617269736f6e20636f6e666c696374225d7d"
+              }
+            }
+          },
+          "created_at_unix": 207,
+          "signing_public_key": "97ffc883c80bee7237ef95d9b9b703d4ad63e60a21e605867682b75b8b3f4303",
+          "signature": "a3a4dcd06887dca0cb6469f6ed6b8178c7594cf87218d4083683e2c7568ba21ee145bc1f4943165ec83b339080f39bc7fc914b863bd2fb324f2a3632beb1fd05"
+        },
+        {
+          "id": "art_083078ba2e905470",
+          "content_hash": "083078ba2e9054707a5d8a7e2a323086face1a39316e7aa7f755cc6c41269739",
+          "skill": "market.result.acknowledgement.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "result acknowledgement ACK.LIT.FLOW.001",
+          "input_fingerprint": "ACK.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_31aea4a549ee0500",
+            "art_aa9f57297b3ac682"
+          ],
+          "schema_tags": [
+            "market.result.acknowledgement"
+          ],
+          "payload": {
+            "hash": "4935dad1751bfa8cb836f659cea2524148f5c9f6bfdc4b444fcd1929e6cafb26",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2261636b6e6f776c656467656d656e745f6964223a2241434b2e4c49542e464c4f572e303031222c22726573756c745f6964223a22524553554c542e4c49542e464c4f572e303031222c22726571756573745f6964223a225245512e4c49542e464c4f572e303031222c2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c22657363726f775f6964223a22455343524f572e4c49542e464c4f572e303031222c227265717565737465725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270726f76696465725f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22737461747573223a224163636570746564222c2261636b6e6f776c65646765645f61745f756e6978223a313730303030303032302c226e6f746573223a5b22726573756c74206172746966616374207061796c6f616420616e64207369676e6174757265207665726966696564222c22666978747572652061636b6e6f776c656467656d656e7420617574686f72697a65732073696d756c617465642072656c65617365225d7d"
+              }
+            }
+          },
+          "created_at_unix": 208,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "402457c329abfd6b67758589c1572ffe02275ffc05b753f44b20aa9be8cad25e841ff76dc51f597993c8e85e708db1e3b8d13da1e3eb341e3f387f3037763401"
+        },
+        {
+          "id": "art_a319dac818eefeaf",
+          "content_hash": "a319dac818eefeaf41111bc63ae8d89d76ee20669ce2953dee2d61e1d99dfe31",
+          "skill": "market.settlement.release.v1",
+          "agent": "operator.chimiaclaw.eth",
+          "topic": "settlement release RELEASE.LIT.FLOW.001",
+          "input_fingerprint": "RELEASE.LIT.FLOW.001",
+          "output_cid": null,
+          "parent_artifact_ids": [
+            "art_083078ba2e905470",
+            "art_17ae3d06eb69cada"
+          ],
+          "schema_tags": [
+            "market.settlement.release"
+          ],
+          "payload": {
+            "hash": "ed410d5743513ae5fd6e2582a30582ca60d223735f803a8bb36eb230f19f597a",
+            "encoding": "Json",
+            "location": {
+              "Inline": {
+                "bytes_hex": "7b2272656c656173655f6964223a2252454c454153452e4c49542e464c4f572e303031222c22657363726f775f6964223a22455343524f572e4c49542e464c4f572e303031222c2271756f74655f6964223a2251554f54452e4c49542e464c4f572e303031222c22726573756c745f6964223a22524553554c542e4c49542e464c4f572e303031222c2261636b6e6f776c656467656d656e745f6964223a2241434b2e4c49542e464c4f572e303031222c2270617965725f6167656e74223a226f70657261746f722e6368696d6961636c61772e657468222c2270617965655f6167656e74223a226c6974657261747572652e736572766963652e6368696d6961636c61772e657468222c22616d6f756e745f757364635f6d6963726f73223a313530303030302c226173736574223a2255534443222c2272656c656173655f737461747573223a2253696d756c6174656452656c6561736564222c2272656c65617365645f61745f756e6978223a313730303030303033302c227472616e73616374696f6e5f726566223a2261727469666163742d6c65646765723a2f2f72656c656173652f4c49542e464c4f572e303031222c2261756469745f6e6f746573223a5b226e6f206c6976652066756e6473206d6f766564222c2272656c6561736520697320616e20617564697461626c65207369676e656420617274696661637420666f72206c61746572206164617074657220657865637574696f6e225d7d"
+              }
+            }
+          },
+          "created_at_unix": 209,
+          "signing_public_key": "ba3b611e2882c1b6aa4b2ae3ec78ea0736e3ad99238353450171507a4b9f15b5",
+          "signature": "32c8022803e9a77fec3ef9718975ec7d7a88d041d88f57643dbfb300032187fcdcaa00b6147cec96d65d7db93c3ed8259da35f1a3f70f55013f45e835caf5b0c"
+        }
+      ]
+    }
+  ],
+  "sponsor_next_steps": {
+    "0G": "persist large request/result payloads and service catalog roots in 0G Storage",
+    "ENS": "resolve provider ENS text records from a configured RPC endpoint",
+    "Gensyn AXL": "send service request and signed result artifacts across two AXL nodes",
+    "KeeperHub": "schedule DFT or settlement job artifacts through KeeperHub CLI/MCP",
+    "Uniswap": "replace simulated artifact-ledger releases with Uniswap API quotes and prepared transfers"
+  }
+}
