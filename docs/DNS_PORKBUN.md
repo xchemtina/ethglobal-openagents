@@ -88,22 +88,49 @@ Subdomain `dft.chimiadao.io` is the faster path and is already wired on Vercel.
 
 ---
 
-## Named tunnel checklist (api.chimiadao.io)
+## Live quick tunnel (ephemeral — until named tunnel)
 
-On a machine with Cloudflare login (you or Olympus once `cloudflared` is installed):
+Olympus gateway is public via Cloudflare **quick** tunnel (hostname changes on restart):
 
 ```bash
-# one-time
+# on Olympus
+export PATH="$HOME/bin:/opt/homebrew/bin:$PATH"
+# or from repo:
+./scripts/olympus-tunnel.sh
+# → https://….trycloudflare.com
+# set Vercel NEXT_PUBLIC_API_BASE to that URL and redeploy web
+```
+
+Current session URL is written to `services/api-gateway/.tunnel-url` (gitignored) on the host that runs the tunnel.
+
+## Named tunnel checklist (api.chimiadao.io)
+
+`cloudflared` is installed on Olympus (`~/bin/cloudflared`) and this Mac (Homebrew).
+
+```bash
+# one-time, on a machine with a browser (this Mac is fine)
 cloudflared tunnel login
-cloudflared tunnel create chimiaclaw-api
-cloudflared tunnel route dns chimiaclaw-api api.chimiadao.io
-# config.yml: hostname api.chimiadao.io → http://127.0.0.1:4021
+# copy cert to Olympus if you login here:
+# scp ~/.cloudflared/cert.pem duck@olympus.local:~/.cloudflared/
+
+# on Olympus
+./scripts/named-tunnel-setup.sh
 cloudflared tunnel run chimiaclaw-api
 ```
 
-If Cloudflare “route dns” cannot write to Porkbun automatically, paste the CNAME Cloudflare shows into Porkbun manually (Host `api` → `xxxx.cfargotunnel.com`).
+If Cloudflare “route dns” cannot write to Porkbun automatically, paste the CNAME into Porkbun:
 
-Olympus currently has the gateway on `:4021` but **no** `cloudflared` binary yet — install there for production API.
+| Type | Host | Answer | TTL |
+|------|------|--------|-----|
+| **CNAME** | `api` | `<TUNNEL_ID>.cfargotunnel.com` | 600 |
+
+Then:
+
+```text
+NEXT_PUBLIC_API_BASE=https://api.chimiadao.io
+PUBLIC_BASE_URL=https://api.chimiadao.io
+CORS_ORIGIN=https://dft.chimiadao.io,https://www.chimiadao.io
+```
 
 ---
 

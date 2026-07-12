@@ -3,13 +3,14 @@
 | Surface | URL |
 |---------|-----|
 | **Web (Vercel)** | https://web-five-rho-8v773a74lq.vercel.app |
-| **API (Cloudflare quick tunnel → this Mac :4021)** | https://biggest-surf-majority-passport.trycloudflare.com |
-| Gateway (local) | `127.0.0.1:4021` — Stripe Payment Link **configured** |
+| **API (Cloudflare quick tunnel → Olympus :4021)** | https://heat-roger-soa-students.trycloudflare.com |
 | Gateway (Olympus) | `duck@olympus.local:4021` — Stripe Payment Link **configured** |
+| Gateway (local) | `127.0.0.1:4021` — also Stripe-ready |
 | Stripe pay | https://buy.stripe.com/5kQ28sahM1zR3mO3gB5Rm00 |
-| `cloudflared` | installed locally (Homebrew) + Olympus `~/bin/cloudflared` |
+| `cloudflared` | Olympus `~/bin/cloudflared` (public path) + Mac Homebrew |
+| Tunnel helpers | `scripts/olympus-tunnel.sh`, `scripts/named-tunnel-setup.sh` |
 
-**Note:** Quick tunnel hostnames change when `cloudflared` restarts. Re-set Vercel `NEXT_PUBLIC_API_BASE` after each new hostname. For stable `api.chimiadao.io`, create a **named** Cloudflare Tunnel + Porkbun CNAME.
+**Note:** Quick tunnel hostnames change when `cloudflared` restarts. Re-run `olympus-tunnel.sh`, re-set Vercel `NEXT_PUBLIC_API_BASE`, redeploy. For stable `api.chimiadao.io`: `cloudflared tunnel login` once → `./scripts/named-tunnel-setup.sh` → Porkbun CNAME.
 
 **DNS:** `chimiadao.io` is on **Porkbun** nameservers (do not move NS to Vercel). See [`docs/DNS_PORKBUN.md`](./DNS_PORKBUN.md).
 
@@ -19,7 +20,7 @@
 | `api.chimiadao.io` | Cloudflare Tunnel → Olympus `:4021` | cloudflared binary ready; named tunnel still pending login |
 | `www` / apex | existing Vercel brand site | leave alone |
 
-**Vercel env now:** `NEXT_PUBLIC_API_BASE=https://biggest-surf-majority-passport.trycloudflare.com` (prod + preview).
+**Vercel env now:** `NEXT_PUBLIC_API_BASE=https://heat-roger-soa-students.trycloudflare.com` (prod + preview, redeployed).
 
 ---
 
