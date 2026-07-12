@@ -116,10 +116,20 @@ Legacy / reference trees may exist (`dft-xyz-landing-page/`, `world-map-demo/`);
 
 ---
 
+## Live public demo (resume 2026-07-12)
+
+| Surface | URL |
+|---------|-----|
+| Site | https://dft.chimiadao.io (also https://web-five-rho-8v773a74lq.vercel.app) |
+| API (ephemeral tunnel) | https://biggest-surf-majority-passport.trycloudflare.com |
+| Stripe | https://buy.stripe.com/5kQ28sahM1zR3mO3gB5Rm00 |
+
+`NEXT_PUBLIC_API_BASE` on Vercel points at the quick tunnel. Tunnel dies/changes if `cloudflared` restarts — re-bind env + redeploy, or graduate to named tunnel + `api.chimiadao.io`.
+
 ## Immediate next (see NEXT_STEPS)
 
-1. Porkbun: `A dft → 76.76.21.21`  
-2. Named Cloudflare Tunnel + `api.chimiadao.io`  
-3. Point Vercel `NEXT_PUBLIC_API_BASE` at stable API  
+1. Confirm Porkbun `A dft → 76.76.21.21` stays valid  
+2. Named Cloudflare Tunnel + `api.chimiadao.io` (login once)  
+3. Point Vercel `NEXT_PUBLIC_API_BASE` at stable `https://api.chimiadao.io`  
 4. Stripe webhook → fulfillment token  
 5. Modal account link for elastic live DFT  

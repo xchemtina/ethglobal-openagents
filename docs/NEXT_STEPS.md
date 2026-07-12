@@ -17,12 +17,20 @@ Companion snapshot: [`docs/SUMMARY.md`](./SUMMARY.md).
 7. ✅ Domain plan locked: Porkbun DNS for `chimiadao.io`; `dft` → Vercel; `api` → tunnel.
 8. ✅ Docs: `SUMMARY`, `DEPLOY*`, `PAYMENTS`, `DNS_PORKBUN`, `X402`, `MODAL_DFT`.
 
+### Done since resume
+
+9. ✅ `cloudflared` installed (this Mac + Olympus `~/bin/cloudflared`).
+10. ✅ Quick tunnel live: `https://biggest-surf-majority-passport.trycloudflare.com` → local `:4021`.
+11. ✅ Vercel `NEXT_PUBLIC_API_BASE` set to that tunnel; production redeployed.
+12. ✅ Olympus gateway Stripe Payment Link env active (`stripe: configured`).
+
 ### Next (ordered)
 
-1. 🟡 **Porkbun:** add `A` record `dft` → `76.76.21.21` (domain already on Vercel project).
-2. 🟡 **Olympus:** install `cloudflared`, named tunnel, `CNAME api` → `*.cfargotunnel.com`.
-3. 🟡 Set Vercel `NEXT_PUBLIC_API_BASE=https://api.chimiadao.io` + gateway  
-   `PUBLIC_BASE_URL` / `CORS_ORIGIN` including `https://dft.chimiadao.io`.
+1. 🟡 **Porkbun:** confirm `A` record `dft` → `76.76.21.21` (Vercel already requested SSL for `dft.chimiadao.io`).
+2. 🟡 **Named tunnel (you login once):**  
+   `cloudflared tunnel login` → `tunnel create chimiaclaw-api` →  
+   Porkbun `CNAME api` → `<id>.cfargotunnel.com` → run on Olympus.
+3. 🟡 Point Vercel `NEXT_PUBLIC_API_BASE=https://api.chimiadao.io` once DNS is stable.
 4. 🟡 Real Revolut link (replace placeholder); optional second Stripe link per SKU.
 5. 🟡 Stripe webhook → fulfillment token (auto-deliver stub MolADT / cached DFT).
 6. 🟡 Modal account link + smoke water SCF; keep live DFT operator-gated.

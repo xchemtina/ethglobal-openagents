@@ -1,21 +1,25 @@
-## LIVE (this session)
+## LIVE (this session — 2026-07-12 resume)
 
 | Surface | URL |
 |---------|-----|
 | **Web (Vercel)** | https://web-five-rho-8v773a74lq.vercel.app |
-| **API (Cloudflare Tunnel → Olympus)** | https://clarke-florence-marketing-poll.trycloudflare.com |
-| Gateway host | `duck@olympus.local` port 4021 |
-| Tunnel | `cloudflared` quick tunnel (ephemeral hostname until named tunnel) |
+| **API (Cloudflare quick tunnel → this Mac :4021)** | https://biggest-surf-majority-passport.trycloudflare.com |
+| Gateway (local) | `127.0.0.1:4021` — Stripe Payment Link **configured** |
+| Gateway (Olympus) | `duck@olympus.local:4021` — Stripe Payment Link **configured** |
+| Stripe pay | https://buy.stripe.com/5kQ28sahM1zR3mO3gB5Rm00 |
+| `cloudflared` | installed locally (Homebrew) + Olympus `~/bin/cloudflared` |
 
-**Note:** Quick tunnel hostnames change when cloudflared restarts. For stable `api.chimiadao.io`, create a named Cloudflare Tunnel + Porkbun CNAME.
+**Note:** Quick tunnel hostnames change when `cloudflared` restarts. Re-set Vercel `NEXT_PUBLIC_API_BASE` after each new hostname. For stable `api.chimiadao.io`, create a **named** Cloudflare Tunnel + Porkbun CNAME.
 
 **DNS:** `chimiadao.io` is on **Porkbun** nameservers (do not move NS to Vercel). See [`docs/DNS_PORKBUN.md`](./DNS_PORKBUN.md).
 
 | Host | Target | Status |
 |------|--------|--------|
-| `dft.chimiadao.io` | Vercel `web` — Porkbun **A** `dft` → `76.76.21.21` | domain added on Vercel; **DNS record pending you** |
-| `api.chimiadao.io` | Cloudflare Tunnel → Olympus `:4021` | after named tunnel |
+| `dft.chimiadao.io` | Vercel `web` — Porkbun **A** `dft` → `76.76.21.21` | domain on Vercel; SSL cert requested; **confirm A record in Porkbun** |
+| `api.chimiadao.io` | Cloudflare Tunnel → Olympus `:4021` | cloudflared binary ready; named tunnel still pending login |
 | `www` / apex | existing Vercel brand site | leave alone |
+
+**Vercel env now:** `NEXT_PUBLIC_API_BASE=https://biggest-surf-majority-passport.trycloudflare.com` (prod + preview).
 
 ---
 
