@@ -19,6 +19,7 @@ __pycache__/
 # x402 gateway / website local state
 services/api-gateway/data/
 services/api-gateway/.env
+services/api-gateway/.tunnel-url
 web/.env
 web/.env.local
 
