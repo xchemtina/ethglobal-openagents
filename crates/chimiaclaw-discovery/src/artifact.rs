@@ -91,6 +91,9 @@ pub fn verify_export(artifact: &Artifact) -> Result<DiscoveryDossier, DiscoveryE
         .verify_payload_bytes(&bytes)
         .map_err(|_| DiscoveryError::new("artifact-payload-hash-mismatch", "$"))?;
     let dossier = decode_dossier(&bytes)?;
+    if bytes != canonical_dossier_bytes(&dossier)? {
+        return Err(DiscoveryError::new("artifact-payload-not-canonical", "$"));
+    }
     let expected_parents = dossier
         .provenance
         .parent_artifact_ids

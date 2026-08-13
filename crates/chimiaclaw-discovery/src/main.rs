@@ -61,6 +61,16 @@ fn error_report(error: &DiscoveryError) -> String {
     })
 }
 
+fn write_error_output(
+    stdout: &mut impl Write,
+    stderr: &mut impl Write,
+    error: &DiscoveryError,
+) -> bool {
+    let stdout_ok = writeln!(stdout, "{}", error_report(error)).is_ok();
+    let stderr_ok = writeln!(stderr, "{USAGE}").is_ok();
+    stdout_ok && stderr_ok
+}
+
 fn read_bounded(path: &str) -> Result<Vec<u8>, DiscoveryError> {
     if !path.to_ascii_lowercase().ends_with(".json") {
         return Err(DiscoveryError {
@@ -129,8 +139,9 @@ fn main() {
             }
         }
         Err(error) => {
-            println!("{}", error_report(&error));
-            eprintln!("{USAGE}");
+            let mut stdout = std::io::stdout().lock();
+            let mut stderr = std::io::stderr().lock();
+            let _ = write_error_output(&mut stdout, &mut stderr, &error);
             std::process::exit(if error.code == "invalid-arguments" {
                 64
             } else {
@@ -181,6 +192,35 @@ mod tests {
         assert!(!report.contains("/private/secret"));
         assert!(report.contains("\"human_decision\":false"));
         assert!(report.contains("\"mutation\":false"));
+    }
+
+    #[test]
+    fn broken_error_output_never_panics() {
+        struct BrokenWriter;
+
+        impl Write for BrokenWriter {
+            fn write(&mut self, _bytes: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "synthetic broken pipe",
+                ))
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "synthetic broken pipe",
+                ))
+            }
+        }
+
+        let error = DiscoveryError {
+            code: "invalid-arguments",
+            at: "$".to_owned(),
+        };
+        let mut stdout = BrokenWriter;
+        let mut stderr = BrokenWriter;
+        assert!(!write_error_output(&mut stdout, &mut stderr, &error));
     }
 
     #[test]

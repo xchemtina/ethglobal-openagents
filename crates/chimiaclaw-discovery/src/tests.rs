@@ -5,12 +5,14 @@ use crate::model::{
 };
 use crate::*;
 use chimiaclaw_artifact::{
-    ArtifactDraft, ArtifactId, ArtifactSigner, PayloadEncoding, PayloadLocation, PayloadRef,
+    blake3_hex, ArtifactDraft, ArtifactId, ArtifactSigner, PayloadEncoding, PayloadLocation,
+    PayloadRef,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 const GOLDEN: &[u8] = include_bytes!("../fixtures/discovery-dossier.valid.json");
+const GOLDEN_ARTIFACT: &[u8] = include_bytes!("../fixtures/discovery-artifact.valid.json");
 const STRING_SAFETY: &[u8] = include_bytes!("../fixtures/discovery-string-safety-parity.v1.json");
 
 fn dossier() -> DiscoveryDossier {
@@ -72,6 +74,47 @@ fn signed_artifact_round_trip_is_payload_bound() {
     assert_eq!(
         verify_export_bytes(&encoded).expect("export"),
         canonical_dossier_bytes(&dossier).expect("canonical")
+    );
+}
+
+#[test]
+fn checked_in_signed_artifact_replays_deterministically() {
+    let dossier = dossier();
+    let expected_artifact = seal_dossier(&dossier, &ArtifactSigner::from_seed([23; 32]))
+        .expect("deterministic synthetic seal");
+    assert_eq!(
+        decode_artifact(GOLDEN_ARTIFACT).expect("checked-in artifact"),
+        expected_artifact
+    );
+    assert_eq!(
+        hex::encode(Sha256::digest(GOLDEN_ARTIFACT)),
+        "9fd126bbcdcd4e5e2cd2a04c3c52a2a64cfa90f7ff16f5957adfcc90c46c9310"
+    );
+    assert_eq!(
+        verify_export_bytes(GOLDEN_ARTIFACT).expect("checked-in artifact export"),
+        canonical_dossier_bytes(&dossier).expect("canonical golden dossier")
+    );
+}
+
+#[test]
+fn signed_noncanonical_payload_is_rejected_before_export() {
+    let signer = ArtifactSigner::from_seed([23; 32]);
+    let dossier = dossier();
+    let noncanonical = serde_json::to_vec_pretty(&dossier).expect("pretty dossier");
+    let artifact = seal_mutated_draft(&dossier, &signer, |draft| {
+        draft.payload = Some(PayloadRef {
+            hash: blake3_hex(&noncanonical),
+            encoding: PayloadEncoding::Json,
+            location: PayloadLocation::Inline {
+                bytes_hex: hex::encode(&noncanonical),
+            },
+        });
+    });
+    assert_eq!(
+        verify_export(&artifact)
+            .expect_err("noncanonical signed payload")
+            .code,
+        "artifact-payload-not-canonical"
     );
 }
 
@@ -673,7 +716,7 @@ fn safety_review_flag_is_preserved_without_policy_inference() {
 fn shared_string_safety_and_ordering_corpus_is_the_wire_contract() {
     assert_eq!(
         hex::encode(Sha256::digest(STRING_SAFETY)),
-        "30bddc1f4adb05d06a92355b5dd6656ad7d6b6c382ca68290c39a1b6ce72ef4c"
+        "646ae7a82592a40d77dfd34cc327bce2602403206b1a33de4719314825b4786c"
     );
     let corpus: Value = serde_json::from_slice(STRING_SAFETY).expect("shared corpus");
     for text in corpus["text"]["accepted"].as_array().expect("accepted") {

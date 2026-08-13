@@ -51,9 +51,20 @@ The corresponding Zopf validator independently computes normalized SHA-256
 over the same synthetic fixture. Neither a valid structure nor agreement
 between validators establishes scientific truth. Agents draft; a human decides.
 
+`discovery-artifact.valid.json` is a deterministic synthetic Artifact sealed
+with the public test seed `[23; 32]`. It is test evidence only, never a trusted
+identity. Rust must export its canonical inline payload byte-for-byte as
+the normalized form of `discovery-dossier.valid.json`; the terminal CLI adds
+one framing newline. Zopf must independently report the same normalized
+dossier digest with every authority bit false. The signed Artifact fixture has
+raw SHA-256 `9fd126bbcdcd4e5e2cd2a04c3c52a2a64cfa90f7ff16f5957adfcc90c46c9310`.
+
 The copied cross-host string/locator/ordering corpus has raw SHA-256
-`30bddc1f4adb05d06a92355b5dd6656ad7d6b6c382ca68290c39a1b6ce72ef4c`.
-Both validators execute every case. The Rust dependency lock deliberately pins
+`646ae7a82592a40d77dfd34cc327bce2602403206b1a33de4719314825b4786c`.
+Both validators execute every case. Blank text uses the same explicit Unicode
+White_Space code-point set in both hosts; path and secret screening uses fixed
+ASCII keywords, ASCII-only case folding, and explicit ASCII separators rather
+than host-regex Unicode defaults. The Rust dependency lock deliberately pins
 the regex transitive versions available in the offline Olympus cache.
 
 ## Known limits

@@ -14,11 +14,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::LazyLock;
 
 static LOCAL_PATH_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?i)(?:file://|(?:^|[\s:=,\"'(\[])(?:~[/\\]|\.\.?[/\\]|/(?:users|home|private|tmp|var|etc|opt|srv|root|volumes|mnt|run|dev|proc|sys)(?:[/\\]|$)|[a-z]:[/\\]|\\\\[^\s]+))"#)
+    Regex::new(r#"(?:file://|(?:^|[ \t\r\n\f:=,"'(\[;])(?:~[/\\]|\.\.?[/\\]|/(?:users|home|private|tmp|var|etc|opt|srv|root|volumes|mnt|run|dev|proc|sys)(?:[/\\]|$)|[a-z]:[/\\]|\\\\[^ \t\r\n\f]+))"#)
         .expect("fixed local-path regex")
 });
 static SECRET_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)(?:-----BEGIN[ A-Z0-9_-]*PRIVATE KEY-----|\b[A-Z0-9_-]*(?:api[_-]?key|access[_-]?token|authorization|password|private[_-]?key)\s*[:=]\s*\S+|\bbearer\s+\S{8,}|\bsk-[A-Za-z0-9_-]{16,}|\bgh[pousr]_[A-Za-z0-9]{16,}|\bAKIA[0-9A-Z]{16}\b|\bxox[baprs]-[A-Za-z0-9-]{10,}|\bhf_[A-Za-z0-9]{20,}|\bglpat-[A-Za-z0-9_-]{20,})")
+    Regex::new(r"(?:-----begin[ a-z0-9_-]*private key-----|(?:^|[^a-z0-9_])[a-z0-9_-]*(?:api[_-]?key|access[_-]?token|authorization|password|private[_-]?key)[ \t\r\n\f]*[:=][ \t\r\n\f]*[^ \t\r\n\f]+|(?:^|[^a-z0-9_])bearer[ \t\r\n\f]+[^ \t\r\n\f]{8,}|(?:^|[^a-z0-9_])sk-[a-z0-9_-]{16,}|(?:^|[^a-z0-9_])gh[pousr]_[a-z0-9]{16,}|(?:^|[^a-z0-9_])akia[0-9a-z]{16}|(?:^|[^a-z0-9_])xox[baprs]-[a-z0-9-]{10,}|(?:^|[^a-z0-9_])hf_[a-z0-9]{20,}|(?:^|[^a-z0-9_])glpat-[a-z0-9_-]{20,})")
         .expect("fixed secret regex")
 });
 static HTTPS_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
@@ -48,7 +48,7 @@ fn bounded(items: usize, minimum: usize, maximum: usize, at: &str) -> Result<(),
 }
 
 fn validate_text(value: &str, maximum: usize, at: &str) -> Result<(), DiscoveryError> {
-    if value.trim().is_empty() {
+    if value.chars().all(is_wire_whitespace) {
         return Err(DiscoveryError::new("empty-string", at));
     }
     if value.len() > maximum {
@@ -66,12 +66,29 @@ fn validate_text(value: &str, maximum: usize, at: &str) -> Result<(), DiscoveryE
     Ok(())
 }
 
+fn is_wire_whitespace(value: char) -> bool {
+    matches!(
+        value,
+        '\u{0009}'..='\u{000d}'
+            | '\u{0020}'
+            | '\u{0085}'
+            | '\u{00a0}'
+            | '\u{1680}'
+            | '\u{2000}'..='\u{200a}'
+            | '\u{2028}'
+            | '\u{2029}'
+            | '\u{202f}'
+            | '\u{205f}'
+            | '\u{3000}'
+    )
+}
+
 fn looks_like_local_path(value: &str) -> bool {
-    LOCAL_PATH_PATTERN.is_match(value)
+    LOCAL_PATH_PATTERN.is_match(&value.to_ascii_lowercase())
 }
 
 fn looks_like_secret(value: &str) -> bool {
-    SECRET_PATTERN.is_match(value)
+    SECRET_PATTERN.is_match(&value.to_ascii_lowercase())
 }
 
 fn validate_identifier(value: &str, at: &str) -> Result<(), DiscoveryError> {
