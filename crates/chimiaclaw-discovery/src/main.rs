@@ -1,5 +1,6 @@
 use chimiaclaw_discovery::{verify_export_bytes, DiscoveryError, MAX_DOSSIER_BYTES};
 use serde::Serialize;
+use std::ffi::OsString;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::os::unix::fs::OpenOptionsExt;
@@ -124,9 +125,24 @@ fn run(arguments: &[String]) -> Result<Vec<u8>, DiscoveryError> {
     verify_export_bytes(&read_bounded(&arguments[1])?)
 }
 
+fn decode_arguments(
+    arguments: impl IntoIterator<Item = OsString>,
+) -> Result<Vec<String>, DiscoveryError> {
+    arguments
+        .into_iter()
+        .map(|argument| {
+            argument.into_string().map_err(|_| DiscoveryError {
+                code: "invalid-arguments",
+                at: "$".to_owned(),
+            })
+        })
+        .collect()
+}
+
 fn main() {
-    let arguments = std::env::args().skip(1).collect::<Vec<_>>();
-    match run(&arguments) {
+    let result =
+        decode_arguments(std::env::args_os().skip(1)).and_then(|arguments| run(&arguments));
+    match result {
         Ok(bytes) => {
             let mut stdout = std::io::stdout().lock();
             if stdout
@@ -154,6 +170,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::os::unix::ffi::OsStringExt;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -192,6 +209,17 @@ mod tests {
         assert!(!report.contains("/private/secret"));
         assert!(report.contains("\"human_decision\":false"));
         assert!(report.contains("\"mutation\":false"));
+    }
+
+    #[test]
+    fn non_utf8_arguments_fail_closed_without_path_bytes() {
+        let error = decode_arguments([OsString::from_vec(b"secret-\xff.json".to_vec())])
+            .expect_err("non-UTF-8 argument");
+        assert_eq!(error.code, "invalid-arguments");
+        assert_eq!(error.at, "$");
+        let report = error_report(&error);
+        assert!(!report.contains("secret"));
+        assert!(!report.contains("json"));
     }
 
     #[test]
