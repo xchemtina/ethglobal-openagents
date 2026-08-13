@@ -1,0 +1,78 @@
+{
+  "schema": "science.discovery.dossier.v1",
+  "dossier_id": "discovery-synthetic-001",
+  "title": "Synthetic catalyst observation dossier",
+  "research_question": "Does the bounded synthetic treatment change the reported catalyst response?",
+  "summary": "A synthetic, non-empirical dossier used only to test the report-only review boundary.",
+  "sources": [
+    {
+      "id": "src-001",
+      "kind": "doi",
+      "locator": "10.1000/zopf.discovery",
+      "title": "Synthetic evidence source",
+      "authors": ["A. Observer"],
+      "year": 2025,
+      "license": "CC-BY-4.0",
+      "retrieved_at_unix": 1740000000,
+      "content_sha256": null
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-001",
+      "statement": "The synthetic source reports a larger response after treatment.",
+      "status": "reported",
+      "support": [
+        {
+          "source_id": "src-001",
+          "locator": "p. 1",
+          "evidence_span": "The treated synthetic sample produced the larger reported response."
+        }
+      ],
+      "uncertainty": "This is synthetic fixture text and is not empirical evidence."
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hyp-001",
+      "statement": "The treatment increases the bounded response under the stated conditions.",
+      "rationale_claim_ids": ["claim-001"],
+      "prediction": "A preregistered repeat shows a larger treated response than its control.",
+      "falsifier": "A preregistered repeat shows no larger treated response than its control.",
+      "uncertainty": "The source is synthetic and the causal mechanism is unspecified."
+    }
+  ],
+  "proposed_tests": [
+    {
+      "id": "test-001",
+      "hypothesis_id": "hyp-001",
+      "objective": "Compare a treated synthetic sample with its matched control.",
+      "method_summary": "Use a bounded, preregistered comparison with independent review.",
+      "positive_signal": "The treated response exceeds the preregistered threshold.",
+      "falsifying_signal": "The treated response does not exceed the preregistered threshold.",
+      "safety_review_required": true
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [],
+  "provenance": {
+    "producer": "openagents-rust",
+    "producer_version": "synthetic-fixture-v1",
+    "parent_artifact_ids": [],
+    "agent_ids": ["sciagents-observer-1"],
+    "model_ids": ["synthetic-model-v1"],
+    "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "generated_at_unix": 1740000000
+  },
+  "governance": {
+    "report_only": true,
+    "requires_human_decision": true,
+    "decision": "pending",
+    "authority": {
+      "database_write": false,
+      "dispatch": false,
+      "execution": false,
+      "publication": false
+    }
+  }
+}
