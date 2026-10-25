@@ -1,0 +1,2 @@
+# Unified diff context lines intentionally contain a single leading space.
+docs/reviews/20261025/*.patch -whitespace

@@ -74,11 +74,11 @@
 /* No separate .dark block — platform is always dark */
 
 @theme inline {
-  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), 'JetBrains Mono', monospace;
-  --font-display: var(--font-instrument), 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
   /* Sci-fi technical numeric — Chakra Petch. Used for all hero metrics and large numbers. */
-  --font-numeric: var(--font-chakra), 'Chakra Petch', 'Eurostile', system-ui, sans-serif;
+  --font-numeric: 'Chakra Petch', 'Eurostile', system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

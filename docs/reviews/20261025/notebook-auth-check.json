@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "checks": 11,
+  "patch_sha256": "7bf74876eeab12b7064a4627e99de5d3234fa956e5dc0240f301bf5ac96f9137",
+  "original_source_sha256": {
+    "app/api/notebooks/corrections/next-task/route.ts": "661257570186c040cc1908445f2a9f8b2ec8d4c5ede76825f917d16f28fae621",
+    "app/api/notebooks/corrections/confirm/route.ts": "c5c4563eb19e799d222264e3ef568fbda7b3e99cca1616c3ef558400ce472cd1",
+    "app/api/evidence/reviews/route.ts": "28157f3d4d3d9169b80a75382dca5de455e857a3a08b46a8fe7efe60c67ec980",
+    "lib/notebook-service-runtime.ts": "70b52323646990a46f552634bacce260182291c1507e5b540b425e96f2605769"
+  },
+  "unresolved_signature_verification": {
+    "reproduced": true,
+    "synthetic_invalid_signature_accepted": true,
+    "status": 200,
+    "review_status": "accepted",
+    "payout_status": "ready_for_manual_release",
+    "actual_payout": false
+  },
+  "scope": "Session and role denial paths, identity binding, isolated fake storage. Separate synthetic reproduction demonstrates unresolved signature verification; no live route or payout."
+}

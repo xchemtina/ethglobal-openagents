@@ -1,37 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono, Instrument_Serif, Chakra_Petch } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains',
-  display: 'swap',
-})
-
-// Editorial display serif — kept for italic editorial headlines (e.g. "Hard Science Discourse").
-const instrumentSerif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  style: ['normal', 'italic'],
-  variable: '--font-instrument',
-  display: 'swap',
-})
-
-// Sci-fi technical numeric — used for all hero metrics and large numbers.
-// Geometric, faintly stretched, with stencil-like cuts. The "Foundry Sterling does sci-fi" feel.
-const chakraPetch = Chakra_Petch({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-chakra',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'Crucible — Hard Science Discourse',
@@ -57,8 +26,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${chakraPetch.variable} bg-background`}>
+    <html lang="en" className="bg-background">
       <body className="font-sans antialiased">
+        <aside className="fixed bottom-3 right-3 z-50 max-w-sm rounded-md border border-border bg-background/95 px-3 py-2 text-xs text-muted-foreground shadow-lg" aria-label="Scaffold status">
+          Preview scaffold · fixture data. Identity, submissions, and reviews are not connected.
+        </aside>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

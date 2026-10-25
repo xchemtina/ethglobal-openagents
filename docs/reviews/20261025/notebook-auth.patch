@@ -1,0 +1,113 @@
+--- a/SciCrucible_v1/app/api/notebooks/corrections/next-task/route.ts
++++ b/SciCrucible_v1/app/api/notebooks/corrections/next-task/route.ts
+@@ -5,7 +5,7 @@
+ import { NOTEBOOK_CORRECTION_MARKET_TASKS } from "@/lib/notebook-memory-data"
+ import { buildNotebookCorrectionNextTask } from "@/lib/notebook-correction-next-task"
+ import { assertNotebookPilotClaimGate } from "@/lib/notebook-pilot-claim-gate"
+-import { notebookDataPath } from "@/lib/notebook-service-runtime"
++import { authorizeNotebookMutation, notebookDataPath } from "@/lib/notebook-service-runtime"
+ 
+ export const runtime = "nodejs"
+ export const dynamic = "force-dynamic"
+@@ -209,6 +209,11 @@
+ }
+ 
+ export async function POST(request: Request) {
++  const mutationAuthorization = await authorizeNotebookMutation()
++  if (!mutationAuthorization.ok) {
++    return NextResponse.json({ ok: false, error: mutationAuthorization.error }, { status: mutationAuthorization.status })
++  }
++
+   let body: unknown
+   try {
+     body = await request.json()
+@@ -218,6 +223,13 @@
+ 
+   const parsed = parseClaimBody(body)
+   if ("error" in parsed) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 })
++
++  if (mutationAuthorization.actor && parsed.assigneeId !== mutationAuthorization.actor.id) {
++    return NextResponse.json({ ok: false, error: "Claim identity must match the authenticated session." }, { status: 403 })
++  }
++  if (mutationAuthorization.requireSession && parsed.walletAddress) {
++    return NextResponse.json({ ok: false, error: "Link a wallet to the authenticated account before using it for a claim." }, { status: 400 })
++  }
+ 
+   const claimGate = await assertNotebookPilotClaimGate()
+   if (!claimGate.ok) {
+--- a/SciCrucible_v1/app/api/notebooks/corrections/confirm/route.ts
++++ b/SciCrucible_v1/app/api/notebooks/corrections/confirm/route.ts
+@@ -2,6 +2,7 @@
+ import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises"
+ import { dirname, join } from "node:path"
+ import { NextResponse } from "next/server"
++import { authorizeNotebookMutation, notebookActorCanOperate } from "@/lib/notebook-service-runtime"
+ import { NOTEBOOK_CORRECTION_MARKET_TASKS } from "@/lib/notebook-memory-data"
+ 
+ export const runtime = "nodejs"
+@@ -447,6 +448,15 @@
+ }
+ 
+ export async function POST(request: Request) {
++  const mutationAuthorization = await authorizeNotebookMutation()
++  if (!mutationAuthorization.ok) {
++    return NextResponse.json({ ok: false, error: mutationAuthorization.error }, { status: mutationAuthorization.status })
++  }
++
++  if (mutationAuthorization.requireSession && !notebookActorCanOperate(mutationAuthorization.actor)) {
++    return NextResponse.json({ ok: false, error: "An operator session is required to confirm correction review status." }, { status: 403 })
++  }
++
+   let body: unknown
+   try {
+     body = await request.json()
+@@ -456,6 +466,10 @@
+ 
+   const parsed = parseBody(body)
+   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 })
++
++  if (mutationAuthorization.actor && parsed.reviewerId && parsed.reviewerId !== mutationAuthorization.actor.id) {
++    return NextResponse.json({ ok: false, error: "Reviewer identity must match the authenticated session." }, { status: 403 })
++  }
+ 
+   const task = NOTEBOOK_CORRECTION_MARKET_TASKS.find((entry) => entry.taskId === parsed.taskId)
+   if (!task) return NextResponse.json({ error: `Unknown correction task: ${parsed.taskId}` }, { status: 404 })
+@@ -502,7 +516,7 @@
+       currency: task.bountyCurrency,
+       network: "chain-agnostic demo escrow",
+     },
+-    reviewer_id: parsed.reviewerId,
++    reviewer_id: mutationAuthorization.actor?.id ?? parsed.reviewerId,
+     notes: parsed.notes,
+     signed_at_unix: found.artifact.created_at_unix ?? null,
+     confirmed_at: now,
+--- a/SciCrucible_v1/app/api/evidence/reviews/route.ts
++++ b/SciCrucible_v1/app/api/evidence/reviews/route.ts
+@@ -1,6 +1,7 @@
+ import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
+ import { dirname, join } from "node:path"
+ import { NextResponse } from "next/server"
++import { authorizeNotebookMutation } from "@/lib/notebook-service-runtime"
+ import { z } from "zod"
+ import {
+   ELECTOR_EVIDENCE_EXAMPLES,
+@@ -59,6 +60,11 @@
+ }
+ 
+ export async function POST(request: Request) {
++  const mutationAuthorization = await authorizeNotebookMutation()
++  if (!mutationAuthorization.ok) {
++    return NextResponse.json({ ok: false, error: mutationAuthorization.error }, { status: mutationAuthorization.status })
++  }
++
+   let body: unknown
+   try {
+     body = await request.json()
+@@ -78,6 +84,7 @@
+   const now = new Date().toISOString()
+   const review: EvidenceReview = {
+     ...result.data,
++    reviewer: mutationAuthorization.actor?.id ?? result.data.reviewer,
+     annotationTags: Array.from(new Set(result.data.annotationTags)),
+     updatedAt: now,
+   }

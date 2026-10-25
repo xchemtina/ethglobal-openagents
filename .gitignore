@@ -11,3 +11,10 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 **/.DS_Store
+
+# Local dependencies, builds and runtime state
+**/node_modules/
+**/.next/
+**/tsconfig.tsbuildinfo
+services/api-gateway/dist/
+services/api-gateway/data/

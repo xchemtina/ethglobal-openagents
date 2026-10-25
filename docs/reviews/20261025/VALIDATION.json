@@ -1,0 +1,42 @@
+{
+  "review_date": "2026-10-25",
+  "scope": "Local source tests and builds; no deployment, provider transactions or scientific calculations.",
+  "later": {
+    "rust_all_features": 139,
+    "gateway_tests": 21,
+    "web_url_tests": 2,
+    "literature_tests_python312": 70,
+    "modal_guard_stub_tests_python312": 10,
+    "gateway_typecheck_build": "PASS",
+    "web_typecheck_build": "PASS",
+    "independent_review": "PASS_WITH_RESERVATIONS"
+  },
+  "legacy": {
+    "rust_all_features": 89,
+    "gateway_tests": 24,
+    "gateway_typecheck_build": "PASS",
+    "scicrucible_typecheck_build": "PASS",
+    "notebook_patch_checks": 11,
+    "notebook_patch_applied_to_original": false,
+    "unresolved_notebook_invalid_signature_acceptance_reproduced": true,
+    "independent_review": "PASS_WITH_RESERVATIONS"
+  },
+  "not_verified": [
+    "hosted CI",
+    "browser interaction",
+    "container runtime",
+    "DNS/uptime",
+    "live provider integration",
+    "scientific validity"
+  ],
+  "rust_logs": [
+    {
+      "name": "openagents-rust-all-features.log",
+      "sha256": "3cae85bf0b8d975eeb660684d1027f55bf6d83edcc9f1b21abd86bf526e224f1"
+    },
+    {
+      "name": "openagents-main-rust-all-features.log",
+      "sha256": "a8d4b3e498a855f261cc577ceeb12a65bdb8ad26be519bd6c4edf53da9b2064d"
+    }
+  ]
+}

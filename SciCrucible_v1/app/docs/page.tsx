@@ -5,7 +5,6 @@ import {
   Key,
   FileCode2,
   Network,
-  Heartbeat,
   BookOpen,
   ChevronRight,
   BadgeCheck,

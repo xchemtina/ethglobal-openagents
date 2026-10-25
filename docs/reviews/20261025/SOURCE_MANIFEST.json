@@ -1,0 +1,263 @@
+{
+  "schema": "openagents.review-source.v1",
+  "baseline_commit": "4318565c025a5f08b61d5ab6358c4929752805ea",
+  "branch": "improve/legacy-main-20261025",
+  "scope": "Changed source relative to baseline, including existing discovery commits on later line; report files excluded to avoid self-reference.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "f5db835e8e6c7649775495b9b73531a9a4ffe3647d202b8e5aa6879a025576d3",
+      "bytes": 117
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "559e91fb53a34e9d63832059f024e4c68ef1e20f70cb0d06afcf236c95c59add",
+      "bytes": 1228
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "3575a79b11f9d07a644ee96c921dcb73a79654fd73cbaf04121ac48730e83c14",
+      "bytes": 314
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "8fdd9e439d3cdbba43994410715510b6b434229827af5763375f3e5a8446e14b",
+      "bytes": 46497
+    },
+    {
+      "path": "README.md",
+      "sha256": "7c39a544e0162e51029e85cefe41f6435fdf12eec3ed863f2a6a284377f3cb88",
+      "bytes": 22710
+    },
+    {
+      "path": "SciCrucible_v1/.gitignore",
+      "sha256": "ac8afe1905245750000988f65dff71d0b2cfc0959f47e392c5d768f174f269d6",
+      "bytes": 243
+    },
+    {
+      "path": "SciCrucible_v1/README.md",
+      "sha256": "2cc97a71fb303a413d0947b13117b75849e43c0c70bff309435de969cfed8ce3",
+      "bytes": 5176
+    },
+    {
+      "path": "SciCrucible_v1/app/docs/page.tsx",
+      "sha256": "11eb0fe09ea7d3df94a9c90b6a7dad086b274b247bca55935bbc49651b9b200a",
+      "bytes": 37107
+    },
+    {
+      "path": "SciCrucible_v1/app/globals.css",
+      "sha256": "c8d424ef8d6edca16884e980c3ecb939548e3dfe8d8fb3f3c948b1c0b34965a9",
+      "bytes": 12221
+    },
+    {
+      "path": "SciCrucible_v1/app/layout.tsx",
+      "sha256": "3fdfe1ebacc13281dcd069d0b773dd2934f02dca79ce3ec45e686ee5bb2ba8be",
+      "bytes": 1483
+    },
+    {
+      "path": "SciCrucible_v1/app/submit/page.tsx",
+      "sha256": "f74ca0503d04f921c000ecb4bdce589c3688dfba270a3c088e97871ed284c347",
+      "bytes": 11887
+    },
+    {
+      "path": "SciCrucible_v1/components/orcid-gate.tsx",
+      "sha256": "1fb4400e58ac81c081a3f73cc2cbd012800abf8c77f7e723777cce8bcd25973c",
+      "bytes": 3554
+    },
+    {
+      "path": "SciCrucible_v1/components/post-card.tsx",
+      "sha256": "8bb98a5c6a1d9817c5858f18b109b7efcdd41e5ae58a50b1065b1a36d96433e8",
+      "bytes": 10774
+    },
+    {
+      "path": "SciCrucible_v1/next-env.d.ts",
+      "sha256": "7b550dda9686c16f36a17bf9051d5dbf31e98555b30d114ac49fc49a1e712651",
+      "bytes": 247
+    },
+    {
+      "path": "SciCrucible_v1/next.config.mjs",
+      "sha256": "9a76401c63672c713585447a02424e0d6da10b7d32e353fd92fae4eb00162260",
+      "bytes": 131
+    },
+    {
+      "path": "SciCrucible_v1/package-lock.json",
+      "sha256": "5b172511e4aef65ad70a443368c297f69e3d3da9e135744ddbbab193950059b7",
+      "bytes": 149317
+    },
+    {
+      "path": "SciCrucible_v1/package.json",
+      "sha256": "e4a436a4b624fec913cf1c6fb5c4a301da751a8dab8399870e82d2560ca22737",
+      "bytes": 2274
+    },
+    {
+      "path": "crates/chimiaclaw-artifact/Cargo.toml",
+      "sha256": "a7406f82ba93c3f71c88236f59b5cce00c4ca6ee5beb82def0065376c613de5d",
+      "bytes": 415
+    },
+    {
+      "path": "crates/chimiaclaw-artifact/src/file_store.rs",
+      "sha256": "baa8cf5f05fcbdcc6c86284db1793bcb33624397b802d153c73ae2e89a04fede",
+      "bytes": 16978
+    },
+    {
+      "path": "crates/chimiaclaw-artifact/src/lib.rs",
+      "sha256": "560aaa8b2953158b0897cf1ad4e66d42a5ece207086abd1e4cf6c1a6f48fe68e",
+      "bytes": 19361
+    },
+    {
+      "path": "crates/chimiaclaw-dft-skala/src/lib.rs",
+      "sha256": "1eea2db72327282cc5f7bcf83ed119c097b5906cbfc4a81621729ed3af8825e9",
+      "bytes": 35970
+    },
+    {
+      "path": "services/api-gateway/.dockerignore",
+      "sha256": "0615a30354d326798ac671335c34b17e49461108a16e9475207ddff22661e5cb",
+      "bytes": 76
+    },
+    {
+      "path": "services/api-gateway/.env.example",
+      "sha256": "85db65d0f6c11ba2371b0ee71e04fe8195af6015127a7503e7e664788ce72740",
+      "bytes": 3810
+    },
+    {
+      "path": "services/api-gateway/.gitignore",
+      "sha256": "2052c43c91b672decead86f892a76fa96d83e838ed11b98e9d3d3d33e61666b7",
+      "bytes": 71
+    },
+    {
+      "path": "services/api-gateway/Dockerfile",
+      "sha256": "16a6cde4a351442c1d423adb6665e1c6f0c26dccc089f20a6019984d3abe6fa5",
+      "bytes": 660
+    },
+    {
+      "path": "services/api-gateway/README.md",
+      "sha256": "de911fa326195195741c1fc406279afc0e5aa202e2fd96b037b5fc5bdc99cebc",
+      "bytes": 6850
+    },
+    {
+      "path": "services/api-gateway/package-lock.json",
+      "sha256": "2c45dc06c09c7ca5134bbe441e7583a5a1ed38b49d0c2fe344ebb7467c294217",
+      "bytes": 63114
+    },
+    {
+      "path": "services/api-gateway/package.json",
+      "sha256": "f67b4258675c2d01404b78e7b6955be75a0f175f9320185f9c0d23f3495cf9c6",
+      "bytes": 874
+    },
+    {
+      "path": "services/api-gateway/src/app.ts",
+      "sha256": "799740d0405737a7ee1f21ac2368f887d7080412eac9129b1ee4ad57b03f4f52",
+      "bytes": 37992
+    },
+    {
+      "path": "services/api-gateway/src/catalog.ts",
+      "sha256": "1b9d85431f72bfcbbae5bce4727c7aac2469f7f92d9a6f1950a92ef5243362a8",
+      "bytes": 6365
+    },
+    {
+      "path": "services/api-gateway/src/config.ts",
+      "sha256": "374419c8ec828f333007a3e4dd6c9cfbeef5253e49a23b96fa291adf37832db3",
+      "bytes": 6669
+    },
+    {
+      "path": "services/api-gateway/src/credits.ts",
+      "sha256": "557cb6512135ffa7380c609a0a09c2c6e3065f3274d2ce3078b82ec463adc336",
+      "bytes": 1406
+    },
+    {
+      "path": "services/api-gateway/src/dft_cache.ts",
+      "sha256": "83cfb27684a29c3505891fc0a4c86ac5f75d0781dff7f22203081f868d0af59d",
+      "bytes": 13829
+    },
+    {
+      "path": "services/api-gateway/src/fulfillment.ts",
+      "sha256": "8e9a099a9f1f0e908d1f0492f4678eb7fc7ce0cb7a68890320802eb9f1de7fce",
+      "bytes": 10498
+    },
+    {
+      "path": "services/api-gateway/src/http_errors.ts",
+      "sha256": "233c0f2041798978194e4aa8ac8b2ba2bbc9c26b7962510738ec41604c19415f",
+      "bytes": 920
+    },
+    {
+      "path": "services/api-gateway/src/index.ts",
+      "sha256": "44694ae697edb2c07019bdb50b8415f86138078478be58eca06276d94b64102b",
+      "bytes": 305
+    },
+    {
+      "path": "services/api-gateway/src/jobs.ts",
+      "sha256": "b08eb4bb2a621f0ffc59ac5764912e98cb887f9132ee5e5e666856ec153ba7d3",
+      "bytes": 10485
+    },
+    {
+      "path": "services/api-gateway/src/moladt.ts",
+      "sha256": "fea0d4661a46b373396b7656b07aba7ba57b66645440ecab7ea2324a1d8e250d",
+      "bytes": 5070
+    },
+    {
+      "path": "services/api-gateway/src/openapi.ts",
+      "sha256": "9a3628cd657fbaace1e206fc6dd22aad20830580ef3c3474d51a41d6ebee9c51",
+      "bytes": 7407
+    },
+    {
+      "path": "services/api-gateway/src/packs.ts",
+      "sha256": "c22793ae6fa9d630ddf65e86052422a4072e2034451263ce5a8382c161a57b90",
+      "bytes": 10027
+    },
+    {
+      "path": "services/api-gateway/src/payment.ts",
+      "sha256": "6d5c7571f54ee3bab66252ebd380d406164701f8287ee059fdf30e513a3ea1b7",
+      "bytes": 4825
+    },
+    {
+      "path": "services/api-gateway/src/payments.ts",
+      "sha256": "72500ca44e457a92d7864ecdbf7084003d98758ff73502057efd4ae88331d140",
+      "bytes": 10595
+    },
+    {
+      "path": "services/api-gateway/src/rate_limit.ts",
+      "sha256": "79c65901c7452f9a14ba3a52f127151335e284fb8263be45a75b9ad8276cd240",
+      "bytes": 2267
+    },
+    {
+      "path": "services/api-gateway/src/revenue.ts",
+      "sha256": "854ce2f85a2f6fcf65f9b2e3afee9d0a4b6b5944ca3cea33464ad504ccf10ffa",
+      "bytes": 677
+    },
+    {
+      "path": "services/api-gateway/src/smoke.ts",
+      "sha256": "812cd3429c050cc6b38cf69e1709ed631f0bd7ff84189ef2b909f143ece60b7a",
+      "bytes": 5452
+    },
+    {
+      "path": "services/api-gateway/src/stripe_webhook.ts",
+      "sha256": "028a95ed77065a9025036d39805c7886e28807facce3092275b424d1af5e5cd6",
+      "bytes": 6945
+    },
+    {
+      "path": "services/api-gateway/tests/fulfillment.test.ts",
+      "sha256": "8c27644bc9d1e79c5e72d96841f75f6b836066bf4c8e329d405b8a9bb0b86f95",
+      "bytes": 5708
+    },
+    {
+      "path": "services/api-gateway/tests/http.test.ts",
+      "sha256": "d2af9ffa273d8078dc74efbe69371fd91c25d99da9c0ac58962b242fc95a6f17",
+      "bytes": 5714
+    },
+    {
+      "path": "services/api-gateway/tests/moladt.test.ts",
+      "sha256": "9847e0b54bde9623f68536c92e1f53837973b94b70e31c1a4b511270de5130b3",
+      "bytes": 3931
+    },
+    {
+      "path": "services/api-gateway/tests/webhook.test.ts",
+      "sha256": "a312e69eb54c6bd1723aceff343ef519a434cf03600f6c5900918a9e69a33bb0",
+      "bytes": 3803
+    },
+    {
+      "path": "services/api-gateway/tsconfig.json",
+      "sha256": "b1ffb9236a5123fac02d3de402a448606fa6910fc896ccbacd11382e32097728",
+      "bytes": 424
+    }
+  ]
+}

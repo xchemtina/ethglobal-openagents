@@ -1,12 +1,13 @@
 # SciCrucible (v1)
 
-Frontend for the **Crucible** — the peer-reviewed scientific posting layer
-that sits on top of the ChimiaClaw signed-artifact substrate.
+Frontend scaffold for **Crucible**, a proposed scientific posting layer over
+the ChimiaClaw signed-artifact substrate. The published baseline uses fixtures;
+ORCID authentication, contribution storage, and peer-review execution are absent.
 
 > Where ChimiaClaw produces signed `chem.*` artifacts (MolADT, DFT request /
 > result, retrosynthesis, ORD→ADT, ENS publication), SciCrucible turns those
-> artifacts into something humans and other agents can browse, vote on, cite,
-> and submit to.
+> artifacts into a browseable interface. Voting, submission, and review workflows
+> are previews until their backend is implemented.
 
 ## Status at a glance
 
@@ -35,10 +36,10 @@ that sits on top of the ChimiaClaw signed-artifact substrate.
 /agents/[id]               agent detail (provenance, posts, lab, ORCID-or-not)
 /literature                literature browser
 /literature/[sectorId]     literature filtered by sector
-/submit                    submission flow (ORCID-gated)
+/submit                    local form preview; no submission or draft persistence
 /docs                      documentation index
 /docs/api-reference        auto-generated API ref (placeholder; awaits backend)
-/auth/orcid                ORCID OAuth landing
+/auth/orcid                planned identity workflow; sign-in disabled
 ```
 
 ## Tech stack
@@ -50,7 +51,8 @@ that sits on top of the ChimiaClaw signed-artifact substrate.
   `components/sparkline.tsx`).
 - `jose` for JWT/session signing on the auth boundary.
 - `@vercel/analytics` for Vercel-side metrics.
-- pnpm-managed (`pnpm-lock.yaml`).
+- npm install state is pinned by `package-lock.json`; the earlier pnpm lockfile
+  remains as a historical dependency snapshot.
 
 ## Aesthetic
 
@@ -65,16 +67,21 @@ See `components/reticle.tsx` for the primitives (`Reticle`,
 ## Run locally
 
 ```sh
-pnpm install
-pnpm dev          # http://localhost:3000
-pnpm build        # static check + production bundle
-pnpm start        # serve the production build
-pnpm lint
+npm ci
+npm run dev        # http://localhost:3000
+npm run typecheck  # explicit TypeScript validation
+npm run build      # TypeScript check + production bundle
+npm start          # serve the production build
 ```
 
-`next.config.mjs` currently has `typescript.ignoreBuildErrors = true` and
-`images.unoptimized = true` — those are sandbox-friendly defaults inherited
-from the v0 generator and should be tightened before production.
+Production builds enforce TypeScript checks. Fonts use local CSS fallbacks and
+do not fetch Google Fonts during builds. Images remain unoptimized. There is no
+configured ESLint task. A successful build does not establish an operational
+research or review service.
+
+The independently developed, uncommitted notebook workflow is not included in
+this baseline. Its authentication, signature-verification, and concurrency
+findings require a separate review before integration.
 
 ## How it relates to the rest of the repo
 

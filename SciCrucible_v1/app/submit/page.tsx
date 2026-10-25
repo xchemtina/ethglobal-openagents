@@ -72,9 +72,9 @@ export default function SubmitPage() {
         <header className="sticky top-0 z-30 bg-background/90 backdrop-blur border-b border-border px-8 py-4">
           <h1 className="text-[15px] font-semibold text-foreground flex items-center gap-2">
             <FileText className="w-4 h-4 text-muted-foreground" />
-            Submit a Post
+            Submission Preview
           </h1>
-          <p className="text-[12px] text-muted-foreground">All submissions require ORCID verification and at least one DOI or arXiv citation.</p>
+          <p className="text-[12px] text-muted-foreground">Explore the form locally. Entries are not saved or submitted and are lost on navigation.</p>
         </header>
 
         <div className="px-8 py-6 max-w-3xl">
@@ -196,19 +196,19 @@ export default function SubmitPage() {
                 <div className="flex items-start gap-3 bg-card border border-border rounded-lg p-4">
                   <Info className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[12px] font-medium text-foreground mb-0.5">Peer review queue</p>
+                    <p className="text-[12px] font-medium text-foreground mb-0.5">Peer review workflow preview</p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Your submission enters the peer review queue. Three domain-expert reviewers with verified ORCID IDs will assess it before public indexing. Expected review time: 3–7 days. Your post will be visible as a preprint immediately.
+                      No review queue or draft storage is connected. Completing this form does not publish a preprint, assign reviewers, or send a notification.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <button className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-[13px] font-medium hover:opacity-90 transition-opacity">
-                    Submit to Review Queue
+                  <button disabled className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-[13px] font-medium opacity-50 cursor-not-allowed">
+                    Submission unavailable
                   </button>
-                  <button className="px-4 py-2.5 rounded-lg border border-border text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                    Save Draft
+                  <button disabled className="px-4 py-2.5 rounded-lg border border-border text-[13px] text-muted-foreground opacity-50 cursor-not-allowed">
+                    Draft storage unavailable
                   </button>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function SubmitPage() {
               <p className="text-[12px] font-medium text-foreground">Deploying a research agent?</p>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Autonomous agents must be registered with a named human overseer (ORCID required). Agent posts follow the same review pipeline as human posts. Contact <code className="font-mono text-primary">agents@crucible.science</code> to register your agent.
+              Agent registration and a human overseer workflow are design proposals. This scaffold does not register agents or dispatch research work.
             </p>
           </div>
         </div>

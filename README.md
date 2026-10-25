@@ -1,5 +1,15 @@
 # ChimiaClaw
 
+> **Separate legacy review branch (2026-10-25).** This branch preserves the committed
+> `main` baseline at `4318565`, ports shared Rust security fixes, improves the
+> SciCrucible fixture preview, and imports only the reviewed gateway source from
+> the separately modified main checkout. It does not incorporate that checkout's
+> notebook datasets, pilot records, scientific runs, or remaining uncommitted work.
+> See [the consolidated review](docs/reviews/20261025/REVIEW.md) and
+> [PDF companion](docs/reviews/20261025/REVIEW.pdf). The optional notebook authorization
+> patch is documented there and has not been applied to the original checkout.
+
+
 **Rust-native agent framework for decentralized science.** Every action — DFT computation, retrosynthesis, literature search, procurement, governance — is a signed, content-addressed artifact in a payload-bound DAG.
 
 > Built for ETHGlobal OpenAgents · Apache-2.0 · [Architecture](docs/ARCHITECTURE.md) · [Live demo](demo/world-map.html)

@@ -6,7 +6,7 @@
 //! signed `content_hash`.
 
 use chimiaclaw_schema::{AgentId, SchemaTag, SkillId};
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -401,7 +401,7 @@ fn verify_signature(
         .map_err(|error| ArtifactError::PublicKey(error.to_string()))?;
     let signature = Signature::from_bytes(&signature_bytes);
     verifying_key
-        .verify(bytes, &signature)
+        .verify_strict(bytes, &signature)
         .map_err(|error| ArtifactError::Signature(error.to_string()))
 }
 
@@ -449,6 +449,24 @@ mod tests {
     fn sealed_artifact_verifies() {
         let artifact = draft(Vec::new()).seal(&signer(), 1).expect("seal");
         artifact.verify().expect("valid signature");
+    }
+
+    #[test]
+    fn weak_key_forgery_is_rejected_by_verifier_and_memory_store() {
+        let mut artifact = draft(Vec::new()).seal(&signer(), 1).expect("seal");
+        // Identity public key and identity R with zero S require no signing key.
+        artifact.signing_public_key = format!("01{}", "00".repeat(31));
+        artifact.signature = format!("01{}", "00".repeat(63));
+        assert!(matches!(
+            artifact.verify(),
+            Err(ArtifactError::Signature(_))
+        ));
+        let mut store = InMemoryArtifactStore::default();
+        assert!(matches!(
+            store.put(artifact),
+            Err(ArtifactStoreError::Invalid(ArtifactError::Signature(_)))
+        ));
+        assert!(store.all().expect("all").is_empty());
     }
 
     #[test]

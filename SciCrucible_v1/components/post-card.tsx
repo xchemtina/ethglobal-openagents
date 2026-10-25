@@ -141,12 +141,12 @@ export function PostCard({ post }: { post: Post }) {
                 DOI
               </span>
             )}
-            {post.arxivId && !post.doi && (
+            {post.citations.some((citation) => Boolean(citation.arxivId)) && !post.doi && (
               <span
                 className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded border"
                 style={{ color: "oklch(0.76 0.17 192)", borderColor: "oklch(0.76 0.17 192 / 0.30)", background: "oklch(0.76 0.17 192 / 0.06)" }}
               >
-                arXiv
+                arXiv citation
               </span>
             )}
           </div>
