@@ -9,7 +9,13 @@
     "modal_guard_stub_tests_python312": 10,
     "gateway_typecheck_build": "PASS",
     "web_typecheck_build": "PASS",
-    "independent_review": "PASS_WITH_RESERVATIONS"
+    "independent_review": "PASS_WITH_RESERVATIONS",
+    "typescript": "5.9.3",
+    "strict_peer_clean_install": "PASS",
+    "hosted_initial_failure": {
+      "run": "https://github.com/xchemtina/ethglobal-openagents/actions/runs/40219010297",
+      "reason": "TypeScript 5.7.3 was below wagmi peer minimum 5.9.3; corrected compiler pin and lockfile, local strict install/tests/types/build passed."
+    }
   },
   "legacy": {
     "rust_all_features": 89,

@@ -320,8 +320,13 @@
       "bytes": 131
     },
     {
+      "path": "web/package-lock.json",
+      "sha256": "b11e35efb643efff65a68964fa6362c403e57aab13b8a1123bf3eab2e473bf35",
+      "bytes": 163664
+    },
+    {
       "path": "web/package.json",
-      "sha256": "68de24efc8b7727926bfa7dc897978a0f645373b22f002920eae8db6f772efc0",
+      "sha256": "606cb86fc4d195e6a476d34d33cac2966bf8594e9c19cf68c770c64ece6f3ee6",
       "bytes": 2552
     },
     {
