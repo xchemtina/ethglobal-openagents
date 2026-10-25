@@ -231,8 +231,8 @@
     },
     {
       "path": "web/README.md",
-      "sha256": "7b9bf9d421a0f76486cb259d77a2282830c0ed23408a70d30d5e7011ea5a8a03",
-      "bytes": 1609
+      "sha256": "9d74c74f98b133a7033ba13ba97f3e98cc0f040f8a173c4035858805f6255d7d",
+      "bytes": 1707
     },
     {
       "path": "web/app/layout.tsx",
@@ -333,6 +333,11 @@
       "path": "web/tests/checkout-link.test.mjs",
       "sha256": "031b78ac8442180582eeeedd1bb3a97f9011fa88cb91b3f08ef28f65a1b239eb",
       "bytes": 827
+    },
+    {
+      "path": "web/vercel.json",
+      "sha256": "6518c06a94a466c96fd700d71f9261e5274f482e77cd3cdb720f1604b673ab22",
+      "bytes": 426
     }
   ]
 }

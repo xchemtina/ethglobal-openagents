@@ -23,7 +23,8 @@ configured gateway. No public deployment is implied by these local commands.
 
 ## Verification
 
-Use Node 22.6 or later and the committed npm lockfile:
+Use Node 22.6 or later and the committed npm lockfile. Vercel explicitly runs `npm ci`; the historical pnpm lockfile is not the supported install path:
+
 
 ```sh
 npm test
