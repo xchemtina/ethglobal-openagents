@@ -52,7 +52,7 @@ export function buildOpenApi(config: GatewayConfig): Record<string, unknown> {
               in: "header",
               required: false,
               schema: { type: "string" },
-              description: "stub in stub mode; real x402 payload in live mode",
+              description: "stub in stub mode; live mode rejects all requests with HTTP 503",
             },
           ],
           requestBody: {
@@ -72,7 +72,8 @@ export function buildOpenApi(config: GatewayConfig): Record<string, unknown> {
           },
           responses: {
             "200": { description: "Paid result" },
-            "402": { description: "Payment Required" },
+            "402": { description: "Stub payment header required" },
+            "503": { description: "Live x402 verification/settlement unavailable" },
           },
         },
       },
@@ -81,6 +82,8 @@ export function buildOpenApi(config: GatewayConfig): Record<string, unknown> {
           summary: "Cached signed DFT result (paid)",
           parameters: [
             { name: "label", in: "query", schema: { type: "string" } },
+            { name: "smiles", in: "query", schema: { type: "string" }, description: "Exact, case-sensitive SMILES; no chemical canonicalization is performed" },
+            { name: "id", in: "query", schema: { type: "string" } },
             {
               name: "PAYMENT-SIGNATURE",
               in: "header",
@@ -89,7 +92,8 @@ export function buildOpenApi(config: GatewayConfig): Record<string, unknown> {
           ],
           responses: {
             "200": { description: "Paid result" },
-            "402": { description: "Payment Required" },
+            "402": { description: "Stub payment header required" },
+            "503": { description: "Live x402 verification/settlement unavailable" },
           },
         },
       },

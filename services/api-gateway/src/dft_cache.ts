@@ -48,18 +48,17 @@ interface ArtifactEnvelope {
 }
 
 const COMMON_ALIASES: Record<string, string[]> = {
-  water: ["h2o", "o", "moladt.water.001"],
-  methanol: ["ch3oh", "meoh", "co", "moladt.methanol.001"],
-  benzene: ["c6h6", "c1ccccc1", "moladt.benzene.001"],
+  water: ["h2o"],
+  methanol: ["ch3oh", "meoh"],
+  benzene: ["c6h6"],
   "propylene glycol": [
     "propyleneglycol",
     "propane-1,2-diol",
     "1,2-propanediol",
-    "occ(o)c",
     "pg",
   ],
-  "caprylic acid": ["c8", "octanoic acid", "cccccccc(=o)o", "octanoic"],
-  "capric acid": ["c10", "decanoic acid", "cccccccccc(=o)o", "decanoic"],
+  "caprylic acid": ["c8", "octanoic acid", "octanoic"],
+  "capric acid": ["c10", "decanoic acid", "decanoic"],
 };
 
 function normalizeKey(value: string): string {
@@ -105,7 +104,7 @@ function labelFromSources(
   const molecule =
     (requestPayload?.molecule as Record<string, unknown> | undefined) ?? {};
   const name = molecule.molecule_name;
-  if (typeof name === "string" && name.length > 0 && !/[=\(\)]/.test(name)) {
+  if (typeof name === "string" && name.length > 0 && name !== molecule.canonical_smiles && !/[=\(\)]/.test(name)) {
     // Prefer human names; reject SMILES-looking "names".
     return name.toLowerCase();
   }
@@ -129,7 +128,7 @@ function labelFromSources(
     return fromTopic;
   }
 
-  if (typeof name === "string" && name.length > 0) {
+  if (typeof name === "string" && name.length > 0 && name !== molecule.canonical_smiles) {
     return name.toLowerCase();
   }
 
@@ -140,30 +139,15 @@ function labelFromSources(
   );
 }
 
-function buildAliases(
-  label: string,
-  smiles: string | null,
-  moleculeId: string | null,
-  artifactId: string,
-): string[] {
-  const aliases = new Set<string>();
-  aliases.add(label);
-  aliases.add(normalizeKey(label));
-  aliases.add(label.replace(/\s+/g, ""));
-  aliases.add(label.replace(/\s+/g, "-"));
-  aliases.add(artifactId);
-  if (smiles) {
-    aliases.add(smiles);
-    aliases.add(smiles.toLowerCase());
-  }
-  if (moleculeId) {
-    aliases.add(moleculeId);
-    aliases.add(moleculeId.toLowerCase());
-  }
-  for (const extra of COMMON_ALIASES[label] ?? []) {
-    aliases.add(extra);
-  }
-  return [...aliases];
+/** Human names only: SMILES and identifiers must never be case-folded. */
+function buildAliases(label: string): string[] {
+  return [...new Set([
+    label,
+    normalizeKey(label),
+    label.replace(/\s+/g, ""),
+    label.replace(/\s+/g, "-"),
+    ...(COMMON_ALIASES[label] ?? []),
+  ])];
 }
 
 async function loadJson(filePath: string): Promise<ArtifactEnvelope | null> {
@@ -252,7 +236,7 @@ export async function loadDftCache(cacheDir: string): Promise<DftCacheEntry[]> {
     const entry: DftCacheEntry = {
       artifact_id: artifact.id,
       label,
-      aliases: buildAliases(label, smiles, moleculeId, artifact.id),
+      aliases: buildAliases(label),
       smiles,
       molecule_id: moleculeId,
       molecule_name: moleculeName,
@@ -310,31 +294,26 @@ export function indexItems(entries: DftCacheEntry[]): DftCacheIndexItem[] {
 export function findDftEntry(
   entries: DftCacheEntry[],
   query: string,
+  kind: "auto" | "smiles" | "id" = "auto",
 ): DftCacheEntry | null {
   const raw = query.trim();
   if (!raw) return null;
+  // Exact comparisons come first, and typed lookups never fall back to names.
+  if (kind !== "id") {
+    const exact = entries.find((entry) => entry.smiles === raw);
+    if (exact) return exact;
+  }
+  if (kind !== "smiles") {
+    const exact = entries.find((entry) => entry.artifact_id === raw || entry.molecule_id === raw);
+    if (exact) return exact;
+  }
+  if (kind !== "auto") return null;
   const key = normalizeKey(raw);
   const compact = key.replace(/\s+/g, "");
-
-  for (const entry of entries) {
-    if (entry.artifact_id === raw || entry.artifact_id === key) {
-      return entry;
-    }
-    if (normalizeKey(entry.label) === key) {
-      return entry;
-    }
-    for (const alias of entry.aliases) {
-      const a = normalizeKey(alias);
-      if (a === key || a.replace(/\s+/g, "") === compact) {
-        return entry;
-      }
-      if (alias === raw) {
-        return entry;
-      }
-    }
-    if (entry.smiles && entry.smiles === raw) {
-      return entry;
-    }
-  }
-  return null;
+  return entries.find((entry) => [entry.label, ...entry.aliases].some((alias) => {
+    // Also protect callers with legacy entries containing identifier aliases.
+    if (alias === entry.smiles || alias === entry.molecule_id || alias === entry.artifact_id) return false;
+    const normalized = normalizeKey(alias);
+    return normalized === key || normalized.replace(/\s+/g, "") === compact;
+  })) ?? null;
 }

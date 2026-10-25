@@ -13,14 +13,6 @@ export function ChallengeCard({ challenge, className }: ChallengeCardProps) {
   const statusLabel = getChallengeStatusLabel(challenge.status)
   const statusColor = getChallengeStatusColor(challenge.status)
 
-  const timeSince = () => {
-    const diff = Date.now() - new Date(challenge.createdAt).getTime()
-    const hours = Math.floor(diff / 3600000)
-    if (hours < 1) return 'Just now'
-    if (hours === 1) return '1 hour ago'
-    return `${hours} hours ago`
-  }
-
   return (
     <div
       className={cn(
@@ -32,10 +24,10 @@ export function ChallengeCard({ challenge, className }: ChallengeCardProps) {
         <div>
           <h4 className="font-mono text-sm text-primary">{challenge.id}</h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Challenging: {challenge.originalArtifactId}
+            Demo fixture: {challenge.originalArtifactId}
           </p>
         </div>
-        <Badge className={cn('text-xs', statusColor)}>{statusLabel}</Badge>
+        <Badge className={cn('text-xs', statusColor)}>Example: {statusLabel}</Badge>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -64,10 +56,10 @@ export function ChallengeCard({ challenge, className }: ChallengeCardProps) {
       <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <Clock className="size-3" />
-          {timeSince()}
+          Fixture date: {challenge.createdAt.slice(0, 10)}
         </div>
         <div>
-          Bond: <span className="font-mono text-amber-400">{challenge.bondAmount} USDC</span>
+          Example bond: <span className="font-mono text-amber-400">{challenge.bondAmount} USDC</span>
         </div>
       </div>
     </div>

@@ -1,16 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: 'DFT.xyz — Agentic DFT cashier (ChimiaDAO)',
   description:
-    'HTTP 402 science cashier for agents: SMILES → signed MolADT / DFT artifacts. Stub or live USDC. No draw-to-structure dependency.',
+    'Science cashier for agents: SMILES to signed MolADT and cached DFT artifacts. Payment demos and local challenge previews; live DFT and USDC settlement are unavailable.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -19,31 +19,27 @@ function ComparisonItem({ text, included }: ComparisonItemProps) {
 }
 
 export function ComparisonSection() {
-  const othersFeatures = [
-    "LLM-driven DFT automation",
-    "Log files for tracking",
-    "Local results storage",
-    "No settlement mechanism",
-    "No cryptographic signatures",
-    "No decentralized identity",
+  const plannedFeatures = [
+    "Verified USDC payment and settlement",
+    "Automatic human-payment fulfillment",
+    "Public live DFT dispatch",
+    "Wallet escrow and dispute execution",
   ]
 
   const dftxyzFeatures = [
     "Signed artifact DAG (Ed25519 + Blake3)",
-    "Live Uniswap settlement quotes",
-    "ENS agent identity",
-    "0G decentralized anchoring",
-    "MCP server for agent discovery",
-    "Skala 1.1 neural functional",
+    "SMILES to signed molecular geometry",
+    "Cached DFT result discovery and retrieval",
+    "Operator-configured identity and storage adapters",
   ]
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
       {/* Others column */}
       <div className="bg-card border border-border rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-muted-foreground mb-4">What others do</h3>
+        <h3 className="text-lg font-semibold text-muted-foreground mb-4">Under development</h3>
         <ul className="space-y-3">
-          {othersFeatures.map((feature, i) => (
+          {plannedFeatures.map((feature, i) => (
             <ComparisonItem key={i} text={feature} included={false} />
           ))}
         </ul>
@@ -52,7 +48,7 @@ export function ComparisonSection() {
       {/* DFT.xyz column */}
       <div className="bg-card border border-primary/30 rounded-lg p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-        <h3 className="text-lg font-semibold text-primary mb-4 relative">What DFT.xyz adds</h3>
+        <h3 className="text-lg font-semibold text-primary mb-4 relative">Implemented surfaces</h3>
         <ul className="space-y-3 relative">
           {dftxyzFeatures.map((feature, i) => (
             <ComparisonItem key={i} text={feature} included={true} />
@@ -67,12 +63,9 @@ export function DifferentiatorCallout() {
   return (
     <div className="mt-8 bg-muted/50 border border-border rounded-lg p-6">
       <p className="text-muted-foreground leading-relaxed">
-        <span className="text-foreground font-semibold">AutoDFT</span> (NTU Singapore) achieves{" "}
-        <span className="text-primary font-mono">94.1%</span> task success with 7 LLM agents on VASP.
-        We achieve <span className="text-foreground">cryptographic provenance</span>,{" "}
-        <span className="text-accent">economic settlement</span>, and{" "}
-        <span className="text-foreground">decentralized identity</span> — the layers that turn
-        computation into a trustless service any agent can consume and pay for.
+        <span className="text-foreground font-semibold">Artifact integrity is inspectable.</span>{" "}
+        Signatures bind payloads and provenance to a signer. They do not establish scientific
+        correctness, successful payment, or that a deployed service is available.
       </p>
     </div>
   )

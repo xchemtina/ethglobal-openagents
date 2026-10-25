@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
 import {
   Dialog,
   DialogContent,
@@ -25,11 +24,10 @@ interface ChallengeModalProps {
 }
 
 export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
-  const { isConnected, address } = useAccount()
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedArtifact, setSelectedArtifact] = useState<DFTResult | null>(null)
-  const [step, setStep] = useState<'search' | 'confirm' | 'submitted'>('search')
+  const [step, setStep] = useState<'search' | 'confirm' | 'preview'>('search')
 
   const filteredArtifacts = SAMPLE_ARTIFACTS.filter(
     (a) =>
@@ -42,28 +40,24 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
     setStep('confirm')
   }
 
-  const handleSubmitChallenge = () => {
-    // In production, this would call the smart contract
-    setStep('submitted')
+  const handlePreviewChallenge = () => {
+    setStep('preview')
   }
 
   const handleClose = () => {
     setOpen(false)
-    // Reset state after animation
-    setTimeout(() => {
-      setStep('search')
-      setSelectedArtifact(null)
-      setSearchQuery('')
-    }, 200)
+    setStep('search')
+    setSelectedArtifact(null)
+    setSearchQuery('')
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => nextOpen ? setOpen(true) : handleClose()}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" className={cn('gap-2', className)}>
             <Shield className="size-4" />
-            Challenge Calculation
+            Preview Challenge
           </Button>
         )}
       </DialogTrigger>
@@ -73,11 +67,11 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Shield className="size-5 text-primary" />
-                Challenge a DFT Result
+                Challenge Workflow Preview
               </DialogTitle>
               <DialogDescription>
-                Search for an artifact ID to challenge. You&apos;ll stake {CHALLENGE_BOND_AMOUNT} USDC
-                as a bond, which is returned if the challenge reveals a discrepancy.
+                Explore a proposed review workflow using sample data. This local
+                preview does not submit a challenge, transfer funds, or run a calculation.
               </DialogDescription>
             </DialogHeader>
 
@@ -110,7 +104,7 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
                         </span>
                         {artifact.anchorTxHash && (
                           <Badge variant="outline" className="text-xs">
-                            Anchored
+                            Sample anchor
                           </Badge>
                         )}
                       </div>
@@ -137,16 +131,16 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="size-5 text-amber-500" />
-                Confirm Challenge
+                Review Sample Challenge
               </DialogTitle>
               <DialogDescription>
-                Review the details before submitting your challenge.
+                These illustrative terms are for this preview only. No wallet is needed.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="rounded-lg border border-border/50 bg-card/50 p-4">
-                <h4 className="mb-2 text-sm font-medium">Original Result</h4>
+                <h4 className="mb-2 text-sm font-medium">Sample Result</h4>
                 <dl className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">Artifact ID</dt>
@@ -166,20 +160,15 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
                 <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-400">
                   <Zap className="size-4" />
-                  Challenge Terms
+                  Illustrative Terms
                 </h4>
                 <ul className="space-y-1 text-sm text-amber-200/80">
-                  <li>Bond amount: <strong>{CHALLENGE_BOND_AMOUNT} USDC</strong></li>
-                  <li>Discrepancy threshold: <strong>{DISCREPANCY_THRESHOLD} Ha</strong></li>
-                  <li>Result will be re-computed by a different operator</li>
+                  <li>Example bond: <strong>{CHALLENGE_BOND_AMOUNT} USDC</strong> (not collected)</li>
+                  <li>Example discrepancy threshold: <strong>{DISCREPANCY_THRESHOLD} Ha</strong></li>
+                  <li>Re-computation is not connected to this preview.</li>
                 </ul>
               </div>
 
-              {!isConnected && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                  Please connect your wallet to submit a challenge.
-                </div>
-              )}
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">
@@ -187,43 +176,39 @@ export function ChallengeModal({ trigger, className }: ChallengeModalProps) {
                 Back
               </Button>
               <Button
-                onClick={handleSubmitChallenge}
-                disabled={!isConnected}
+                onClick={handlePreviewChallenge}
                 className="gap-2"
               >
-                Stake {CHALLENGE_BOND_AMOUNT} USDC
+                View Local Preview
                 <ArrowRight className="size-4" />
               </Button>
             </DialogFooter>
           </>
         )}
 
-        {step === 'submitted' && (
+        {step === 'preview' && selectedArtifact && (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Shield className="size-5 text-emerald-500" />
-                Challenge Submitted
+                Local Preview Ready
               </DialogTitle>
               <DialogDescription>
-                Your challenge has been submitted and is being processed.
+                Nothing has been submitted. This example exists only in this browser view.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
                 <p className="text-sm text-emerald-200">
-                  A different operator will re-compute the DFT calculation.
-                  You&apos;ll be notified when results are ready.
+                  No payment, calculation, or notification has been scheduled.
+                  Close this dialog to discard the preview.
                 </p>
                 <p className="mt-2 font-mono text-xs text-muted-foreground">
-                  Challenge ID: chal-{Date.now().toString(36)}
+                  Preview reference: preview-{selectedArtifact.id}
                 </p>
               </div>
 
-              <div className="text-center text-sm text-muted-foreground">
-                Connected as: <span className="font-mono text-primary">{address?.slice(0, 10)}...</span>
-              </div>
             </div>
 
             <DialogFooter>

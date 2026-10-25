@@ -1,25 +1,22 @@
-# ChimiaClaw API gateway — deploy on Fly/Railway/any Docker host
-FROM node:22-bookworm-slim
-
+# Compile with locked build dependencies; production never downloads a runner.
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
-
-# System deps for optional native modules; CLI binary is optional mount
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev
-
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
+RUN npm run build && npm prune --omit=dev
 
+FROM node:22-bookworm-slim
+WORKDIR /app
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+RUN mkdir data && chown node:node data
+USER node
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4021
 EXPOSE 4021
-
-# DFT cache + CLI expected via volume or build stage in production
-#   -e DFT_CACHE_DIR=/data/dft
-#   -e CHIMIACLAW_CLI=/data/bin/chimiaclaw-cli
-
-CMD ["npx", "tsx", "src/index.ts"]
+# Mount a DFT cache and executable CLI; configure their paths via environment.
+CMD ["node", "dist/index.js"]

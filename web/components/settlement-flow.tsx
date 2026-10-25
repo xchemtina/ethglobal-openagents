@@ -12,7 +12,7 @@ export function SettlementFlow({ className }: SettlementFlowProps) {
     {
       icon: Coins,
       label: 'Quote',
-      description: 'Live Uniswap V4 price',
+      description: 'Proposed price quote',
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/30',
@@ -20,7 +20,7 @@ export function SettlementFlow({ className }: SettlementFlowProps) {
     {
       icon: Lock,
       label: 'Escrow',
-      description: 'Funds held in contract',
+      description: 'Proposed contract deposit',
       color: 'text-amber-400',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/30',
@@ -28,7 +28,7 @@ export function SettlementFlow({ className }: SettlementFlowProps) {
     {
       icon: Clock,
       label: 'Compute',
-      description: 'DFT calculation runs',
+      description: 'Proposed worker dispatch',
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/10',
       borderColor: 'border-blue-500/30',
@@ -36,7 +36,7 @@ export function SettlementFlow({ className }: SettlementFlowProps) {
     {
       icon: Check,
       label: 'Release',
-      description: 'Operator receives payment',
+      description: 'Proposed payment release',
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500/10',
       borderColor: 'border-emerald-500/30',

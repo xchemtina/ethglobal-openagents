@@ -9,12 +9,12 @@ export interface PaymentMethodsResponse {
   deployable: boolean;
   honesty: string[];
   methods: PaymentMethod[];
-  agent_default: "x402_stub" | "x402_live" | "free";
+  agent_default: "x402_stub" | "unavailable" | "free";
 }
 
 export interface PaymentMethod {
   id: "x402" | "stripe" | "revolut";
-  status: "live" | "configured" | "stub" | "unconfigured";
+  status: "unavailable" | "configured" | "stub" | "unconfigured";
   title: string;
   description: string;
   details: Record<string, string | boolean | null>;
@@ -22,10 +22,13 @@ export interface PaymentMethod {
 
 export function paymentMethods(config: GatewayConfig): PaymentMethodsResponse {
   const stripeCheckoutConfigured = Boolean(config.stripeSecretKey);
+  const stripeCheckoutAvailable = stripeCheckoutConfigured && (
+    config.moladtPriceMicros >= 500_000 || config.dftCachedPriceMicros >= 500_000
+  );
   const stripeLinksConfigured = Boolean(
     config.stripePaymentLinkMoladt || config.stripePaymentLinkDftCached,
   );
-  const stripeConfigured = stripeCheckoutConfigured || stripeLinksConfigured;
+  const stripeConfigured = stripeCheckoutAvailable || stripeLinksConfigured;
   const revolutConfigured = Boolean(
     config.revolutPayTo || config.revolutPaymentLink,
   );
@@ -35,18 +38,20 @@ export function paymentMethods(config: GatewayConfig): PaymentMethodsResponse {
       id: "x402",
       status:
         config.mode === "live"
-          ? "live"
+          ? "unavailable"
           : config.mode === "stub"
             ? "stub"
             : "configured",
       title: "x402 (agents)",
       description:
-        "HTTP 402 + PAYMENT-SIGNATURE. Primary machine path. Stub accepts header `stub` without funds.",
+        "Free/stub integration only. Live x402 is unavailable until verification and settlement are implemented.",
       details: {
         mode: config.mode,
         pay_to: config.payTo,
         network: config.network,
         facilitator_url: config.facilitatorUrl,
+        live_verification: false,
+        live_settlement: false,
       },
     },
     {
@@ -58,7 +63,9 @@ export function paymentMethods(config: GatewayConfig): PaymentMethodsResponse {
         : "Create Payment Links in Stripe Dashboard, or set STRIPE_SECRET_KEY for Checkout API.",
       details: {
         configured: stripeConfigured,
-        checkout_api: stripeCheckoutConfigured,
+        checkout_api: stripeCheckoutAvailable,
+        checkout_api_key_configured: stripeCheckoutConfigured,
+        checkout_minimum_usd: "0.50",
         payment_links: stripeLinksConfigured,
         publishable_key_set: Boolean(config.stripePublishableKey),
         payment_link_moladt: config.stripePaymentLinkMoladt,
@@ -87,7 +94,8 @@ export function paymentMethods(config: GatewayConfig): PaymentMethodsResponse {
   return {
     deployable: humanReady || config.mode === "stub" || config.mode === "free",
     honesty: [
-      "Stub x402 never moves funds.",
+      "Stub x402 never moves funds; live mode returns 503 and accepts no payment.",
+      "Stripe Checkout API rejects these micro-priced SKUs below its configured $0.50 floor; no silent price increase.",
       "Stripe charges when a Payment Link is paid or STRIPE_SECRET_KEY Checkout completes (operator still fulfills SKU until webhook).",
       "Revolut is manual settlement — do not auto-deliver high-cost SKUs without operator confirmation.",
       "Live DFT remains operator-gated regardless of payment rail.",
@@ -95,7 +103,7 @@ export function paymentMethods(config: GatewayConfig): PaymentMethodsResponse {
     methods,
     agent_default:
       config.mode === "live"
-        ? "x402_live"
+        ? "unavailable"
         : config.mode === "free"
           ? "free"
           : "x402_stub",
@@ -115,6 +123,9 @@ export async function createStripeCheckout(
 ): Promise<{ url: string; id: string }> {
   if (!config.stripeSecretKey) {
     throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  if (!Number.isSafeInteger(opts.amountCents) || opts.amountCents < 50) {
+    throw new Error("checkout_amount_below_minimum: configure an explicitly priced bundle of at least $0.50");
   }
   const params = new URLSearchParams();
   params.set("mode", "payment");
@@ -144,6 +155,7 @@ export async function createStripeCheckout(
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params.toString(),
+    signal: AbortSignal.timeout(15_000),
   });
   const body = (await res.json()) as {
     id?: string;
@@ -170,6 +182,6 @@ export function revolutInstructions(
     reference: opts.reference,
     note:
       config.revolutNote ||
-      "Include the reference string in the payment description. Operator confirms before delivery of live compute.",
+      "Include the reference string in the payment description. Operator confirms before manual fulfillment of the selected artifact SKU.",
   };
 }

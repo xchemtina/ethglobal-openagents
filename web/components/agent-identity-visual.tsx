@@ -64,11 +64,11 @@ export function AgentIdentityVisual({ className }: AgentIdentityVisualProps) {
           <div className="size-12 rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
             <Wallet className="size-6 text-amber-400" />
           </div>
-          <h4 className="font-semibold text-foreground mb-1">Settlement Wallet</h4>
-          <p className="text-xs text-muted-foreground text-center">USDC payments</p>
+          <h4 className="font-semibold text-foreground mb-1">Proposed Wallet</h4>
+          <p className="text-xs text-muted-foreground text-center">Settlement not connected</p>
           <div className="mt-2 flex items-center gap-1 text-xs">
             <Key className="size-3 text-amber-400" />
-            <span className="font-mono text-amber-400">0x7a23...8f91</span>
+            <span className="font-mono text-amber-400">Illustrative account</span>
           </div>
         </div>
       </div>

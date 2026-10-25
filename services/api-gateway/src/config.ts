@@ -30,12 +30,24 @@ export interface GatewayConfig {
   publicBaseUrl: string;
   rateLimitMax: number;
   rateLimitWindowMs: number;
+  rateLimitMaxKeys: number;
+  moladtTimeoutMs: number;
+  moladtMaxOutputBytes: number;
+  moladtMaxConcurrent: number;
 }
 
 function env(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
   if (value === undefined) {
     throw new Error(`missing required env ${name}`);
+  }
+  return value;
+}
+
+function positiveInteger(name: string, fallback: string, maximum = Number.MAX_SAFE_INTEGER): number {
+  const value = Number(env(name, fallback));
+  if (!Number.isSafeInteger(value) || value <= 0 || value > maximum) {
+    throw new Error(`${name} must be a positive integer no greater than ${maximum}`);
   }
   return value;
 }
@@ -57,7 +69,7 @@ export function loadConfig(): GatewayConfig {
   }
 
   return {
-    port: Number(env("PORT", "4021")),
+    port: positiveInteger("PORT", "4021", 65535),
     host: env("HOST", "0.0.0.0"),
     corsOrigin: env("CORS_ORIGIN", "*"),
     mode,
@@ -81,7 +93,11 @@ export function loadConfig(): GatewayConfig {
     revolutPaymentLink: process.env.REVOLUT_PAYMENT_LINK?.trim() || null,
     revolutNote: process.env.REVOLUT_NOTE?.trim() || null,
     publicBaseUrl: env("PUBLIC_BASE_URL", "http://127.0.0.1:4021"),
-    rateLimitMax: Number(env("RATE_LIMIT_MAX", "120")),
-    rateLimitWindowMs: Number(env("RATE_LIMIT_WINDOW_MS", "60000")),
+    rateLimitMax: positiveInteger("RATE_LIMIT_MAX", "120"),
+    rateLimitWindowMs: positiveInteger("RATE_LIMIT_WINDOW_MS", "60000", 2_147_483_647),
+    rateLimitMaxKeys: positiveInteger("RATE_LIMIT_MAX_KEYS", "10000"),
+    moladtTimeoutMs: positiveInteger("MOLADT_TIMEOUT_MS", "30000", 2_147_483_647),
+    moladtMaxOutputBytes: positiveInteger("MOLADT_MAX_OUTPUT_BYTES", "4194304"),
+    moladtMaxConcurrent: positiveInteger("MOLADT_MAX_CONCURRENT", "4"),
   };
 }

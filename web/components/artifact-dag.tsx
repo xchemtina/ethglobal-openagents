@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 
 export function ArtifactDAG() {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -24,8 +24,11 @@ export function ArtifactDAG() {
 
   return (
     <div className="relative w-full max-w-2xl mx-auto lg:mx-0">
+      <p className="text-center text-xs text-muted-foreground">Artifact flow illustration · optional settlement and storage adapters</p>
       <svg
         ref={svgRef}
+        role="img"
+        aria-label="Illustrative artifact lineage from structure through DFT result to optional settlement and storage"
         viewBox="0 0 620 200"
         className="w-full h-auto"
         style={{ minHeight: "200px" }}

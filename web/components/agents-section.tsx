@@ -24,17 +24,17 @@ export function AgentsSection() {
       <AgentCard
         icon={<Server className="w-5 h-5" />}
         title="HTTP + x402"
-        description="Primary interface. Discover SKUs at GET /v1/catalog, pay with HTTP 402 / PAYMENT-SIGNATURE, receive signed chem.molecule.adt or chem.dft.result JSON. No GUI required."
+        description="Discover SKUs at GET /v1/catalog and request chem.molecule.adt or cached chem.dft.result JSON. The HTTP 402 flow currently supports free or stub demonstrations."
       />
       <AgentCard
         icon={<Box className="w-5 h-5" />}
         title="SMILES & labels"
-        description="Inputs are machine strings: SMILES for MolADT, cache labels for gallery DFT. Geometry workers and live SCF stay behind the cashier — agents never draw."
+        description="Use SMILES for MolADT and cache labels for existing DFT results. New SCF jobs require a separate operator-run workflow."
       />
       <AgentCard
         icon={<Globe className="w-5 h-5" />}
-        title="ENS + settlement"
-        description="Service identity under chimiaclaw.eth / market.chimiaclaw.eth. Stub mode for integration; live USDC on Base when CHIMIA_X402_PAY_TO and facilitator are set."
+        title="Identity + future settlement"
+        description="ENS adapters support operator-configured identity. Verified payment and settlement are not yet connected; live mode fails closed."
       />
     </div>
   )

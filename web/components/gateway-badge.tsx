@@ -96,7 +96,7 @@ export function GatewayBadge({ className }: { className?: string }) {
           href={catalogUrl}
           target="_blank"
           rel="noreferrer"
-          title={`Open ${catalogUrl}`}
+          title={`Open catalog. API mode: ${mode}. Reachability does not verify payment settlement.`}
           className="flex items-center gap-2 px-3 py-1 transition-colors hover:bg-emerald-500/15"
         >
           <span
@@ -105,7 +105,7 @@ export function GatewayBadge({ className }: { className?: string }) {
               live ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground",
             )}
           />
-          <span>{live ? `API ${mode}` : "API offline"}</span>
+          <span>{live ? "API online" : "API offline"}</span>
           <ExternalLink className="size-3 opacity-70" />
         </a>
         <button

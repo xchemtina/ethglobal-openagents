@@ -1,50 +1,48 @@
-# DFT.xyz web (ChimiaDAO science market)
+# ChimiaDAO science cashier web
 
-Next.js landing dropped from Vercel/v0 into this monorepo.
-
-**Customers:** agents and other machines first. Humans get the same cashier for demos and ops.
-
-**Brand note:** ChimiaDAO / ChimiaClaw product face. `DFT.xyz` = HTTP 402 science marketplace (SMILES/label → signed artifact → stub or USDC). Ship at `dft.xyz` or `chimiadao.io/agents`.
-
-**Not building:** draw-to-structure / image OCR as a product path. Optional human UI may exist later; it is not on the critical path.
+Next.js frontend for the OpenAgents gateway: SMILES to MolADT geometry, cached DFT
+results, artifact browsing, and operator-fulfilled human checkout. Live DFT and
+verified USDC settlement are unavailable. Challenge and escrow interfaces are
+explicit previews.
 
 ## Quick start
 
-```bash
-# Terminal A — cashier
-cd services/api-gateway
-export X402_MODE=stub CHIMIACLAW_CLI=../../target/debug/chimiaclaw-cli
-export DFT_CACHE_DIR=../../demo/dft
-npm run dev
+From the repository root, build the Rust CLI and start the gateway using its
+[README](../services/api-gateway/README.md). In a separate terminal:
 
-# Terminal B — site
+```sh
 cd web
-cp .env.example .env.local   # NEXT_PUBLIC_API_BASE=http://127.0.0.1:4021
-pnpm install   # or npm install
-pnpm dev       # http://localhost:3000
+cp .env.example .env.local
+npm ci
+npm run dev
 ```
 
-## Gateway contract
+The default API is `http://127.0.0.1:4021`; the site runs at
+`http://localhost:3000`. Set `NEXT_PUBLIC_API_BASE` before building to select a
+configured gateway. No public deployment is implied by these local commands.
 
-See [`README.contract.md`](README.contract.md) and [`docs/X402.md`](../docs/X402.md).
+## Verification
 
-| UI need | API |
-|---------|-----|
-| Health badge | `GET /health` |
-| SKU grid | `GET /v1/catalog` |
-| Cached DFT labels | `GET /v1/dft/index` |
-| MolADT try (stub pay) | `POST /v1/moladt` + `PAYMENT-SIGNATURE: stub` |
+Use Node 22.6 or later and the committed npm lockfile:
 
-Wired today:
+```sh
+npm test
+npm run typecheck
+npm run build
+```
 
-- Header **API badge** (`GatewayBadge`)
-- **Service catalog** section (`ServiceCatalog`)
-- **Molecule ticker** prefers live DFT index; falls back to real Olympus gallery + Ge + Sn evidence
-- **Cashier** (`#cashier`): MolADT SMILES + cached DFT label buys (`PAYMENT-SIGNATURE: stub`)
-- **Agent curl panel** with live `NEXT_PUBLIC_API_BASE` endpoints
+The production build checks TypeScript. Checkout-link tests reject executable,
+insecure, relative, malformed, and credential-bearing destinations without making
+network calls. There is no configured ESLint task.
 
-Deferred / non-goals: draw-to-structure, image OCR. Still demo: challenge fixtures, live facilitator wallet settle.
+## Gateway integration
 
-## Source drop
+See the [frontend contract](README.contract.md) for endpoints and payment modes.
+The API badge checks reachability; it does not validate scientific results or
+payment settlement. Gallery visuals are projections of archived evidence.
 
-Original export also kept at `../dft-xyz-landing-page/` if you need to re-diff the Vercel package.
+Challenge previews remain in browser memory and are discarded on close. They do
+not need a wallet, submit work, collect a bond, or schedule computation.
+
+The original design export in `../dft-xyz-landing-page/` is a historical reference;
+`web/` is the maintained frontend.

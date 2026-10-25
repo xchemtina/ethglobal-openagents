@@ -1,5 +1,7 @@
 # Next steps
 
+> The dated deployment checklist below is historical. Current priorities: independently verify cached artifact signatures; implement verified payment settlement before enabling live x402; qualify fulfillment and worker limits with an operator-owned deployment. See [the source review](reviews/20261025/REVIEW.md).
+
 This is the near-term build order after the current scaffold.  
 Companion snapshot: [`docs/SUMMARY.md`](./SUMMARY.md).
 

@@ -49,7 +49,7 @@ export function AgentApiPanel() {
             FOR AGENTS
           </p>
           <h3 className="text-xl font-semibold text-foreground">
-            Cashier API (live contract)
+            Cashier API contract
           </h3>
         </div>
         <div className="font-mono text-[11px] text-muted-foreground">

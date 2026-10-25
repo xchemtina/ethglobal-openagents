@@ -55,7 +55,7 @@ export const SAMPLE_CHALLENGES: Challenge[] = [
     bondAmount: 50,
     status: 'computing',
     discrepancyThreshold: DISCREPANCY_THRESHOLD,
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    createdAt: '2026-07-12T00:00:00.000Z',
   },
 ]
 

@@ -453,6 +453,11 @@ mod live {
             input: &DftWorkerInput,
             cube_out_dir: Option<&Path>,
         ) -> Result<DftResult, DftSkalaError> {
+            if input.request.molecule.molecule_id != input.molecule_adt.molecule_id {
+                return Err(DftSkalaError::Parse(
+                    "request and input molecule identities differ".to_string(),
+                ));
+            }
             let input_json = serde_json::to_vec(input)
                 .map_err(|error| DftSkalaError::Parse(error.to_string()))?;
             let mut child = Command::new(&self.program)
@@ -485,6 +490,14 @@ mod live {
                     expected: DFT_RESULT_TAG.to_string(),
                     found: worker_result.schema_tag,
                 });
+            }
+
+            if worker_result.request_id != input.request.request_id
+                || worker_result.molecule_id != input.request.molecule.molecule_id
+            {
+                return Err(DftSkalaError::Parse(
+                    "worker response identity does not match the request".to_string(),
+                ));
             }
 
             let mut orbital_densities = Vec::new();
@@ -520,16 +533,28 @@ mod live {
                             bytes.len()
                         )));
                     }
-                    let safe_label = cube.label.replace(['/', ' '], "_");
-                    let stem = format!(
-                        "{}_{}_{}",
-                        worker_result.molecule_id,
-                        safe_label,
-                        &local_sha[..16]
-                    );
+                    // Worker-controlled identifiers are metadata, never path components.
+                    let binding = serde_json::to_vec(&(
+                        &input.request.request_id,
+                        &worker_result.molecule_id,
+                        &cube.label,
+                        &local_sha,
+                    ))
+                    .map_err(|error| DftSkalaError::Parse(error.to_string()))?;
+                    let stem = chimiaclaw_artifact::blake3_hex(&binding);
                     let path = dir.join(format!("{stem}.cube"));
-                    fs::write(&path, &bytes)
-                        .map_err(|error| DftSkalaError::Io(format!("write cube: {error}")))?;
+                    let mut file = fs::OpenOptions::new()
+                        .write(true)
+                        .create_new(true)
+                        .open(&path)
+                        .map_err(|error| {
+                            DftSkalaError::Io(format!("create cube without overwrite: {error}"))
+                        })?;
+                    if let Err(error) = file.write_all(&bytes).and_then(|()| file.sync_all()) {
+                        drop(file);
+                        let _ = fs::remove_file(&path);
+                        return Err(DftSkalaError::Io(format!("write cube: {error}")));
+                    }
                     orbital_densities.push(OrbitalDensity {
                         label: cube.label.clone(),
                         sha256: cube.sha256.clone(),
@@ -562,6 +587,150 @@ mod live {
         }
     }
 
+    #[cfg(all(test, unix))]
+    mod boundary_tests {
+        use super::*;
+        use crate::WorkerOrbitalCube;
+
+        fn fixture() -> (DftWorkerInput, WorkerDftResult) {
+            let (_, request) = crate::tests::fixture_request();
+            let result = crate::tests::fixture_converged_result(&request);
+            let worker: WorkerDftResult =
+                serde_json::from_value(serde_json::to_value(result).expect("serialize"))
+                    .expect("worker result");
+            (
+                DftWorkerInput::new(request, chimiaclaw_moladt::demo_ferrocene_moladt()),
+                worker,
+            )
+        }
+
+        fn temp_dir() -> PathBuf {
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static NEXT: AtomicU64 = AtomicU64::new(0);
+            let dir = std::env::temp_dir().join(format!(
+                "dft-boundary-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir(&dir).expect("temporary directory");
+            dir
+        }
+
+        fn fake_worker(dir: &Path, response: &WorkerDftResult) -> DftWorkerCommandConfig {
+            let response_path = dir.join("response.json");
+            fs::write(
+                &response_path,
+                serde_json::to_vec(response).expect("serialize"),
+            )
+            .expect("write fixture");
+            DftWorkerCommandConfig {
+                program: PathBuf::from("/bin/sh"),
+                program_args: vec![
+                    "-c".to_string(),
+                    "cat >/dev/null; cat \"$1\"".to_string(),
+                    "fake-worker".to_string(),
+                    response_path.to_string_lossy().into_owned(),
+                ],
+            }
+        }
+
+        fn with_cube(response: &mut WorkerDftResult) {
+            let bytes = b"fixture cube bytes; not a scientific calculation";
+            response.orbital_cubes.push(WorkerOrbitalCube {
+                label: "../../HOMO".to_string(),
+                sha256: hex_lower(&Sha256::digest(bytes)),
+                bytes: bytes.len() as u64,
+                grid_resolution: 1,
+                worker_path: "/worker/untrusted".to_string(),
+                bytes_base64: BASE64_STANDARD.encode(bytes),
+            });
+        }
+
+        #[test]
+        fn mismatched_worker_identities_are_rejected_before_creating_cube_directory() {
+            for change_request in [false, true] {
+                let dir = temp_dir();
+                let (input, mut response) = fixture();
+                with_cube(&mut response);
+                if change_request {
+                    response.request_id = "different-request".to_string();
+                } else {
+                    response.molecule_id = "../outside".to_string();
+                }
+                let worker = fake_worker(&dir, &response);
+                let cubes = dir.join("cubes");
+                assert!(matches!(
+                    worker.invoke(&input, Some(&cubes)),
+                    Err(DftSkalaError::Parse(_))
+                ));
+                assert!(!cubes.exists());
+                fs::remove_dir_all(&dir).expect("cleanup");
+            }
+        }
+
+        #[test]
+        fn matching_identifiers_cannot_escape_cube_directory_or_overwrite_output() {
+            let dir = temp_dir();
+            let (mut input, mut response) = fixture();
+            let malicious_id = "../../outside";
+            input.request.molecule.molecule_id = malicious_id.to_string();
+            input.molecule_adt.molecule_id = malicious_id.to_string();
+            response.molecule_id = malicious_id.to_string();
+            with_cube(&mut response);
+            let worker = fake_worker(&dir, &response);
+            let cubes = dir.join("cubes");
+            let result = worker
+                .invoke(&input, Some(&cubes))
+                .expect("safe materialization");
+            let path = Path::new(&result.orbital_densities[0].local_path);
+            assert_eq!(path.parent(), Some(cubes.as_path()));
+            assert_eq!(path.file_stem().expect("stem").len(), 64);
+            let bytes = fs::read(path).expect("read");
+            assert!(matches!(
+                worker.invoke(&input, Some(&cubes)),
+                Err(DftSkalaError::Io(_))
+            ));
+            assert_eq!(fs::read(path).expect("read unchanged"), bytes);
+            fs::remove_dir_all(&dir).expect("cleanup");
+        }
+
+        #[test]
+        fn cube_symlink_is_never_overwritten_or_followed() {
+            use std::os::unix::fs::symlink;
+            let dir = temp_dir();
+            let (input, mut response) = fixture();
+            with_cube(&mut response);
+            let worker = fake_worker(&dir, &response);
+            let cubes = dir.join("cubes");
+            let result = worker.invoke(&input, Some(&cubes)).expect("first write");
+            let path = Path::new(&result.orbital_densities[0].local_path);
+            fs::remove_file(path).expect("remove");
+            let target = dir.join("external");
+            fs::write(&target, b"preserved").expect("target");
+            symlink(&target, path).expect("link");
+            assert!(matches!(
+                worker.invoke(&input, Some(&cubes)),
+                Err(DftSkalaError::Io(_))
+            ));
+            assert_eq!(fs::read(&target).expect("target"), b"preserved");
+            fs::remove_dir_all(&dir).expect("cleanup");
+        }
+
+        #[test]
+        fn mismatched_input_is_rejected_before_worker_launch() {
+            let (mut input, _) = fixture();
+            input.molecule_adt.molecule_id = "different-molecule".to_string();
+            let worker = DftWorkerCommandConfig {
+                program: PathBuf::from("/nonexistent-worker"),
+                program_args: Vec::new(),
+            };
+            assert!(matches!(
+                worker.invoke(&input, None),
+                Err(DftSkalaError::Parse(_))
+            ));
+        }
+    }
+
     fn hex_lower(bytes: &[u8]) -> String {
         let mut out = String::with_capacity(bytes.len() * 2);
         for byte in bytes {
@@ -590,7 +759,7 @@ mod tests {
         AgentId("dft.worker.chimiaclaw.eth".to_string())
     }
 
-    fn fixture_request() -> (Artifact, DftRequest) {
+    pub(super) fn fixture_request() -> (Artifact, DftRequest) {
         let molecule = demo_ferrocene_moladt();
         let mol_artifact =
             molecule_artifact(&molecule, agent(), &signer(), 1).expect("molecule artifact");
@@ -619,7 +788,7 @@ mod tests {
         (req_artifact, request)
     }
 
-    fn fixture_converged_result(request: &DftRequest) -> DftResult {
+    pub(super) fn fixture_converged_result(request: &DftRequest) -> DftResult {
         DftResult {
             schema_tag: DFT_RESULT_TAG.to_string(),
             request_id: request.request_id.clone(),

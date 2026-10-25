@@ -1,5 +1,7 @@
 # ChimiaClaw / OpenAgents — Summary
 
+> Historical snapshot. For the 2026-10-25 source review, fixes, and current verification limits, see [REVIEW.md](reviews/20261025/REVIEW.md). Live payment header presence is no longer authorization.
+
 **Date:** 2026-07-12  
 **Repo root:** monorepo at OpenAgents (Rust core + HTTP cashier + Next.js market + workers + evidence)
 

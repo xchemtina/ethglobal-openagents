@@ -55,7 +55,7 @@ export function MoladtTry() {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <p className="font-mono text-xs tracking-[0.15em] text-primary">
-            LIVE STUB CASHIER
+            GEOMETRY DEMO · NO FUNDS
           </p>
           <h3 className="text-lg font-semibold text-foreground">
             Try MolADT via x402
@@ -88,7 +88,7 @@ export function MoladtTry() {
           ) : (
             <Sparkles className="size-4" />
           )}
-          Pay stub $0.01
+          Request demo geometry
         </Button>
       </form>
       {error && (

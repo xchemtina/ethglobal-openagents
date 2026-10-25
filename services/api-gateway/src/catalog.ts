@@ -13,7 +13,7 @@ export interface ServiceSku {
   estimated_latency_seconds: number;
   network: string;
   mime_type: string;
-  status: "live" | "coming_soon";
+  status: "live" | "unavailable" | "coming_soon";
 }
 
 export interface PublicCatalog {
@@ -56,7 +56,7 @@ export function buildCatalog(config: GatewayConfig): PublicCatalog {
         estimated_latency_seconds: 5,
         network,
         mime_type: "application/json",
-        status: "live",
+        status: config.mode === "live" ? "unavailable" : "live",
       },
       {
         sku_id: "literature.synthesis",
@@ -87,7 +87,7 @@ export function buildCatalog(config: GatewayConfig): PublicCatalog {
         estimated_latency_seconds: 2,
         network,
         mime_type: "application/json",
-        status: "live",
+        status: config.mode === "live" ? "unavailable" : "live",
       },
       {
         sku_id: "dft.live_small",
@@ -107,14 +107,14 @@ export function buildCatalog(config: GatewayConfig): PublicCatalog {
       },
     ],
     agent_notes: [
-      "Unauthenticated calls to paid routes receive HTTP 402 with payment requirements.",
-      "Retry with PAYMENT-SIGNATURE after settling USDC via x402.",
+      "In stub mode, paid routes return HTTP 402 until the stub header is supplied.",
+      "Live x402 is unavailable: paid routes return HTTP 503 and do not accept payments.",
       "In stub mode, send header PAYMENT-SIGNATURE: stub (no funds moved).",
       "Successful responses include a signed ChimiaClaw artifact as the payload of record.",
     ],
     human_notes: [
       "This catalog powers the public website and agent discovery.",
-      "pay_to must be a DAO-controlled Base address before enabling live mode.",
+      "A treasury address alone does not enable live payments; facilitator verification and settlement remain unimplemented.",
       "Website is a projection; signed artifacts remain the source of truth.",
     ],
   };

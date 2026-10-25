@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   apiBase,
-  fetchMoladtStub,
   displayMode,
 } from "@/lib/api-gateway";
 import { MoladtTry } from "@/components/moladt-try";
@@ -72,9 +71,9 @@ export function AgentCashier() {
         </h3>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
           Machines are the customers. There is no draw-to-structure dependency.
-          POST JSON (or GET cached DFT by label), settle with{" "}
-          <code className="text-foreground">PAYMENT-SIGNATURE</code> (stub now,
-          USDC later), receive a content-addressed result. Mode:{" "}
+          POST JSON (or GET cached DFT by label) with{" "}
+          <code className="text-foreground">PAYMENT-SIGNATURE: stub</code> to
+          exercise the demo without payment. Live settlement is unavailable. Display mode:{" "}
           <span className="text-primary">{displayMode()}</span> · base{" "}
           <code className="text-foreground">{apiBase()}</code>
         </p>
@@ -85,10 +84,10 @@ export function AgentCashier() {
 
         <div className="rounded-xl border border-border bg-card/50 p-5">
           <p className="font-mono text-xs tracking-[0.15em] text-primary">
-            CACHED DFT · $0.05 STUB
+            CACHED DFT · NO-FUNDS DEMO
           </p>
           <h3 className="mt-1 text-lg font-semibold text-foreground">
-            Buy a signed chem.dft.result
+            Retrieve a cached chem.dft.result
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Labels from the Olympus gallery:{" "}
@@ -115,7 +114,7 @@ export function AgentCashier() {
               className="gap-2"
             >
               {dftLoading && <Loader2 className="size-4 animate-spin" />}
-              Pay stub
+              Request demo result
             </Button>
           </form>
           {dftError && (

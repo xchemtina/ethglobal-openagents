@@ -3,6 +3,13 @@
 **Rust-native signed artifact DAG for autonomous scientific agents**  
 ChimiaDAO substrate · agentic DFT cashier · EthGlobal OpenAgents lineage
 
+**Review checkpoint (2026-10-25):** this branch hardens artifact verification, file storage,
+DFT response identity, cashier boundaries, and the preview UI. Live x402 settlement is
+unavailable and fails closed; live DFT remains disabled. Challenge screens are local
+previews. The July deployment notes below are historical, not a current uptime check.
+See [the review](docs/reviews/20261025/REVIEW.md) and its
+[typeset companion](docs/reviews/20261025/REVIEW.pdf) for checks and remaining work.
+
 Showcase (EthGlobal): https://ethglobal.com/showcase/sciclaw-x-dao-igcz8
 
 Every scientific action, agent decision, payment, and governance event becomes an **immutable signed artifact** in a verifiable DAG.
@@ -51,7 +58,7 @@ cargo run -p chimiaclaw-cli -- moladt-api --smiles c1ccccc1 --no-worker
 ```bash
 cd services/api-gateway
 cp .env.example .env   # set STRIPE_PAYMENT_LINK_* , DFT_CACHE_DIR, etc.
-npm install
+npm ci
 npm start              # http://127.0.0.1:4021
 ```
 
@@ -67,11 +74,11 @@ curl -s 'http://127.0.0.1:4021/v1/dft/cached?label=water' \
 ```bash
 cd web
 cp .env.example .env.local   # NEXT_PUBLIC_API_BASE=http://127.0.0.1:4021
-npm install
+npm ci
 npm run dev                  # http://127.0.0.1:3000
 ```
 
-Production: Vercel project `web` · custom host `dft.chimiadao.io` (Porkbun DNS).
+Historical deployment target: Vercel project `web`, host `dft.chimiadao.io`. Deployment and DNS were not revalidated in this source review.
 
 ---
 
@@ -79,13 +86,13 @@ Production: Vercel project `web` · custom host `dft.chimiadao.io` (Porkbun DNS)
 
 | Who | How they pay | What they get |
 |-----|--------------|---------------|
-| **Agents** | x402 stub / live HTTP 402 | Signed `chem.molecule.adt` / `chem.dft.result` |
+| **Agents** | Explicit free/stub mode; live unavailable | Signed `chem.molecule.adt` / `chem.dft.result` |
 | **Humans** | Stripe Payment Link, Revolut | Same SKUs after operator fulfillment |
 | **Operators** | Olympus / Modal | Live DFT (gated), cube gallery |
 
 **Not a product:** draw→structure UI. Machines POST SMILES or cache labels.
 
-Live SKUs (gateway):
+Implemented SKUs (gateway; availability depends on mode):
 
 1. `moladt.geometry` — SMILES → signed MolADT  
 2. `dft.cached_result` — label → signed gallery DFT (water…capric acid)  

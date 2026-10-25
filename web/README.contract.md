@@ -1,95 +1,56 @@
-# ChimiaDAO public website (frontend)
+# Frontend and gateway contract
 
-**Canonical brand site:** [https://www.chimiadao.io](https://www.chimiadao.io)  
-Next.js on Vercel (`v0.app` stack). That is the human front door for the DAO — not a second OpenAgents-branded site.
+`web/` is the Next.js science cashier. It reads the gateway selected by
+`NEXT_PUBLIC_API_BASE`; source code and a successful build do not establish that a
+public deployment is online.
 
-## Recommended integration model
+## Current routes
 
-Do **not** launch a separate public product domain for ChimiaClaw/OpenAgents. Fold the agentic market into the existing ChimiaDAO brand:
+| UI surface | Gateway request |
+|---|---|
+| Reachability badge | `GET /health` |
+| Service catalog | `GET /v1/catalog` |
+| Payment configuration | `GET /v1/payment-methods` |
+| Cached result index | `GET /v1/dft/index` |
+| Molecular geometry | `POST /v1/moladt` with `{ "smiles": "O", "no_worker": true }` |
+| Existing DFT result | `GET /v1/dft/cached?label=water` |
+| Human checkout | `POST /v1/checkout` with `sku_id` and `method` |
+| Agent contract | `GET /openapi.json`, `GET /.well-known/x402` |
 
-| Surface | URL | Role |
-|---------|-----|------|
-| DAO home / narrative | `https://www.chimiadao.io` | Existing site (mission, story, trust) |
-| Science market (humans) | `https://www.chimiadao.io/agents` (or `/market`) | Catalog, try MolADT, proof gallery, “for agents” |
-| Cashier API (agents) | `https://api.chimiadao.io` (or Vercel rewrite to gateway) | x402 + signed artifacts |
+## Payment and execution boundaries
 
-**Why this shape**
+- In `stub` mode, artifact requests without `PAYMENT-SIGNATURE: stub` receive
+  HTTP 402. This header exercises a demo flow and does not prove payment.
+- In `free` mode, the gateway allows requests without payment.
+- In `live` mode, artifact requests fail closed with HTTP 503 until verified
+  payment and settlement are implemented. Setting an environment variable or
+  connecting a wallet cannot enable settlement.
+- Live DFT execution remains unavailable (HTTP 501). A cached result request
+  retrieves existing evidence; it does not schedule a new calculation.
+- Stripe/Revolut configuration is reported by the gateway. Human payments require
+  operator fulfillment. The frontend offers an explicit HTTPS link after a
+  successful checkout response and does not claim a payment has completed.
+- Payment links are public configuration; private keys and provider secrets stay
+  outside the frontend.
 
-- One brand, one SEO surface, one design system (cyan/purple/pink HUD already matches SciCrucible / world-map aesthetics).
-- Marketing site stays light; heavy science/payment stays on the gateway.
-- You can ship `/agents` in **stub / free** mode without a treasury address; only `api` needs `pay_to` for live USDC later.
+## Demonstration content
 
-## How to land the current Vercel site in this monorepo (optional)
+Challenge cards are fixed sample fixtures. The challenge dialog operates only in
+local React state: no submission, payment, worker dispatch, or notification occurs.
+Settlement diagrams illustrate proposed adapters. Archived gallery projections
+must remain distinct from new computations and cryptographic verification.
 
-If you want the site source next to OpenAgents:
+## Local configuration and checks
 
-1. Export / clone the chimiadao.io Vercel project.
-2. Drop it into this `web/` folder **or** keep it in its own repo and only copy the integration contract below.
-3. Add route(s) `/agents` (catalog + demo) wired to the gateway.
-4. Point env vars at the API gateway (see `.env.example`).
-5. Keep `www` on Vercel; host `services/api-gateway` on Railway / Fly / a small VPS, then CNAME `api.chimiadao.io`.
+See `.env.example` and [`README.md`](README.md). Use Node 22.6 or later.
 
-If the site stays in a separate repo, still use the same paths and env names so agents and humans share one discovery story.
-
-## Integration contract (do not break)
-
-### Free routes (site can call anytime)
-
-| Site need | Gateway |
-|-----------|---------|
-| Service catalog / pricing table | `GET {NEXT_PUBLIC_API_BASE}/v1/catalog` |
-| x402 discovery | `GET {NEXT_PUBLIC_API_BASE}/.well-known/x402` |
-| Health | `GET {NEXT_PUBLIC_API_BASE}/health` |
-| DFT cache index (free) | `GET {NEXT_PUBLIC_API_BASE}/v1/dft/index` |
-
-### Paid routes (agentic cashier)
-
-| Site need | Gateway |
-|-----------|---------|
-| MolADT geometry | `POST {NEXT_PUBLIC_API_BASE}/v1/moladt` body `{ "smiles": "c1ccccc1" }` |
-| Cached DFT result | `GET {NEXT_PUBLIC_API_BASE}/v1/dft/cached?label=water` |
-
-- Without payment → **HTTP 402** + `PAYMENT-REQUIRED` header / body `accepts[]`.
-- Stub demo → retry with header `PAYMENT-SIGNATURE: stub`.
-- Live → real x402 client / wallet flow.
-
-### Design surfaces to include (minimum)
-
-1. **Hero** — ChimiaClaw thesis: signed science → agentic market → DAO treasury.
-2. **Service catalog** — render `/v1/catalog` SKUs with price + status.
-3. **Try MolADT** — SMILES input; show 402 then paid result / artifact id.
-4. **Proof gallery** — link or embed existing DFT / world-map assets from `demo/` or static copies.
-5. **For agents** — curl examples + link to `/.well-known/x402`.
-6. **DAO strip** — `pay_to` address, network, “no silent fund movement” honesty.
-
-### Env vars
-
-See `.env.example`:
-
-- `NEXT_PUBLIC_API_BASE` — e.g. `http://127.0.0.1:4021` or production gateway URL
-- `NEXT_PUBLIC_X402_MODE` — informational badge (`stub` / `live`)
-- `NEXT_PUBLIC_PAY_TO` — display treasury address (should match gateway)
-
-## Placeholder shell
-
-Until the Vercel design lands, a minimal Next placeholder can be scaffolded with:
-
-```bash
-cd web
-npx create-next-app@14 . --typescript --eslint --app --src-dir=false --import-alias "@/*"
-# then wire fetch to NEXT_PUBLIC_API_BASE
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run build
 ```
 
-Or simply open the gateway catalog in the browser while you transfer the design:
-
-```text
-http://127.0.0.1:4021/v1/catalog
-```
-
-## What stays out of the website
-
-- Private keys, facilitator secrets, worker credentials
-- Live DFT free-run (must stay gated)
-- Inventing science state not backed by signed artifacts
-
-The dashboard doctrine still holds: **the site is a projection; the artifact DAG is truth.**
+Production builds enforce TypeScript checks. Fonts use the existing CSS system
+font stack, so builds do not fetch Google Fonts. `npm test` checks navigation URL
+safety; it does not contact a payment provider.

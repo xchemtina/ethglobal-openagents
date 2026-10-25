@@ -2,12 +2,14 @@
   "name": "@chimiaclaw/dft-xyz-web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "DFT.xyz / ChimiaDAO science-market landing (Next.js) — talks to services/api-gateway",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

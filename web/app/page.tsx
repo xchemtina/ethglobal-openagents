@@ -51,7 +51,7 @@ export default function Home() {
               trigger={
                 <Button variant="ghost" size="sm" className="hidden lg:flex gap-2">
                   <Shield className="size-4" />
-                  Challenge
+                  Preview
                 </Button>
               }
             />
@@ -75,12 +75,12 @@ export default function Home() {
                 AGENTIC DFT CASHIER · CHIMIADAO
               </p>
               <p className="mb-5 text-balance text-3xl font-medium leading-tight text-foreground md:text-4xl">
-                Agents POST SMILES. We return signed DFT.
+                Signed molecular geometry. Cached DFT evidence.
               </p>
 
               <p className="mb-8 max-w-xl text-pretty leading-relaxed text-muted-foreground">
-                Primary customers are machines: HTTP catalog, x402 payment, content-addressed artifacts.
-                No drawing board required. Humans can inspect the same cashier; agents integrate with curl.
+                POST SMILES for a MolADT artifact, or request an existing DFT result by label.
+                Agents and humans use the same catalog. New DFT jobs and live USDC settlement are unavailable.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -99,7 +99,7 @@ export default function Home() {
               </div>
               <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs text-muted-foreground">
                 <span>SMILES / labels</span>
-                <span>HTTP 402 · stub→live USDC</span>
+                <span>HTTP 402 · payment demo</span>
                 <span>Signed artifacts</span>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function Home() {
               </h2>
             </div>
             <p className="max-w-sm text-pretty text-sm leading-relaxed text-muted-foreground">
-              Stub payments prove the loop today. Live mode flips facilitator + DAO pay_to — not a sketch UI.
+              Stub mode exercises the request flow without moving funds. Live payment verification is not implemented.
             </p>
           </div>
           <AgentCashier />
@@ -140,10 +140,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Agent Identity Meets Wallet Settlement
+              Signed Artifacts and Agent Identity
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Every computation is traceable from ENS identity through signed artifact to wallet payment
+              Artifact signatures record provenance. Identity and settlement diagrams show the wider system design.
             </p>
           </div>
 
@@ -153,20 +153,22 @@ export default function Home() {
             <div className="p-6 rounded-lg border border-border/50 bg-card/30">
               <h4 className="font-semibold text-foreground mb-2">Discoverable</h4>
               <p className="text-sm text-muted-foreground">
-                Find agents via ENS. <code className="text-primary">chimiaclaw.eth</code> resolves
-                to capabilities, public keys, and service endpoints.
+                ENS identity adapters can publish capabilities, public keys, and service endpoints
+                when configured by an operator.
               </p>
             </div>
             <div className="p-6 rounded-lg border border-border/50 bg-card/30">
               <h4 className="font-semibold text-foreground mb-2">Verifiable</h4>
               <p className="text-sm text-muted-foreground">
-                Every result is signed with ed25519. Verify provenance without trusting the operator.
+                Ed25519 signatures can verify artifact integrity and signer identity.
+                Scientific validity still requires review.
               </p>
             </div>
             <div className="p-6 rounded-lg border border-border/50 bg-card/30">
-              <h4 className="font-semibold text-foreground mb-2">Settleable</h4>
+              <h4 className="font-semibold text-foreground mb-2">Operator Fulfillment</h4>
               <p className="text-sm text-muted-foreground">
-                Pay in USDC via your connected wallet. Escrow holds funds until computation completes.
+                Configured Stripe or Revolut payments require operator fulfillment.
+                Connecting a wallet does not enable escrow or USDC payment here.
               </p>
             </div>
           </div>
@@ -178,10 +180,10 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              How Settlement Works
+              Proposed Settlement Flow
             </h2>
             <p className="text-muted-foreground">
-              From quote to payment — all through your wallet
+              Architecture preview. This site does not execute these transactions.
             </p>
           </div>
 
@@ -191,21 +193,21 @@ export default function Home() {
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
               <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                 <Wallet className="size-5" />
-                USDC Settlement
+                Planned USDC Settlement
               </h4>
               <p className="text-sm text-muted-foreground">
-                Prices quoted in real-time via Uniswap V4 CLASSIC routing. 
-                No volatile tokens — stable settlement in USDC.
+                Verified USDC settlement needs a payment adapter and settlement receipts.
+                The current gateway rejects live payment requests.
               </p>
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-6">
               <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
                 <Shield className="size-5" />
-                Escrow Protection
+                Escrow Design
               </h4>
               <p className="text-sm text-muted-foreground">
-                Funds held in smart contract escrow until computation completes.
-                Challenge results if you disagree.
+                Contract scaffolds describe a possible escrow workflow.
+                This interface does not deposit funds or enforce dispute resolution.
               </p>
             </div>
           </div>
@@ -217,11 +219,11 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Challenge Any Calculation
+              Explore a Challenge Preview
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Connect your wallet and stake USDC to challenge suspicious results.
-              If a discrepancy is found, you win the original operator&apos;s stake.
+              Walk through an example review using sample results.
+              No challenge is submitted, no funds move, and no calculation is launched.
             </p>
           </div>
 
@@ -230,7 +232,7 @@ export default function Home() {
               trigger={
                 <Button size="lg" className="gap-2">
                   <Shield className="size-5" />
-                  Challenge a Calculation
+                  Open Local Preview
                 </Button>
               }
             />
@@ -238,7 +240,7 @@ export default function Home() {
 
           {SAMPLE_CHALLENGES.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Active Challenges</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Illustrative Challenge Fixture</h3>
               <div className="grid gap-4">
                 {SAMPLE_CHALLENGES.map((challenge) => (
                   <ChallengeCard key={challenge.id} challenge={challenge} />
@@ -256,7 +258,7 @@ export default function Home() {
             The Computation Pipeline
           </h2>
           <p className="text-muted-foreground text-center mb-6 max-w-2xl mx-auto">
-            Every step produces a signed artifact — from input to anchored result
+            Operator-run workers produce signed artifacts. The cashier serves geometry and existing results.
           </p>
 
           {/* DFT Explainer - collapsible */}
@@ -268,7 +270,7 @@ export default function Home() {
             <PipelineCard
               step={1}
               title="Input"
-              description="Drawn or imaged structure → validated geometry"
+              description="SMILES input for molecular geometry"
             />
             <PipelineCard
               step={2}
@@ -278,7 +280,7 @@ export default function Home() {
             <PipelineCard
               step={3}
               title="DFT"
-              description="PySCF quantum chemistry computation"
+              description="Operator-run PySCF computation"
             />
             <PipelineCard
               step={4}
@@ -288,12 +290,12 @@ export default function Home() {
             <PipelineCard
               step={5}
               title="Settlement"
-              description="Uniswap quote → wallet payment"
+              description="Settlement adapter under development"
             />
             <PipelineCard
               step={6}
               title="Anchor"
-              description="0G Storage + on-chain hash"
+              description="Optional operator-configured storage"
               isLast
             />
           </div>
@@ -307,14 +309,14 @@ export default function Home() {
             Real Computations. Real Artifacts.
           </h2>
           <p className="text-muted-foreground text-center mb-10">
-            Live results from our autonomous DFT pipeline
+            Archived results and visual projections from the repository; this page does not run new calculations.
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard value="30+" label="DFT Results" sublabel="SCF-converged, signed" />
-            <StatCard value="14" label="Molecules" sublabel="Computed overnight" />
-            <StatCard value="12+" label="0G Anchors" sublabel="On-chain commitments" />
-            <StatCard value="$115.50" label="Batch Quote" sublabel="Live Uniswap pricing" isPrice />
+            <StatCard value="MolADT" label="Geometry artifacts" sublabel="SMILES input" />
+            <StatCard value="DFT" label="Cached results" sublabel="Availability from API index" />
+            <StatCard value="Ed25519" label="Artifact signatures" sublabel="Integrity and provenance" />
+            <StatCard value="Preview" label="Settlement and challenges" sublabel="No on-site execution" />
           </div>
         </div>
 
@@ -344,7 +346,7 @@ export default function Home() {
             Built for Agent-to-Agent Commerce
           </h2>
           <p className="text-muted-foreground text-center mb-10">
-            Discover, compute, and settle — all programmatically
+            Discover the catalog and retrieve artifacts programmatically. Settlement remains under development.
           </p>
 
           <AgentsSection />
@@ -416,7 +418,7 @@ export default function Home() {
             {/* Links */}
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://github.com/ChimiaDAO/OpenAgents"
+                href="https://github.com/xchemtina/ethglobal-openagents"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"

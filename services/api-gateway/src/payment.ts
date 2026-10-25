@@ -30,7 +30,7 @@ export interface PaymentGateOptions {
 
 /**
  * Minimal x402-compatible gate for free/stub modes.
- * Live mode can be upgraded to official @x402/express middleware when packages are installed.
+ * Live mode fails closed until facilitator verification and settlement are implemented.
  */
 export function paymentGate(config: GatewayConfig, options: PaymentGateOptions) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -65,21 +65,13 @@ export function paymentGate(config: GatewayConfig, options: PaymentGateOptions) 
       return;
     }
 
-    // live mode — without full @x402 middleware, require an explicit signature header
-    // and mark verification as "header-present" for operator follow-up.
-    // Prefer installing @x402/express and wiring facilitator verification.
-    if (!signature || signature === "stub") {
-      send402(res, config, options);
-      return;
-    }
-
-    res.locals.x402 = {
-      mode: "live",
-      verified: true,
-      paymentSignature: signature.slice(0, 256),
-      verification: "header-present-operator-must-enable-facilitator",
-    };
-    next();
+    // A header is not proof of payment. Until verification AND settlement are
+    // wired, live mode must not dispatch work or return a paid artifact.
+    res.status(503).json({
+      error: "live_payment_unavailable",
+      message: "Live x402 verification and settlement are not implemented. No payment was accepted.",
+      payment_methods: "/v1/payment-methods",
+    });
   };
 }
 
