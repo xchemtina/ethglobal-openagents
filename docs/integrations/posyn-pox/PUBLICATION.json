@@ -1,0 +1,30 @@
+{
+  "schema": "openagents.integration-publication.v1",
+  "date": "2026-10-27",
+  "repository": "https://github.com/xchemtina/ethglobal-openagents",
+  "branch": "integrate/posyn-pox-20261027",
+  "verified_source_commit": "57cb3f37bc73f869b58ee2f39198e209dd46c8a2",
+  "source_commit_url": "https://github.com/xchemtina/ethglobal-openagents/commit/57cb3f37bc73f869b58ee2f39198e209dd46c8a2",
+  "workflow_run": 40515437057,
+  "workflow_url": "https://github.com/xchemtina/ethglobal-openagents/actions/runs/40515437057",
+  "workflow_conclusion": "success",
+  "jobs": {
+    "rust": "success",
+    "gateway": "success",
+    "web": "success",
+    "offline-workers": "success",
+    "federation-pilot": "success"
+  },
+  "first_run": {
+    "id": 40515049534,
+    "conclusion": "failure",
+    "reason": "Rust1.99 Clippy required standard is_multiple_of parity method; corrected and retested"
+  },
+  "intermediate_run": {
+    "id": 40515403339,
+    "conclusion": "cancelled",
+    "reason": "superseded by formatted source commit"
+  },
+  "scope": "source-only offline developer pilot; no deployment, users onboarded, contracts or private data uploaded",
+  "note": "This receipt names the tested source commit; its later addition is publication metadata only."
+}
