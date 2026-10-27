@@ -1,0 +1,9 @@
+{
+  "schema": "openagents.synthetic-provenance.v1",
+  "synthetic": true,
+  "source_kind": "hand-authored-public-fixture",
+  "upstream_dataset": null,
+  "execution": "not_verified",
+  "reproducibility": "not_checked",
+  "physical_synthesis": "not_attested"
+}

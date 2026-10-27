@@ -198,6 +198,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "chimiaclaw-federation"
+version = "0.1.0"
+dependencies = [
+ "chimiaclaw-artifact",
+ "chimiaclaw-posyn",
+ "chimiaclaw-schema",
+ "getrandom 0.2.17",
+ "hex",
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "chimiaclaw-governance"
 version = "0.1.0"
 dependencies = [
@@ -303,6 +318,17 @@ dependencies = [
  "chimiaclaw-schema",
  "chimiaclaw-skill",
  "hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "chimiaclaw-posyn"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "hex",
+ "libc",
  "serde",
  "serde_json",
 ]

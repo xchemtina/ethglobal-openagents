@@ -1,0 +1,11 @@
+{
+  "schema": "pox.source-compatibility.v1",
+  "profile": "data-inquiry-20261007-sql-v4",
+  "files": {
+    "network.py": "bdc6d4adfc9a25a9e6b9a71bbb2b0e37873f48bbc6d8775c5d2ed82719b485e1",
+    "delivery.py": "6a3d67c65fb5478d05c78f0bdc24e7a52e62a9c280edef6a33d66a952124e9f9",
+    "measurements.py": "db443edb9980e5ddb49232f7d228e9d048e54db548b7012e3fdad29d41592ed3",
+    "measurement_profiles.json": "e75cf6b18de3b4feca4bfd8fdb7b4e98c8fcc04ae00472576906da71a322ffcd",
+    "inquiry.py": "f85614e948109325f927c18d0319de14274f793878b92c3e88b529411a02f441"
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "schema": "openagents.federation.demo-receipt.v1",
+  "status": "pass",
+  "synthetic_only": true,
+  "installations": 3,
+  "human_identities": 3,
+  "ai_identities": 3,
+  "posyn_expected_root": "blake3:a48f37a331a0949452b6b3535ff7da81cc28ab89e9b2860c13256369404411cd",
+  "checks": [
+    {
+      "check": "generate independent coordinator key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "generate independent coordinator-ai key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "generate independent producer key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "generate independent producer-ai key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "generate independent reviewer key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "generate independent reviewer-ai key",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "human delegates evidence signing to own AI",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "delegated AI imports expected-root PoSyn bundle",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "reviewer verifies received evidence with own policy",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "coordinator verifies received evidence with own policy",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "named human reviews exact received evidence",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "coordinator verifies human review bound to evidence",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "reviewer AI cannot replace human review",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "coordinator cannot impersonate reviewer",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "AI cannot issue human delegation",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "key creation cannot overwrite existing secret",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "stale scope rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "replacement handoff rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "revoked AI key rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "revoked human delegator rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "untrusted AI key rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "expired local policy rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "different pinned PoSyn root rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "tampered package signature rejected",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "human producer can import the same source bundle",
+      "status": "pass",
+      "expected": "accept"
+    },
+    {
+      "check": "review cannot be moved to another evidence package",
+      "status": "pass",
+      "expected": "reject"
+    },
+    {
+      "check": "six private keys remain isolated with owner-only permissions",
+      "status": "pass",
+      "expected": "isolate"
+    }
+  ],
+  "review_verification": {
+    "schema": "openagents.federation.verification.v1",
+    "statement_type": "review",
+    "artifact_id": "art_72afb54ad2404d9a",
+    "content_hash": "blake3:72afb54ad2404d9a51a14c5d8249cc6dffd4145ca0b4999c0b09134f09f6e316",
+    "signer_id": "reviewer",
+    "scope": {
+      "scope_id": "synthetic:three-person-pilot:handoff-1",
+      "revision": 1,
+      "scope_sha256": "sha256:45377752c8a52f16525fbe50580b9f3df0a8dc6bea1c972a853051916cb4eff8",
+      "coordinator_id": "coordinator",
+      "producer_id": "producer",
+      "reviewer_id": "reviewer"
+    },
+    "expected_posyn_root": "blake3:a48f37a331a0949452b6b3535ff7da81cc28ab89e9b2860c13256369404411cd",
+    "policy_sha256": "sha256:3a60d70081c72f654d98a11c2f1ae638339de868b3109f035e5b6e9ed411828a",
+    "policy_observed_at_unix": 1793108634,
+    "verified_at_unix": 1793108634,
+    "trust_state": "local_snapshot",
+    "scientific_review": "not_established",
+    "review_decision": "reviewed",
+    "publication_authorized": false,
+    "encrypted": false
+  },
+  "network_calls": 0,
+  "blockchain_transactions": 0,
+  "private_working_state": "temporary; deleted on exit",
+  "trust_scope": "local policy snapshots only"
+}

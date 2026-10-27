@@ -1,0 +1,38 @@
+{
+  "payload": {
+    "schema": "posyn.bundle.v1",
+    "profile": "artifact-integrity.v1",
+    "claims": {
+      "execution": "not_verified",
+      "reproducibility": "not_checked",
+      "physical_synthesis": "not_attested"
+    },
+    "artifacts": [
+      {
+        "role": "input",
+        "name": "input.json",
+        "digest": "blake3:1795a12f5027b9e76833ffabe38d2fdfa53b8e7a7a16bf88cc8aac21b741e1ff",
+        "size_bytes": 194
+      },
+      {
+        "role": "provenance",
+        "name": "provenance.json",
+        "digest": "blake3:0b8754632c822484d98aba3c9c647b1f5ddd98c90fc56e66635a54f4238f3bbd",
+        "size_bytes": 258
+      },
+      {
+        "role": "result",
+        "name": "result.json",
+        "digest": "blake3:280a9ba5b0fe5d0337b43efd69b61254ff5bda968c2c78770c3ff4e20d32c3b9",
+        "size_bytes": 829
+      },
+      {
+        "role": "specification",
+        "name": "specification.json",
+        "digest": "blake3:ede0c35406fba3acb62089f5d2dcc398403ba52ebb8af0a240f4fcaf105cb850",
+        "size_bytes": 145
+      }
+    ]
+  },
+  "attestation_hash": "blake3:a48f37a331a0949452b6b3535ff7da81cc28ab89e9b2860c13256369404411cd"
+}

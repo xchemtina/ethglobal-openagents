@@ -64,3 +64,17 @@ jobs:
       - run: python -m pytest skills/scienceclaw-port/workers/dft_modal/tests -q
         env:
           PYTHONPATH: skills/scienceclaw-port/workers/dft_modal/src
+  federation-pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cargo build --locked -p chimiaclaw-federation
+      - run: cargo clippy --locked -p chimiaclaw-posyn -p chimiaclaw-federation --all-targets --no-deps -- -D warnings
+      - run: python demo/federation/run.py
+      # The private PoX implementation is not distributed in this repository.
+      # Its separately pinned, real-runtime tests are run locally and recorded.
+      - run: python -m unittest discover -s integrations/pox/tests -v

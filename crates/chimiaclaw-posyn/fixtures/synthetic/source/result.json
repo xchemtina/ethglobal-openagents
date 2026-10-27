@@ -1,0 +1,35 @@
+{
+  "schema": "openagents.synthetic-projections.v1",
+  "synthetic": true,
+  "records": [
+    {
+      "source_id": "fixture-accepted",
+      "source_smiles": "O",
+      "status": "accepted",
+      "molecule": {
+        "fixture_only": true
+      },
+      "limits": [
+        "representation fixture; no optimized geometry"
+      ]
+    },
+    {
+      "source_id": "fixture-unsupported",
+      "source_smiles": "[Si]",
+      "status": "unsupported",
+      "reason": "synthetic restricted-profile refusal"
+    },
+    {
+      "source_id": "fixture-rejected",
+      "source_smiles": "invalid fixture",
+      "status": "rejected",
+      "reason": "synthetic parser refusal"
+    },
+    {
+      "source_id": "fixture-missing",
+      "source_smiles": null,
+      "status": "missing",
+      "reason": "source identifier absent"
+    }
+  ]
+}

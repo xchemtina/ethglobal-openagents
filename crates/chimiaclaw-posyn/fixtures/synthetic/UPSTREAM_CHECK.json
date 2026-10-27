@@ -1,0 +1,19 @@
+{
+  "schema": "openagents.posyn-fixture-crosscheck.v1",
+  "date": "2026-10-27",
+  "synthetic": true,
+  "method": "Actual separately installed PoSyn CLI seal and verify, with explicit expected root",
+  "verification": {
+    "schema": "posyn.verification.v1",
+    "status": "integrity_verified_against_expected_hash",
+    "attestation_hash": "blake3:a48f37a331a0949452b6b3535ff7da81cc28ab89e9b2860c13256369404411cd",
+    "artifact_count": 4,
+    "total_bytes": 1426,
+    "expected_hash_matched": true,
+    "claims": {
+      "execution": "not_verified",
+      "reproducibility": "not_checked",
+      "physical_synthesis": "not_attested"
+    }
+  }
+}

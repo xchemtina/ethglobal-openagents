@@ -1,0 +1,6 @@
+{
+  "schema": "openagents.synthetic-spec.v1",
+  "purpose": "Test evidence transport only",
+  "synthetic": true,
+  "chemistry_execution": false
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "openagents.pdf-review.v1",
+  "pdf": "REVIEW.pdf",
+  "pdf_sha256": "d93fee6137c678577db24df109f5dcf1302c16e540e4234ed3ea387f6543def2",
+  "pages": 2,
+  "render_dpi": 120,
+  "visually_inspected_pages": [
+    1,
+    2
+  ],
+  "result": "pass",
+  "checks": [
+    "all final pages rendered and inspected",
+    "no clipped text or diagram labels",
+    "no overlaps",
+    "no overfull boxes in final LaTeX log"
+  ],
+  "figure_sources": [
+    "chimiaclaw-posyn byte-preserving verification and synthetic fixture",
+    "chimiaclaw-federation CLI and demo/federation/run.py three-isolated-directory journey",
+    "integrations/pox source authentication and sidecar implementation"
+  ]
+}

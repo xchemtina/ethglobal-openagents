@@ -1,0 +1,8 @@
+\callout{\textbf{Verified locally:} 167 Rust workspace tests; 10 real-source PoX
+adapter tests; 27 three-installation exchange checks; 14 actual PoX/Rust journey
+checks. The independent review found no remaining blocker for this offline pilot.}
+The Rust total includes 10 PoSyn and 18 federation regressions. The new crates
+pass scoped formatting and warning-denied Clippy. The PoX source tests use the
+separately installed implementation; public CI runs five portable adapter tests
+and explicitly skips those five source-dependent tests. A whole-workspace
+formatting check still reports pre-existing differences in unrelated crates.

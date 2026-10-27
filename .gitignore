@@ -1,5 +1,7 @@
 /target/
 /.chimiaclaw/
+/.federation-local/
+*.key
 /.env
 .env.*
 !.env.example

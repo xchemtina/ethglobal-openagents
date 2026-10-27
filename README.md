@@ -3,6 +3,13 @@
 **Rust-native signed artifact DAG for autonomous scientific agents**  
 ChimiaDAO substrate · agentic DFT cashier · EthGlobal OpenAgents lineage
 
+**PoSyn / PoX integration (2026-10-27):** independent local installations can
+exchange signed, scope-bound evidence and review packages with separate human
+and AI identities. A synthetic three-person journey and an additive private PoX
+adapter are included. No smart contracts are required. See the
+[pilot guide](docs/integrations/posyn-pox/README.md) for setup, verification and
+offline trust boundaries.
+
 **Review checkpoint (2026-10-25):** this branch hardens artifact verification, file storage,
 DFT response identity, cashier boundaries, and the preview UI. Live x402 settlement is
 unavailable and fails closed; live DFT remains disabled. Challenge screens are local
@@ -21,6 +28,7 @@ Every scientific action, agent decision, payment, and governance event becomes a
 | Layer | Path | Role |
 |-------|------|------|
 | Artifact core | `crates/*` | Signed DAG, MolADT, market, DFT, x402 types, CLI |
+| Local federation | `crates/chimiaclaw-federation`, `crates/chimiaclaw-posyn`, `integrations/pox` | Verified PoSyn bundles, signed exchange, explicit local trust and PoX scope references |
 | HTTP cashier | `services/api-gateway` | Catalog, HTTP 402, MolADT + cached DFT SKUs, Stripe/Revolut |
 | Science market UI | `web/` | Agents-first Next.js site (DFT.xyz / ChimiaDAO) |
 | Workers | `skills/scienceclaw-port/workers/*` | PySCF DFT, Modal H100 scaffold, literature |

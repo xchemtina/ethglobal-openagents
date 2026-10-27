@@ -1,0 +1,10 @@
+{
+  "schema": "openagents.synthetic-source.v1",
+  "synthetic": true,
+  "source_records": [
+    "fixture-accepted",
+    "fixture-unsupported",
+    "fixture-rejected",
+    "fixture-missing"
+  ]
+}

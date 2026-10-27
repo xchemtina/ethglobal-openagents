@@ -1,0 +1,48 @@
+{
+  "schema": "openagents.integration-validation.v1",
+  "date": "2026-10-27",
+  "branch": "integrate/posyn-pox-20261027",
+  "base_commit": "18312933bb169b25e05be717f6f36784dff44656",
+  "scope": "offline local evidence exchange; synthetic fixtures only",
+  "checks": {
+    "rust_workspace_all_features": {
+      "passed": 167,
+      "failed": 0,
+      "ignored": 0
+    },
+    "posyn_regressions_in_workspace": 10,
+    "federation_regressions_in_workspace": 18,
+    "pox_adapter_with_actual_pinned_source": {
+      "passed": 10,
+      "skipped": 0
+    },
+    "public_pox_adapter_without_external_source": {
+      "passed": 5,
+      "skipped": 5,
+      "reason": "separately installed PoX source is not distributed"
+    },
+    "three_installation_cli_checks": 27,
+    "actual_pox_rust_journey_checks": 14,
+    "new_crates_clippy_warnings_denied": "pass",
+    "new_crates_rustfmt": "pass",
+    "whole_workspace_rustfmt": "preexisting differences in unchanged CLI, MolADT and x402 code",
+    "upstream_posyn_fixture_verification": "pass",
+    "independent_review": "PASS_WITH_RESERVATIONS"
+  },
+  "constraints": [
+    "human-designated keys do not prove human presence; keep human keys outside AI access",
+    "offline locally administered policy and clock; no automatic revocation sync or anti-rollback",
+    "signed packages are not encrypted",
+    "three isolated directories tested on one host; independent-device qualification remains open",
+    "PoX adapter requires separately installed pinned source and records sidecar references only",
+    "no source delivery, scientific admission or publication authority",
+    "no private science datasets or real credentials used"
+  ],
+  "original_sources": "PoSyn and PoX implementation sources unchanged; PoX demo verifies its temporary source DB unchanged by adapter",
+  "local_toolchain_note": "macOS validation used existing MacOSX15.2 SDK because default MacOSX27 stubs were incompatible with the available linker",
+  "publication": "Recorded separately in PUBLICATION.json after push",
+  "receipts": {
+    "FEDERATION_DEMO.json": "71e5b02420fe0d1bc814a9505f305a8ec9e6d41fda00df33303176770e464ca2",
+    "POX_DEMO.json": "9efc3d29675112083d8532c9f1f7f4cb68d90ef33b41883656dbcfa34896176a"
+  }
+}
