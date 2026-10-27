@@ -1,0 +1,27 @@
+{
+  "schema": "openagents.independent-review.v1",
+  "date": "2026-10-27",
+  "implementation_commit": "f9bc30b49d3fe470324acb34e78e6570f0cb8f0d",
+  "assessment": "PASS_WITH_RESERVATIONS",
+  "blocking_findings_remaining": 0,
+  "fixed_findings": [
+    "review decision retained in verifier receipt and PoX reference",
+    "PoX package bound aligned with federation 48MiB envelope limit"
+  ],
+  "independent_checks": {
+    "posyn_tests": 10,
+    "federation_tests": 18,
+    "pox_tests_with_pinned_source": 10,
+    "federation_cli_journey_checks": 27,
+    "pox_rust_journey_checks": 14,
+    "original_posyn_fixture_check": "pass"
+  },
+  "reservations": [
+    "human-designated signatures do not prove human presence; AI with same filesystem privileges can read human key",
+    "locally administered trust policies and clocks; no automatic synchronization or rollback protection",
+    "signed packages are not encrypted",
+    "three installations simulated on one host; independent-device qualification open",
+    "PoX separately installed source required; sidecar references do not change existing web workflow"
+  ],
+  "review_scope": "changed verifier, signing/authority, source adapter, demo and runbook; not production deployment or scientific validity"
+}

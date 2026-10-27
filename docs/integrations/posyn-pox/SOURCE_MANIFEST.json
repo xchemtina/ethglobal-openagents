@@ -29,7 +29,7 @@
     "crates/chimiaclaw-posyn/fixtures/synthetic/source/result.json": "615ed3831441a32a640c9ac41f5fd285b017bb2bba9e55cd3dce11a34a55f09f",
     "crates/chimiaclaw-posyn/fixtures/synthetic/source/specification.json": "096df95a459aed3b6d1fde37e4f2da6912d69e3635fe824b3814032f2d58c8c4",
     "crates/chimiaclaw-posyn/src/filesystem.rs": "1e8c531489a7fdf4a1017d14a1b2cda5ee6fd439d8e9adab4f75466525d4549c",
-    "crates/chimiaclaw-posyn/src/lib.rs": "ec91a42713e123a69c09941c379f0c9335196ababbac922120572ce52aa5efdb",
+    "crates/chimiaclaw-posyn/src/lib.rs": "ec6f0f3d612eae8335c82a8f0f089932503b92713caa4045c1b104d65a2767b5",
     "crates/chimiaclaw-posyn/src/manifest.rs": "ac7b73a51f3acf693e5973adda09bd9d1ad4568d874c009356e029df399739d5",
     "crates/chimiaclaw-posyn/tests/integrity.rs": "c8c25145d57a399a00a37a9a3c1f587803ed861119932887590b56ea0f6ad1d4",
     "demo/federation/run.py": "63c3c72cd22aeabe2bb076ce74153b8df3e5f3615a7f1280ab131e8d6f9c419d",

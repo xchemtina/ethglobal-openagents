@@ -44,5 +44,12 @@
   "receipts": {
     "FEDERATION_DEMO.json": "71e5b02420fe0d1bc814a9505f305a8ec9e6d41fda00df33303176770e464ca2",
     "POX_DEMO.json": "9efc3d29675112083d8532c9f1f7f4cb68d90ef33b41883656dbcfa34896176a"
+  },
+  "hosted_ci_correction": {
+    "initial_run": 40515049534,
+    "result": "failure only in federation-pilot clippy",
+    "cause": "Rust1.99 Clippy requires is_multiple_of for parity check",
+    "fix": "use standard usize.is_multiple_of(2); affected28Rust tests rerun",
+    "other_jobs": "rust, gateway, web, offline-workers passed"
   }
 }

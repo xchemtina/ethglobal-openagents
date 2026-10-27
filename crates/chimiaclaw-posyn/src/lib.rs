@@ -80,7 +80,7 @@ pub(crate) fn valid_digest(value: &str) -> bool {
 
 fn decode_hex(value: &str, limit: usize) -> Result<Vec<u8>, Error> {
     require(value.len() <= limit * 2, "size_limit")?;
-    require(value.len() % 2 == 0 && lower_hex(value), "invalid_hex")?;
+    require(value.len().is_multiple_of(2) && lower_hex(value), "invalid_hex")?;
     hex::decode(value).map_err(|_| Error("invalid_hex"))
 }
 
