@@ -1,6 +1,6 @@
 {
   "schema": "openagents.hardening-validation.v1",
-  "recorded_at_utc": "2026-10-27T19:09:04.064698+00:00",
+  "recorded_at_utc": "2026-10-27T19:13:35.533964+00:00",
   "baseline_commit": "7316731bb792c1055688d7ce6be79474a9843285",
   "status": "local_validation_pass",
   "source_binding": "exact hashes below; hosted publication tracked separately",
@@ -144,16 +144,16 @@
       "bytes": 6343
     },
     "docs/reviews/20261027-hardening/REVIEW.md": {
-      "sha256": "12a8c5c22591c8d0dea229990622b177c6efbfa1094a760e59d3961e7a883071",
-      "bytes": 7065
+      "sha256": "c0c375ba66fb5eb380bfea841400b7cd14173398d83b43987949f341de84518f",
+      "bytes": 7360
     },
     "docs/reviews/20261027-hardening/REVIEW.pdf": {
-      "sha256": "929049b5e920cf4b03349c54f3d6abc37e7fea0c862edfa974cf9edd61da99d3",
-      "bytes": 221843
+      "sha256": "268f165ba63b46b413eb80bbaa79f96708c5b1ae3e36db9325250cf50e4de905",
+      "bytes": 221706
     },
     "docs/reviews/20261027-hardening/REVIEW.tex": {
-      "sha256": "d499cd49a0ac0980dc7d2fb082a2a1d5e62df7a61deadae039a873549a8cec17",
-      "bytes": 8542
+      "sha256": "99acb6da049e13378720a0f309f97430cbf52ec5a0bba1c85b44a4254f60cb61",
+      "bytes": 8717
     },
     "integrations/workstreams/README.md": {
       "sha256": "05547b556b691d0f6f8a202935d3dfd84eac3f3184cd02205802d8d89a890b6d",
@@ -218,6 +218,19 @@
     "web/package.json": {
       "sha256": "04c1bb2d4fd8df9d483249aa5f1395ea3b673fdabb9d6aea6684727ed228a453",
       "bytes": 2493
+    },
+    "tools/molecule_mcp/README.md": {
+      "sha256": "9a777cc404016f3b3b5d3e6d2a25fdfd0c108eac3b7d78b95c3cb038533ebec9",
+      "bytes": 664
     }
+  },
+  "repository_metadata_repair": {
+    "path": "tools/molecule_mcp",
+    "previous_gitlink": "92a0959b2e13389726a8bb427c313a589f9e6efe",
+    "upstream": "https://github.com/leelasd/molecule_mcp",
+    "replacement": "optional upstream README with exact revision; original checkouts untouched",
+    "local_submodule_foreach": "pass",
+    "initial_hosted_run": "https://github.com/xchemtina/ethglobal-openagents/actions/runs/40566649959",
+    "initial_hosted_result": "checkout failed before tests; orphaned gitlink had no .gitmodules URL"
   }
 }

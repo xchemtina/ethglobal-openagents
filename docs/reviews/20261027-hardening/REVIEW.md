@@ -82,7 +82,7 @@ See the relevant [proxy-addr](https://github.com/advisories/GHSA-jqcg-44mw-7w3h)
 [Next.js](https://github.com/advisories/GHSA-2464-fhr4-w9xw) and
 [body-parser](https://github.com/advisories/GHSA-27r3-jxmh-p828) advisories.
 
-The Rust lock now pins Quinn 0.11.18, Rustls 0.23.46, rustls-webpki 0.103.16,
+The Rust lock now pins quinn-proto 0.11.18, Rustls 0.23.46, rustls-webpki 0.103.16,
 webpki-roots 1.0.10 and Tokio 1.53.3. A fresh OSV scan covered all 175 resolved
 registry package versions. Its sole raw hit was `block-buffer 0.10.4`: the
 aggregate record says `<0.12.1`, while the
@@ -98,8 +98,12 @@ SHAs; checkout credentials are not persisted; job timeouts are bounded and token
 permissions remain read-only. CI now includes observer tests on Linux and macOS
 and production npm audit gates. These controls follow
 [GitHub's secure-use guidance](https://docs.github.com/en/actions/reference/security/secure-use).
-Local Node was 25.9 and Rust 1.89; hosted CI uses Node 22 and Rust stable, providing
-a separate compatibility check. The public branch contains methods and synthetic
+Local Node was 25.9 and Rust 1.89; hosted CI is configured to check Node 22 and Rust
+stable separately. Its results must be checked against the exact branch commit.
+The first hosted run failed during checkout because an unused historical submodule
+had no `.gitmodules` definition. Its orphaned entry was replaced by an optional
+upstream pointer retaining the exact revision, preserving credential cleanup.
+The public branch contains methods and synthetic
 fixtures; private source databases, host credentials and canary tokens are excluded.
 
 The local OS account remains trusted. Any AI with the same filesystem privileges

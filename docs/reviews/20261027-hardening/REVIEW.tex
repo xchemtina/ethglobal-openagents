@@ -87,7 +87,7 @@ live payments remain unavailable and fail closed. A new compressed-request test
 confirms malformed trailing bytes produce a generic HTTP 400 and leave the
 gateway responsive.
 
-The Rust lock pins Quinn 0.11.18, Rustls 0.23.46, rustls-webpki 0.103.16,
+The Rust lock pins quinn-proto 0.11.18, Rustls 0.23.46, rustls-webpki 0.103.16,
 webpki-roots 1.0.10 and Tokio 1.53.3. The updated workspace's 167 tests and scoped
 Clippy passed; the federation binary was rebuilt. The final OSV scan covers
 175 registry package versions. Python's 14 pinned requirements passed pip-audit
@@ -104,7 +104,9 @@ Actions use verified upstream commit SHAs, checkout does not persist credentials
 token permissions remain read-only, and jobs have explicit timeouts. Linux and
 macOS run observer tests and its synthetic journey; gateway and web have production
 npm audit gates. Local Node 25.9 and Rust 1.89 differ from hosted Node 22 and Rust
-stable, so hosted CI supplies a separate compatibility check.
+stable. Hosted results must be checked against the exact branch commit. The first
+run failed at checkout on an unused orphaned submodule. Its exact upstream
+revision is now preserved in a pointer, removing the malformed Git entry.
 
 \sub{Authority the observer deliberately does not acquire}
 The calling OS account remains trusted. A same-account AI can access its files;
