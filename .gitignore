@@ -1,6 +1,8 @@
 /target/
 /.chimiaclaw/
 /.federation-local/
+/.workstreams-local/
+*.token
 *.key
 /.env
 .env.*

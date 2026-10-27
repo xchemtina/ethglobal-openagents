@@ -1,0 +1,223 @@
+{
+  "schema": "openagents.hardening-validation.v1",
+  "recorded_at_utc": "2026-10-27T19:09:04.064698+00:00",
+  "baseline_commit": "7316731bb792c1055688d7ce6be79474a9843285",
+  "status": "local_validation_pass",
+  "source_binding": "exact hashes below; hosted publication tracked separately",
+  "tests": {
+    "rust": 167,
+    "gateway": 22,
+    "web": 2,
+    "literature_worker": 70,
+    "offline_dft_worker": 10,
+    "actual_pox_adapter": 10,
+    "observer": 40,
+    "total": 321
+  },
+  "journey_checks": {
+    "federation": 27,
+    "actual_pox_and_rust": 14,
+    "observer": 12
+  },
+  "typechecks_and_builds": {
+    "gateway": "pass",
+    "web": "pass"
+  },
+  "clippy": "scoped posyn/federation alltargets warnings denied pass",
+  "second_physical_mac": {
+    "status": "pass",
+    "observer_tests": 40,
+    "observer_checks": 12,
+    "federation_checks": 27,
+    "package_signed_on_source_verified_on_recipient": true,
+    "original_evidence_retained_in_observer": true,
+    "private_temporary_state_removed": true,
+    "binary_sha256": "923e74fd0a62c33a29adf61dec23cb5efcbe4e042a58c0cb1763407f8442a22a"
+  },
+  "windows_host": {
+    "ssh_server_reached": true,
+    "unattended_authentication": "rejected",
+    "runtime_and_jobs": "unverified",
+    "supported_private_file_boundary": false
+  },
+  "dependency_audits": {
+    "npm": {
+      "gateway": {
+        "production": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "full": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      },
+      "web": {
+        "production": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "full": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      }
+    },
+    "python": {
+      "pinned_requirements": 14,
+      "known_vulnerabilities": 0,
+      "skipped": 0,
+      "tool": "pip-audit 2.10.1"
+    },
+    "rust": {
+      "status": "complete",
+      "packages": 175,
+      "raw_advisory_ids": [
+        "GHSA-qwgh-2vcv-g2f7"
+      ],
+      "applicable_advisories_after_upstream_review": 0
+    },
+    "rust_adjudication": [
+      {
+        "id": "GHSA-qwgh-2vcv-g2f7",
+        "package": "block-buffer",
+        "locked_version": "0.10.4",
+        "aggregated_range": "<0.12.1",
+        "maintainer_affected_range": ">=0.11.0,<0.12.1",
+        "primary_source": "https://github.com/RustCrypto/utils/security/advisories/GHSA-qwgh-2vcv-g2f7",
+        "decision": "not affected under explicit maintainer range; raw scanner result retained; no package-wide suppression",
+        "scope": "this exact locked0.10.4 version only"
+      }
+    ]
+  },
+  "independent_review": {
+    "verdict": "PASS_WITH_RESERVATIONS",
+    "fixed_findings": [
+      "malformed delivery timestamp hides inbox item",
+      "malformed stored digest raises TypeError"
+    ],
+    "boundary": "trusted account; Unix observer only; no human awareness or execution authority"
+  },
+  "pdf": {
+    "pages": 2,
+    "render_dpi": 110,
+    "visual_inspection": "passed; both final rendered pages inspected; no clipping or overlap",
+    "layout_warnings": []
+  },
+  "actions": {
+    "scientific_jobs_launched": 0,
+    "production_services_deployed": 0,
+    "messages_sent": 0,
+    "blockchain_transactions": 0
+  },
+  "source_files": {
+    ".github/workflows/ci.yml": {
+      "sha256": "95b89b51737898d186425a93a9a78c2a949291075b5fa802ef39cd4a2700fc71",
+      "bytes": 4061
+    },
+    ".gitignore": {
+      "sha256": "a61b1f5c7cc5aa91df2d3639c8401c93f6991e87f807c02bd86d7ce65bddf362",
+      "bytes": 732
+    },
+    "Cargo.lock": {
+      "sha256": "e9c18c08cbf7be68a3abb20a17fde12c43bdd5ea5084f824d77ef157f96e738c",
+      "bytes": 47447
+    },
+    "README.md": {
+      "sha256": "b3eda1e77828d3ee023b2d5f8d81e9f0a75b4b44bfd9a068d7cdaa746dda4422",
+      "bytes": 6343
+    },
+    "docs/reviews/20261027-hardening/REVIEW.md": {
+      "sha256": "12a8c5c22591c8d0dea229990622b177c6efbfa1094a760e59d3961e7a883071",
+      "bytes": 7065
+    },
+    "docs/reviews/20261027-hardening/REVIEW.pdf": {
+      "sha256": "929049b5e920cf4b03349c54f3d6abc37e7fea0c862edfa974cf9edd61da99d3",
+      "bytes": 221843
+    },
+    "docs/reviews/20261027-hardening/REVIEW.tex": {
+      "sha256": "d499cd49a0ac0980dc7d2fb082a2a1d5e62df7a61deadae039a873549a8cec17",
+      "bytes": 8542
+    },
+    "integrations/workstreams/README.md": {
+      "sha256": "05547b556b691d0f6f8a202935d3dfd84eac3f3184cd02205802d8d89a890b6d",
+      "bytes": 7207
+    },
+    "integrations/workstreams/__init__.py": {
+      "sha256": "51396cd46035d7c28d0dd888832f719a639463d0529ea8eafbc5945a31520e18",
+      "bytes": 190
+    },
+    "integrations/workstreams/__main__.py": {
+      "sha256": "0382fe3f52ede8b62df14a78ee116570a95ea26e0cd99cfbd7aa185d5bd5c3c6",
+      "bytes": 3424
+    },
+    "integrations/workstreams/demo.py": {
+      "sha256": "5d0e2b1931dfab197b51c71c28637e6b0bad95a0b46a42a5c82df8970b966621",
+      "bytes": 3821
+    },
+    "integrations/workstreams/journal.py": {
+      "sha256": "a61cfffc00a0ebad06a138212f185d62ee171a02a5b8f1c5bdd11374afbe9331",
+      "bytes": 17579
+    },
+    "integrations/workstreams/safeio.py": {
+      "sha256": "77d52ea3187f6e3ee25d16dcc871ecd62709a623f24ccb99c6a895cf55a5e929",
+      "bytes": 6390
+    },
+    "integrations/workstreams/tests/test_journal.py": {
+      "sha256": "92d810a70cff636350aa77d7d93448e55980e288a06c80a1b9d8f14ce6d40bc5",
+      "bytes": 18244
+    },
+    "services/api-gateway/README.md": {
+      "sha256": "cda628b94e902aa2771b2dec478103eeb777fb29a8867f2c4831db42578e9f1d",
+      "bytes": 5369
+    },
+    "services/api-gateway/package-lock.json": {
+      "sha256": "274c7c479395caacc37f36ee537222e1f78b945b6af0ce7120628b9058562d22",
+      "bytes": 49435
+    },
+    "services/api-gateway/package.json": {
+      "sha256": "0c0a186fe6203a9b13adcb649cbc8de849b87aff48b46ff2596bb862e8bc127d",
+      "bytes": 755
+    },
+    "services/api-gateway/src/http_errors.ts": {
+      "sha256": "59fd527e2ba3c863c585e659e4390840d9545198f91df4a9322979350cfb87c3",
+      "bytes": 1097
+    },
+    "services/api-gateway/tests/http.test.ts": {
+      "sha256": "88dbcccefb0be81757278e529aaa36b3dec44778332f9580f0a6297d0029f74e",
+      "bytes": 5127
+    },
+    "web/README.md": {
+      "sha256": "8e64ed1c4395878a38093a0c97c6d3be56ff3e8bbb91597c54e295a70d4b0387",
+      "bytes": 1728
+    },
+    "web/next-env.d.ts": {
+      "sha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b",
+      "bytes": 288
+    },
+    "web/package-lock.json": {
+      "sha256": "91dec9b97653d1cb2b70107ba41146e07fc639564c2f1017ae3622943b49b630",
+      "bytes": 165426
+    },
+    "web/package.json": {
+      "sha256": "04c1bb2d4fd8df9d483249aa5f1395ea3b673fdabb9d6aea6684727ed228a453",
+      "bytes": 2493
+    }
+  }
+}

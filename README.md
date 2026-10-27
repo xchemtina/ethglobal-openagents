@@ -3,6 +3,13 @@
 **Rust-native signed artifact DAG for autonomous scientific agents**  
 ChimiaDAO substrate · agentic DFT cashier · EthGlobal OpenAgents lineage
 
+**Workstream hardening (2026-10-27):** a private local observer now retains exact
+receipts, deduplicates events and tracks each recipient's delivery across restarts.
+It preserves existing ownership and gates; it does not schedule jobs or infer
+human acknowledgment. Dependency fixes and a second-machine synthetic canary are
+documented in the [hardening review](docs/reviews/20261027-hardening/REVIEW.md).
+Try the [observer](integrations/workstreams/README.md) with Python 3.10+ on Unix.
+
 **PoSyn / PoX integration (2026-10-27):** independent local installations can
 exchange signed, scope-bound evidence and review packages with separate human
 and AI identities. A synthetic three-person journey and an additive private PoX
@@ -29,6 +36,7 @@ Every scientific action, agent decision, payment, and governance event becomes a
 |-------|------|------|
 | Artifact core | `crates/*` | Signed DAG, MolADT, market, DFT, x402 types, CLI |
 | Local federation | `crates/chimiaclaw-federation`, `crates/chimiaclaw-posyn`, `integrations/pox` | Verified PoSyn bundles, signed exchange, explicit local trust and PoX scope references |
+| Workstream observer | `integrations/workstreams` | Private durable observations and recipient delivery receipts; no execution or human acknowledgment authority |
 | HTTP cashier | `services/api-gateway` | Catalog, HTTP 402, MolADT + cached DFT SKUs, Stripe/Revolut |
 | Science market UI | `web/` | Agents-first Next.js site (DFT.xyz / ChimiaDAO) |
 | Workers | `skills/scienceclaw-port/workers/*` | PySCF DFT, Modal H100 scaffold, literature |

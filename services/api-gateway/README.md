@@ -92,6 +92,7 @@ Each successful paid MolADT call appends one JSONL line to `REVENUE_LOG_PATH` (d
 npm run typecheck
 npm test
 npm run build
+npm audit --omit=dev
 ```
 
 The regression suite uses local HTTP servers and disposable fake CLI workers; it never sends payments or starts scientific computations. The image compiles TypeScript during its build and runs `node dist/index.js` as a non-root user; it does not download `tsx` at startup.
@@ -108,7 +109,7 @@ The regression suite uses local HTTP servers and disposable fake CLI workers; it
 1. Set `CHIMIA_X402_PAY_TO` to the DAO Base treasury.
 2. Set `X402_NETWORK=eip155:8453` (Base mainnet).
 3. Point `X402_FACILITATOR_URL` at a production facilitator (not `x402.org/facilitator`).
-4. Implement and test facilitator verification **and settlement** before changing the fail-closed live gate. Installing optional packages alone does not enable payments.
+4. Implement and test facilitator verification **and settlement** before changing the fail-closed live gate. Add the required SDK dependencies as part of that integration; the current gateway does not import or install them.
 5. Keep expensive DFT gated; start with MolADT + cached DFT only.
 6. For live SCF: deploy Modal worker (`docs/MODAL_DFT.md`), never free-run uncapped GPU jobs.
 

@@ -30,6 +30,7 @@ Use Node 22.6 or later and the committed npm lockfile. Vercel explicitly runs `n
 npm test
 npm run typecheck
 npm run build
+npm audit --omit=dev
 ```
 
 The production build checks TypeScript. Checkout-link tests reject executable,
