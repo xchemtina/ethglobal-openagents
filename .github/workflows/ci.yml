@@ -114,4 +114,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s integrations/workstreams/tests -v
+      - name: Verify observer under a private default umask
+        run: |
+          umask 077
+          python -m unittest discover -s integrations/workstreams/tests -v
       - run: python -m integrations.workstreams.demo

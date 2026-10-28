@@ -251,6 +251,8 @@ class JournalTests(unittest.TestCase):
             self.journal.register("third", self.root / "third.token")
         shared = self.base / "shared"
         shared.mkdir(mode=0o755)
+        # mkdir's mode is filtered by umask; this fixture must really be shared.
+        shared.chmod(0o755)
         with self.assertRaises(JournalError):
             self.journal.register("third", shared / "third.token")
 
