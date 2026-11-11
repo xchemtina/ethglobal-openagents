@@ -1,5 +1,6 @@
 //! Offline evidence exchange. Trust comes from the separately maintained local
 //! policy, not a public key embedded in a package. No network or chain is used.
+pub mod attempt;
 pub mod files;
 mod model;
 mod strict;

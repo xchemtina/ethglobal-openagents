@@ -1,7 +1,7 @@
 use chimiaclaw_federation::{
-    create_delegation, create_evidence, create_review, decode_envelope, decode_policy, files,
-    verify_package, Audience, Error, IdentityKind, Result, ReviewDecision, MAX_PACKAGE_BYTES,
-    MAX_POLICY_BYTES,
+    attempt, create_delegation, create_evidence, create_review, decode_envelope, decode_policy,
+    files, verify_package, Audience, Error, IdentityKind, Result, ReviewDecision,
+    MAX_PACKAGE_BYTES, MAX_POLICY_BYTES,
 };
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -14,9 +14,13 @@ Commands:
   delegate --key FILE --policy FILE --delegate-id AI_ID --expires-at UNIX --out NEW_FILE
   review --package FILE --key FILE --policy FILE --decision reviewed|corrections_required --out NEW_FILE
   verify --package FILE --policy FILE [--evidence FILE]
+  bind-attempt --policy FILE --expect-attempt FILE --evidence FILE --receipt FILE --event FILE --key FILE --out NEW_FILE
+  verify-attempt --policy FILE --expect-attempt FILE --evidence FILE --receipt FILE --event FILE --package FILE
 Key initialization prints only the public identity. Verify/review use locally pinned
 policy keys, expected root, exact scope and revocations; no live registry is queried.
 Review verification requires --evidence. All files written are create-only mode0600.
+Terminal-attempt commands bind existing evidence and exact retained bytes. The
+receiver supplies its own expectation; no execution or scientific claim is granted.
 ";
 
 struct Args(BTreeMap<String, String>);
@@ -56,11 +60,65 @@ fn encode(value: &impl serde::Serialize) -> Result<Vec<u8>> {
     serde_json::to_vec_pretty(value).map_err(|_| Error("output_encoding_failed"))
 }
 
+fn run_attempt(command: &str, mut args: Args, now: u64) -> Result<Vec<u8>> {
+    let policy_bytes = files::read(Path::new(&args.take("--policy")?), MAX_POLICY_BYTES, false)?;
+    let expectation_bytes = files::read(
+        Path::new(&args.take("--expect-attempt")?),
+        attempt::MAX_RECORD_BYTES,
+        false,
+    )?;
+    let receipt_bytes = files::read(
+        Path::new(&args.take("--receipt")?),
+        attempt::MAX_RECORD_BYTES,
+        false,
+    )?;
+    let event_bytes = files::read(
+        Path::new(&args.take("--event")?),
+        attempt::MAX_RECORD_BYTES,
+        false,
+    )?;
+    let evidence = envelope(&args.take("--evidence")?)?;
+    let context = attempt::Context {
+        policy_bytes: &policy_bytes,
+        expectation_bytes: &expectation_bytes,
+        receipt_bytes: &receipt_bytes,
+        event_bytes: &event_bytes,
+        evidence: &evidence,
+        now,
+    };
+    if command == "verify-attempt" {
+        let bytes = files::read(
+            Path::new(&args.take("--package")?),
+            attempt::MAX_ATTEMPT_PACKAGE_BYTES,
+            false,
+        )?;
+        args.done()?;
+        return encode(&attempt::verify(
+            &attempt::decode_package(&bytes)?,
+            &context,
+        )?);
+    }
+    let key = files::load_key(Path::new(&args.take("--key")?))?;
+    let output = args.take("--out")?;
+    args.done()?;
+    let package = attempt::create(&key, &context)?;
+    let bytes = encode(&package)?;
+    if bytes.len() > attempt::MAX_ATTEMPT_PACKAGE_BYTES {
+        return Err(Error("output_too_large"));
+    }
+    let receipt = attempt::verify(&package, &context)?;
+    files::write_new(Path::new(&output), &bytes)?;
+    encode(&receipt)
+}
+
 fn run(command: &str, mut args: Args) -> Result<Vec<u8>> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| Error("invalid_clock"))?
         .as_secs();
+    if matches!(command, "bind-attempt" | "verify-attempt") {
+        return run_attempt(command, args, now);
+    }
     if command == "init" {
         let id = args.take("--id")?;
         let kind = match args.take("--kind")?.as_str() {

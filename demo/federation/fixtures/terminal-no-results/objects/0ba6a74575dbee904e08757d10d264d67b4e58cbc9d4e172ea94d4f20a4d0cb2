@@ -1,0 +1,1 @@
+{"attempt_id":"attempt-1","failure_code":"missing_output","job_id":"synthetic-job","missing_outputs":["result.json"],"outcome":"failed","schema":"openagents.terminal-attempt.failure-record.v1"}
